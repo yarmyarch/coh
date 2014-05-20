@@ -1,0 +1,23 @@
+{
+    "project_type": "javascript",
+
+    "debugMode" : 1,
+    "showFPS" : true,
+    "frameRate" : 60,
+    "id" : "gameCanvas",
+    "renderMode" : 0,
+    "engineDir":"frameworks/cocos2d-html5",
+
+    "modules" : ["cocos2d", "cocostudio"],
+
+    "jsList" : [
+        "src/resource.js?f=5",
+        "src/util/SlideUtil.js",
+        "src/logic/control.js",
+        "src/logic/actor.js",
+        "src/logic/battle.js?v=5",
+        "src/ui/mapScene.js",
+        "src/ui/mapLayer.js",
+        "src/ui/battleScene.js"
+    ]
+}
