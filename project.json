@@ -15,7 +15,7 @@
         "src/util/SlideUtil.js",
         "src/logic/control.js",
         "src/logic/actor.js",
-        "src/logic/battle.js?v=5",
+        "src/logic/battle.js?v=7",
         "src/ui/mapScene.js",
         "src/ui/mapLayer.js",
         "src/ui/battleScene.js"

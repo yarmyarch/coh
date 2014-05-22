@@ -3,50 +3,7 @@ coh.Battle = (function(){
     
     var self;
     
-    var LC = {
-        COLOR : {
-            GREEN : 1,
-            RED : 2,
-            BLUE : 3
-        },
-        LOCATION_TYPE : {
-            // 0 - reserved
-            // [row count, column count]
-            1 : [1,1],
-            2 : [2,1],
-            3 : [1,2],
-            4 : [2,2]
-        },
-        CONVERT_TYPE : {
-            // possible location type may create a convert.
-            1 : [
-                [1], 
-                [1], 
-                [1]
-            ],
-            2 : [
-                [2], 
-                [2], 
-                [1], 
-                [1]
-            ],
-            3 : [
-                [1, 1, 1]
-            ],
-            4 : [
-                [3, 3], 
-                [1, 1]
-            ],
-            5 : [
-                [4, 4], 
-                [4, 4], 
-                [1, 1], 
-                [1, 1]
-            ]
-        },
-        BLANK : 0,
-        COLOR_COUNT : 3
-    };
+    var LC = coh.LocalConfig;
     
     var buf = {
         occupiedRowIndex : {}
@@ -55,45 +12,36 @@ coh.Battle = (function(){
     var handlerList = {
         // indexed by the type configed in local config.
         locationTest : {
-            1 : function(dataGroup, column) {
-                return dataGroup[dataGroup.length - 1][column] == LC.BLANK;
+            1 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK;
             },
-            2 : function(dataGroup, column) {
-                return dataGroup[dataGroup.length - 1][column] == LC.BLANK && dataGroup[dataGroup.length - 2][column] == LC.BLANK;
+            2 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.BLANK;
             },
-            3 : function(dataGroup, column) {
-                return dataGroup[dataGroup.length - 1][column] == LC.BLANK && dataGroup[dataGroup.length - 1][column + 1] == LC.BLANK;
+            3 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK;
             },
-            4 : function(dataGroup, column) {
-                return 
-                    dataGroup[dataGroup.length - 1][column] == LC.BLANK
-                    && dataGroup[dataGroup.length - 1][column + 1] == LC.BLANK
-                    && dataGroup[dataGroup.length - 2][column] == LC.BLANK
-                    && dataGroup[dataGroup.length - 2][column + 1] == LC.BLANK;
+            4 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK
+                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum] == LC.BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.BLANK;
             }
         }
     }
     
     var util = {
         /**
-         * @return the first element that's not equals to LC.BLANK. Starts from 0.
+         * @return the first index that's followed by a non blank target, when checked from bottom to top. Starts from 0.
          */
-        getNonBlankIndex : function(dataGroup, rowNum) {
+        getBlankIndex : function(dataGroup, colNum) {
             
-            // XXXXXX what if there are blanks blocked by some a 2*2 target?
-            var nBlankIndex = 0, 
-                blankIndex = dataGroup.length,
-                blank = 0,
-                p;
-            while(nBlankIndex != blankIndex - 1) {
-                p = nBlankIndex + ~~((blankIndex - nBlankIndex) / 2);
-                if (dataGroup[p][rowNum] != blank) {
-                    nBlankIndex = p;
-                } else {
-                    blankIndex = p;
-                }
+            // what if there are blanks blocked by some a 2*2 target?
+            var blank = LC.BLANK;
+            for (var i = dataGroup.length - 1; i >= 0; --i) {
+                if (+dataGroup[i][colNum] != blank) return i + 1;
             }
-            return nBlankIndex;
+            return 0;
         },
         
         /**
@@ -108,7 +56,6 @@ coh.Battle = (function(){
             var _lc = LC,
                 convert,
                 match,
-                //~ nBlankIndex = util.getNonBlankIndex(dataGroup, rowNum),
                 result = [];
             for (var i in _lc.CONVERT_TYPE) {
                 convert = _lc.CONVERT_TYPE[i];
@@ -119,7 +66,7 @@ coh.Battle = (function(){
                         // ignore the last element, we assume it would be the one with a given color.
                         if (rowInCon == convert.length - 1 && colInQueue == queue.length - 1) continue;
                         status = status * _lc.COLOR_COUNT + color;
-                        match = match && (status == dataGroup[rowNum+ 1 - convert.length + rowInCon][colNum + 1 - queue.length + colInQueue]);
+                        match = match && (+status == +dataGroup[rowNum+ 1 - convert.length + rowInCon][colNum + 1 - queue.length + colInQueue]);
                         if (!match) break;
                     }
                     if (!match) break;
@@ -132,32 +79,50 @@ coh.Battle = (function(){
             return result;
         },
         
-        locationTest : function(dataGroup, type, column) {
-            return handlerList.locationTest[type](dataGroup, column);
+        locationTest : function(dataGroup, type, colNum) {
+            return handlerList.locationTest[type](dataGroup, colNum);
         },
         
-        colorTest : function(dataGroup, type, column, color) {
+        colorTest : function(dataGroup, type, colNum, color) {
+            
             if (type != 1) return true;
-            else {
-                
+            
+            // type 1, test all possible converts to the right or left side of the given position.
+            if (self.findAllPossibleConverts(dataGroup, colNum, util.getBlankIndex(dataGroup, colNum), color).length) {
+                return false;
             }
+            
+            return true;
         },
         
         /**
          * check and append new row data into the result set if necessary.
          * for the given target array like [0,1,2], newly appended result would be ["0","0","0"].
          */
-        checkResultSet : function(resultRet, targetArray, column) {
+        checkResultSet : function(resultSet, targetArray, colNum) {
             var _buf = buf;
             
             // init the result set.
-            if (!result[_buf.occupiedRowIndex[column] + 1]) {
+            if (!resultSet[_buf.occupiedRowIndex[colNum]]) {
                 var rowCount = 0;
-                while (rowCount <= _buf.occupiedRowIndex[column]) {
-                    result.push([targetArray.join(" ").replace(/\d+/g, 0).split(" ")]);
+                while (rowCount <= _buf.occupiedRowIndex[colNum]) {
+                    resultSet.push(targetArray.join(" ").replace(/\d+/g, 0).split(" "));
+                    ++rowCount;
                 }
             }
-            return resultRet;
+            return resultSet;
+        },
+        
+        /**
+         * deep copy a data group that's a Two-dimensional array.
+         */
+        copy2Array : function(arr) {
+            var arrBuf = arr.concat();
+            
+            for (var i = 0, row; row = arr[i]; ++i) {
+                arrBuf[i] = arrBuf[i].concat();
+            }
+            return arrBuf;
         }
     }
     
@@ -199,16 +164,12 @@ coh.Battle = (function(){
             
             var result = [],
                 faild = [],
-                currentBuf = current.concat(),
+                currentBuf = util.copy2Array(current);
                 totalCount = 0,
                 items = [],
                 _lc = LC,
-                _buf = buf;
-            
-            // deep copy the current data group.
-            for (var i = 0, row; row = current[i]; ++i) {
-                currentBuf[i] = current[i].concat();
-            }
+                _buf = buf,
+                _util = util;
             
             for (var i in config) {
                 totalCount += config[i];
@@ -217,44 +178,63 @@ coh.Battle = (function(){
                 }
             }
             
-            var targetIndex, targetType, totalColumns = currentBuf[0].length, column, columnCount = 0, color, colorCount = 0, match = true;
+            var targetIndex, targetType, totalColumns = currentBuf[0].length, column, columnCount, color, colorCount, match = true;
+            
+            // clear the cache
+            _buf.occupiedRowIndex = {};
+            
             while (items.length > 0) {
                 targetIndex = ~~(Math.random() * items.length);
                 targetType = items[targetIndex];
-                items[targetIndex] = items[length - 1];
+                items[targetIndex] = items[items.length - 1];
                 items.length = items.length - 1;
+                
+                columnCount = 0;
+                colorCount = 0;
                 
                 // position check
                 do {
                     if (columnCount == 0) {
-                        column = ~~(Math.random() * _lc.COLOR_COUNT);
+                        column = ~~(Math.random() * totalColumns);
                     } else {
-                        column = (column + columnCount) % totalColumns;
+                        column = (column + 1) % totalColumns;
                     }
                     ++columnCount;
-                } while (match = util.locationTest(currentBuf, targetType, column) && columnCount < totalColumns);
+                } while (columnCount <= totalColumns && !(match = _util.locationTest(currentBuf, targetType, column)));
                 
                 // color check
                 if (match) do {
                     if (colorCount == 0) {
                         color = ~~(Math.random() * _lc.COLOR_COUNT);
                     } else {
-                        color = (color + colorCount) % _lc.COLOR_COUNT;
+                        color = (color + 1) % _lc.COLOR_COUNT;
                     }
                     ++colorCount;
-                } while (match = util.colorTest(currentBuf, targetType, column, color) && colorCount < _lc.COLOR_COUNT);
+                } while (colorCount <= _lc.COLOR_COUNT && !(match = _util.colorTest(currentBuf, targetType, column, color)));
                 
                 // if faild - for instance, no places for a 2*2 target.
                 // otherwise, place the target into buffered data group.
                 if (!match) {
                     faild.push(targetType);
                 } else {
-                    var typeConfig = _lc.LOCATION_TYPE[targetType];
+                    var typeConfig = _lc.LOCATION_TYPE[targetType],
+                        blankIndex = 0;
                     for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                         for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
-                            if (!_buf.occupiedRowIndex[column + columnCount]) _buf.occupiedRowIndex[column + columnCount] = -1;
-                            result = util.checkResultSet(result, currentBuf[0], column + columnCount);
-                            result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount] = targetType * _lc.COLOR_COUNT + color;
+                            blankIndex = Math.max(blankIndex, _util.getBlankIndex(currentBuf, column + columnCount));
+                        }
+                        for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                            if (!_buf.occupiedRowIndex[column + columnCount]) _buf.occupiedRowIndex[column + columnCount] = 0;
+                            
+                            // init result row with all 0;
+                            result = _util.checkResultSet(result, currentBuf[0], column + columnCount);
+                            
+                            // inject generated status into the resultset and buffered data/
+                            result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
+                                = currentBuf[blankIndex][column + columnCount]
+                                = targetType * _lc.COLOR_COUNT + color;
+                            
+                            // record avaliable row index, for next possible 
                             ++_buf.occupiedRowIndex[column + columnCount];
                         }
                     }
@@ -263,22 +243,59 @@ coh.Battle = (function(){
             
             return {
                 succeed : result,
-                faild : faild
+                faild : faild,
+                dataGroup : currentBuf
             }
-        }
+        },
         
         /**
          * find all possible convert at the given position for the color,
          * thus will test all those nodes with the same color at both left and right side to the target position.
          * we won't test those ones behind (row number + 1) the target position,
-         * because that means the node was moved (position changed), while another findAllPossibleConvert required for that node.
+         * because that means the node was moved (position changed), while another findAllPossibleConverts required for that node.
          * this function is based on util.findConvert.
          * @return 
          */
-        findAllPossibleConvert : function(dataGroup, colNum, rowNum, color) {
-            var leftPointer, rightPointer;
+        findAllPossibleConverts : function(dataGroup, colNum, rowNum, color) {
             
-        },
+            var columnPointer = colNum, 
+                convertList, 
+                result = [],
+                _lc = LC,
+                _util = util,
+                status = 1 * _lc.COLOR_COUNT + color,
+                dataBuf = _util.copy2Array(dataGroup);
+            
+            // assume the target is injected, try to find possible converts related to the change.
+            dataBuf[rowNum][colNum] = status;
+            
+            // check left
+            while (columnPointer >= 0 && +dataBuf[rowNum][columnPointer] == +status) {
+                convertList = _util.findConvert(dataBuf, columnPointer, rowNum, color);
+                
+                convertList.length && result.push({
+                    column : columnPointer,
+                    row : rowNum,
+                    converts : convertList
+                });
+                
+                --columnPointer;
+            }
+            
+            // check right
+            columnPointer = colNum + 1;
+            while (columnPointer < dataBuf[0].length && +dataBuf[rowNum][columnPointer] == +status) {
+                convertList = _util.findConvert(dataBuf, columnPointer, rowNum, color);
+                convertList.length && result.push({
+                    column : columnPointer,
+                    row : rowNum,
+                    converts : convertList
+                });
+                ++columnPointer;
+            }
+            
+            return result;
+        }
     }
 })();
 
@@ -287,9 +304,9 @@ coh.Battle = (function(){
 [
     [4,6,3,3,12,12,3,3],
     [3,6,4,5,12,12,3,3],
-    [3,5,3,5,3,3,0,4],
-    [5,4,4,0,3,3,0,3],
-    [0,0,0,0,0,0,0,5],
-    [0,0,0,0,0,0,0,0]
+    [3,5,3,5,5, 3, 4,4],
+    [5,4,4,3,3, 0, 3,3],
+    [0,0,0,0,0, 0, 0,5],
+    [0,0,0,0,0, 0, 0,0]
 ]
 */
