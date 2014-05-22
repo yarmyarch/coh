@@ -5,7 +5,7 @@ coh.Actor = cc.Sprite.extend({
         this._super(startFrame, rect);
         // starts from "first"
         this.position = startNode.name;
-        coh.logic.control.locateNode(startNode);
+        coh.View.locateNode(startNode);
         
         var winSize = cc.director.getWinSize();
         
@@ -15,7 +15,7 @@ coh.Actor = cc.Sprite.extend({
         // go to target position, and roll the map at the same time.
         var self = this;
         self.position = "";
-        coh.logic.control.moveMapToNode(node, function() {
+        coh.View.moveMapToNode(node, function() {
             self.position = node.name;
             callback && callback();
         });

@@ -1,6 +1,5 @@
 var coh = coh || {};
-coh.logic = coh.logic || {};
-coh.logic.control = (function() {
+coh.View = (function() {
     
     var self;
     

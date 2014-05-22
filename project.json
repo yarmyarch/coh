@@ -13,11 +13,12 @@
     "jsList" : [
         "src/resource.js?f=5",
         "src/util/SlideUtil.js",
-        "src/logic/control.js",
-        "src/logic/actor.js",
-        "src/logic/battle.js?v=7",
-        "src/ui/mapScene.js",
-        "src/ui/mapLayer.js",
-        "src/ui/battleScene.js"
+        "src/logic/coh.LocalConfig.js",
+        "src/logic/coh.View.js",
+        "src/logic/coh.Actor.js",
+        "src/logic/coh.Battle.js?v=7",
+        "src/ui/coh.MapScene.js",
+        "src/ui/coh.MapLayer.js",
+        "src/ui/coh.BattleScene.js"
     ]
 }
