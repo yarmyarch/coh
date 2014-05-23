@@ -40,6 +40,10 @@ coh.Player = function(faction, level, units) {
         return buf.totalHP;
     };
     
+    self.getUnits = function() {
+        return units;
+    };
+    
     construct();
     
     return self;

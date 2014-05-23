@@ -186,6 +186,9 @@ coh.Battle = (function(){
             while (items.length > 0) {
                 targetIndex = ~~(Math.random() * items.length);
                 targetType = items[targetIndex];
+                
+                if (!_lc.LOCATION_TYPE[targetType]) continue;
+                
                 items[targetIndex] = items[items.length - 1];
                 items.length = items.length - 1;
                 

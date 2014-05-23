@@ -18,5 +18,25 @@ coh.BattleScene = cc.Scene.extend({
         this.addChild(this.bgLayer);
     },
     
+    generate : function() {
+        var player = new coh.Player("", 1, { Archer : 24 });
+        player.
+    },
     
+    placePlayer : function(player) {
+        
+        var unitConfig = {},
+            units = player.getUnits();
+        
+        var unitType;
+        for (var unitName in units) {
+            unitType = coh.Unit.getType(unitName);
+            unitConfig[unitType] && (unitConfig[unitType]);
+            unitConfig[unitType] += units[unitName];
+        }
+        
+        var dataGroup = coh.Battle.recharge(coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+        
+        // XXXXXX ToDo: how to translate dataGroup into map positions?
+    }
 });

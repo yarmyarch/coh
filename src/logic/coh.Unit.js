@@ -1,6 +1,11 @@
 var coh = coh || {};
 
 (function() {
+/**
+ * Super class for all classes in coh.units module.
+ * required interface list: 
+ * @interface static getType
+ */
 coh.Unit = function(level) {
     
     var self = this,
@@ -43,5 +48,16 @@ coh.Unit = function(level) {
 
 //~ coh.subUnitClass.prototype = new coh.Unit();
 //~ coh.subUnitClass.prototype.constructor = coh.Unit;
+
+// public functions
+
+/**
+ * @interface static getType
+ */
+coh.Unit.getType = function(unitName) {
+    if (coh.units[unitName] && coh.util.isExecutable(coh.units[unitName].getType)) return coh.units[unitName].getType();
+    // 0 - reserved.
+    else return 0;
+};
 
 })();
