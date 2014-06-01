@@ -2,8 +2,7 @@ var coh = coh || {};
 
 (function() {
 /**
- * Super class for all classes in coh.units module.
- * required interface list: 
+ * public functions for all actions related to units.
  * @interface static getType
  */
 coh.Unit = function(level) {

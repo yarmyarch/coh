@@ -4,7 +4,9 @@ coh.BattleScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
         this.bgLayer = new cc.Layer();
-        var map = cc.TMXTiledMap.create("res/tmxmap/b_market.tmx"),
+        
+        var _coh = coh,
+            map = cc.TMXTiledMap.create(_coh.res.map.battle.tmx),
             winSize = cc.director.getWinSize(),
             scale = 0;
         
@@ -13,7 +15,7 @@ coh.BattleScene = cc.Scene.extend({
         map.setScale(winSize.height / map.height);
         map.setPosition(winSize.width / 2, winSize.height / 2);
 
-        coh.map2 = map;
+        _coh.map2 = map;
         
         this.addChild(this.bgLayer);
     },
@@ -26,16 +28,18 @@ coh.BattleScene = cc.Scene.extend({
     placePlayer : function(player) {
         
         var unitConfig = {},
-            units = player.getUnits();
+            units = player.getUnits(),
+            _coh = coh;
         
         var unitType;
         for (var unitName in units) {
-            unitType = coh.Unit.getType(unitName);
+            // no interfaces changed.
+            unitType = _coh.Unit.getType(unitName);
             unitConfig[unitType] && (unitConfig[unitType]);
             unitConfig[unitType] += units[unitName];
         }
         
-        var dataGroup = coh.Battle.recharge(coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+        var dataGroup = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
         for (var i = 0, row; row = dataGroup[i]; ++i) {
             for (var j = 0, target; target = row[j]; ++j) {

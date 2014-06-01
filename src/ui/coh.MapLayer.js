@@ -4,13 +4,15 @@ coh.MapLayer = cc.Layer.extend({
     ctor:function () {
         this._super();
         
-        coh.map = cc.TMXTiledMap.create("res/tmxmap/forest.tmx");
+        var _coh = coh;
         
-        this.addChild(coh.map, 0, 1);
+        _coh.map = cc.TMXTiledMap.create(_coh.res.map.forest.tmx);
+        
+        this.addChild(_coh.map, 0, 1);
         
         var MpSize = cc.director.getWinSize(),
             self = this,
-            mapPositons = coh.map.getObjectGroup("positions"),
+            mapPositons = _coh.map.getObjectGroup("positions"),
             keyMap = {},                                
             gogogo = function(key) {
                 var nextNode;
@@ -29,7 +31,7 @@ coh.MapLayer = cc.Layer.extend({
             investigate = function() {
                 cc.director.runScene(
                     cc.TransitionFadeDown.create(1.2, 
-                        coh.scene["battle"] || (coh.scene["battle"] = new coh.BattleScene())
+                        _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene())
                     )
                 );
             };
@@ -62,7 +64,7 @@ coh.MapLayer = cc.Layer.extend({
             animIdle,
             runningAction;
         
-        spriteCache.addSpriteFrames("res/sprite/sprite.plist", "res/sprite/sprite.png");
+        spriteCache.addSpriteFrames(_coh.res.sprite.awen.walking.plist, _coh.res.sprite.awen.walking.img);
         
         for (var i in spriteCache._spriteFrames) {
             animIdleFrame.push(spriteCache._spriteFrames[i]);
@@ -70,7 +72,7 @@ coh.MapLayer = cc.Layer.extend({
         animIdle = cc.Animation.create(animIdleFrame, 0.1);
         runningAction = cc.RepeatForever.create(cc.Animate.create(animIdle));
         
-        this.sprite = new coh.Actor(animIdleFrame[0], null, mapPositons.objectNamed("first"));
+        this.sprite = new _coh.Actor(animIdleFrame[0], null, mapPositons.objectNamed("first"));
         
         this.addChild(this.sprite);
         
