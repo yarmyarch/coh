@@ -53,10 +53,15 @@ coh.Unit = function(level) {
 /**
  * @interface static getType
  */
+/*
 coh.Unit.getType = function(unitName) {
     if (coh.units[unitName] && coh.util.isExecutable(coh.units[unitName].getType)) return coh.units[unitName].getType();
     // 0 - reserved.
     else return 0;
 };
+*/
+coh.Unit.getType = function(unitName) {
+    return (coh.units[unitName] && coh.units[unitName].type) || 0;
+}
 
 })();

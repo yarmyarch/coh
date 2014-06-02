@@ -27,6 +27,9 @@ coh.res = {
                 plist : "res/sprite/sprite.plist",
                 img : "res/sprite/sprite.png"
             }
+        },
+        archer : {
+            
         }
     }
 };

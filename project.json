@@ -1,8 +1,7 @@
 {
     "project_type": "javascript",
-
     "debugMode" : 1,
-    "showFPS" : true,
+    "showFPS" : false,
     "frameRate" : 60,
     "id" : "gameCanvas",
     "renderMode" : 0,
@@ -12,8 +11,8 @@
 
     "jsList" : [
         "src/resource.js?f=5",
+        "src/config.js",
         "src/util/SlideUtil.js",
-        "src/logic/coh.LocalConfig.js",
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",
         "src/logic/coh.Battle.js?v=7",

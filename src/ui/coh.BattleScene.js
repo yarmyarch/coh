@@ -39,15 +39,19 @@ coh.BattleScene = cc.Scene.extend({
             unitConfig[unitType] += units[unitName];
         }
         
-        var dataGroup = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+        var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        for (var i = 0, row; row = dataGroup[i]; ++i) {
-            for (var j = 0, target; target = row[j]; ++j) {
-                
+        for (var i = 0, row; row = recharge.succeed[i]; ++i) {
+            for (var j = 0, status; status = row[j]; ++j) {
+                this.placeUnit(player, status, i, j);
             }
         }
         
         // XXXXXX ToDo: how to translate dataGroup into map positions?
         // Maybe I should make units configs to prevent to much js files.
+    },
+    
+    placeUnit : function(player, status, rowNum, colNum) {
+        var sprite = 
     }
 });
