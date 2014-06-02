@@ -22,7 +22,7 @@ coh.BattleScene = cc.Scene.extend({
     
     generate : function() {
         var player = new coh.Player("", 1, { Archer : 24 });
-        player.
+        //~ player.
     },
     
     placePlayer : function(player) {

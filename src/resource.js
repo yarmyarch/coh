@@ -27,28 +27,30 @@ coh.res = {
                 plist : "res/sprite/sprite.plist",
                 img : "res/sprite/sprite.png"
             }
-        },
-        archer : {
-            idle : {
-                plist : "res/sprite/archer_idle.plist",
-                img_0 : "res/sprite/archer_idle_blue.png",
-                img_1 : "res/sprite/archer_idle_gold.png",
-                img_2 : "res/sprite/archer_idle_white.png"
             }
-        }
+        //~ },
+        //~ archer : {
+            //~ idle : {
+                //~ plist : "res/sprite/archer_idle.plist",
+                //~ img_0 : "res/sprite/archer_idle_blue.png",
+                //~ img_1 : "res/sprite/archer_idle_gold.png",
+                //~ img_2 : "res/sprite/archer_idle_white.png"
+            //~ }
+        //~ }
     }
 };
-coh.resources = [];
 
 (function() {
     var generateRes = function(obj) {
+        var result = [];
         for (var i in obj) {
             if (obj[i] instanceof Object) {
-                coh = coh.resources.concat(generateRes(obj[i]));
+                result = result.concat(generateRes(obj[i]));
             } else {
-                coh.resources.push(res[i]);
+                result.push(obj[i]);
             }
         }
+        return result;
     }
-    generateRes(coh.res);
+    coh.resources = generateRes(coh.res);
 })();

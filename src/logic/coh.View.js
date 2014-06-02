@@ -58,7 +58,7 @@ coh.View = (function() {
             
             _sc.addSpriteFrames(
                 _coh.res.sprite[unitName][actionName].plist, 
-                _coh.res[unitName][actionName]["img" + (color === undefined ? "" : "_" + (+color))]
+                _coh.res.sprite[unitName][actionName]["img" + (color === undefined ? "" : "_" + (+color))]
             );
             
             for (var i in _sc._spriteFrames) {
@@ -67,7 +67,7 @@ coh.View = (function() {
             anim = cc.Animation.create(animFrame, rate || _coh.LocalConfig.FRAME_RATE);
             action = cc.RepeatForever.create(cc.Animate.create(anim));
             
-            var sprite = new cc.Sprite(animFrame[0], null, mapPositons.objectNamed("first"));
+            var sprite = new cc.Sprite(animFrame[0], null);
             sprite.runAction(action);
             
             return {

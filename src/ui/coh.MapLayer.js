@@ -60,9 +60,8 @@ coh.MapLayer = cc.Layer.extend({
             }, this);
         }
         
-        var actor = _coh.View.getSprite("awen", "walking");
-        this.addChild(actor.sprite);
-        _coh.Actor.focus(actor.sprite);
+        var actor = new _coh.Actor(_coh.View.getSprite("awen", "walking"), mapPositons.objectNamed("first").sprite);
+        this.addChild(actor);
         
         return true;
     }

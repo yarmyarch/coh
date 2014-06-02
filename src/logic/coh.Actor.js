@@ -3,7 +3,7 @@ var coh = coh || {};
 /**
  * As we've moved the the sprite related functions into View, so the Actor can no longer be a class that extends cc.Sprite.
  * let's make it a util then.
- */
+    
 coh.Actor = (function(){
    
     var self;
@@ -15,7 +15,7 @@ coh.Actor = (function(){
     return self = {
         /**
          * place the sprite at the center of the view area.
-         */
+         
         focus : function(sprite, startNode) {
             // starts from "first"
             buf.position = startNode.name;
@@ -35,11 +35,23 @@ coh.Actor = (function(){
             });
             // XXXXXX set sprite: run/walk
         }
+    }*/
+/**
+ * Sprite Adapter. Must I do it like this? There exist many fucking puclic functions there you know...
+ */
+coh.Actor = function(sprite) {
+    
+    var self = this,
+        _coh = coh;
+    
+    for (var i in sprite) {
+        if (_coh.util.isExecutable(sprite[i])) self[i] = // XXXXXX
     }
-/*
-coh.Actor = cc.Sprite.extend({
+}
+
+cc.Sprite.extend({
     position : "",
-    ctor : function(startFrame, rect, startNode) {
+    ctor : function(sprite, startNode) {
         this._super(startFrame, rect);
         // starts from "first"
         this.position = startNode.name;
@@ -59,6 +71,5 @@ coh.Actor = cc.Sprite.extend({
         });
     }
 });
-*/
 
-});
+})();

@@ -10,14 +10,14 @@
     "modules" : ["cocos2d", "cocostudio"],
 
     "jsList" : [
-        "src/resource.js?f=5",
+        "src/resource.js?v=2",
         "src/config.js",
         "src/util/SlideUtil.js",
-        "src/logic/coh.View.js",
-        "src/logic/coh.Actor.js",
+        "src/logic/coh.View.js?v=2",
+        "src/logic/coh.Actor.js?v=1",
         "src/logic/coh.Battle.js?v=7",
         "src/ui/coh.MapScene.js",
-        "src/ui/coh.MapLayer.js",
-        "src/ui/coh.BattleScene.js"
+        "src/ui/coh.MapLayer.js?v=1",
+        "src/ui/coh.BattleScene.js?v=1"
     ]
 }
