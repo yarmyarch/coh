@@ -10,11 +10,6 @@ coh.Unit = function(level) {
     var self = this,
         self._super;
     
-    //~ self._super = coh.superClass.apply({}, arguments);
-    //~ for (var i in _super) {
-        //~ self[i] = _super[i];
-    //~ }
-    
     var buf = {
         name : false, 
         type : 0, 
@@ -44,9 +39,6 @@ coh.Unit = function(level) {
     
     return self;
 };
-
-//~ coh.subUnitClass.prototype = new coh.Unit();
-//~ coh.subUnitClass.prototype.constructor = coh.Unit;
 
 // public functions
 

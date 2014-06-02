@@ -17,7 +17,8 @@ coh.MapLayer = cc.Layer.extend({
             gogogo = function(key) {
                 var nextNode;
                 if ((nextNode = mapPositons.objectNamed(self.sprite.position)) && (nextNode = nextNode[keyMap[key]]) && (nextNode = mapPositons.objectNamed(nextNode))) {
-                    self.sprite.goTo(nextNode, function() {
+                    //~ self.sprite.goTo(nextNode, function() {
+                    _coh.Actor.goTo(self.sprite, nextNode, function() {
                         if (nextNode.passingBy) {
                             setTimeout(function(){
                                 gogogo(key);
@@ -59,24 +60,9 @@ coh.MapLayer = cc.Layer.extend({
             }, this);
         }
         
-        var spriteCache = cc.spriteFrameCache,
-            animIdleFrame = [],
-            animIdle,
-            runningAction;
-        
-        spriteCache.addSpriteFrames(_coh.res.sprite.awen.walking.plist, _coh.res.sprite.awen.walking.img);
-        
-        for (var i in spriteCache._spriteFrames) {
-            animIdleFrame.push(spriteCache._spriteFrames[i]);
-        }
-        animIdle = cc.Animation.create(animIdleFrame, 0.1);
-        runningAction = cc.RepeatForever.create(cc.Animate.create(animIdle));
-        
-        this.sprite = new _coh.Actor(animIdleFrame[0], null, mapPositons.objectNamed("first"));
-        
-        this.addChild(this.sprite);
-        
-        this.sprite.runAction(runningAction);
+        var actor = _coh.View.getSprite("awen", "walking");
+        this.addChild(actor.sprite);
+        _coh.Actor.focus(actor.sprite);
         
         return true;
     }

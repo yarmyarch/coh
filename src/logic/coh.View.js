@@ -3,6 +3,10 @@ coh.View = (function() {
     
     var self;
     
+    var buf = {
+        spriteCache : cc.spriteFrameCache
+    }
+    
     return self = {
         moveMap : function(position, callback) {
             var map = coh.map,
@@ -41,6 +45,36 @@ coh.View = (function() {
                 winSize = cc.director.getWinSize();
             
             self.moveMap({x : -node.x - node.width/2 + winSize.width / 2, y : -node.y - node.height/2  + winSize.height / 2}, callback);
+        },
+    
+        getSprite : function(unitName, actionName, color, rate) {
+            
+            var animFrame = [],
+                anim,
+                action,
+                sprite,
+                _coh = coh,
+                _sc = buf.spriteCache;
+            
+            _sc.addSpriteFrames(
+                _coh.res.sprite[unitName][actionName].plist, 
+                _coh.res[unitName][actionName]["img" + (color === undefined ? "" : "_" + (+color))]
+            );
+            
+            for (var i in _sc._spriteFrames) {
+                animFrame.push(_sc._spriteFrames[i]);
+            }
+            anim = cc.Animation.create(animFrame, rate || _coh.LocalConfig.FRAME_RATE);
+            action = cc.RepeatForever.create(cc.Animate.create(anim));
+            
+            var sprite = new cc.Sprite(animFrame[0], null, mapPositons.objectNamed("first"));
+            sprite.runAction(action);
+            
+            return {
+                sprite : sprite,
+                // animation
+                action : action
+            }
         }
     }
     

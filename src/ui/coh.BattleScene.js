@@ -47,11 +47,15 @@ coh.BattleScene = cc.Scene.extend({
             }
         }
         
-        // XXXXXX ToDo: how to translate dataGroup into map positions?
-        // Maybe I should make units configs to prevent to much js files.
+        // ToDo: translate dataGroup into map positions;
     },
     
     placeUnit : function(player, status, rowNum, colNum) {
-        var sprite = 
+        
+        // find correct unit from the player via given status(type defined);
+        var unit = coh.View.getSprite("archer", "idle", status % coh.LocalConfig.COLOR_COUNT);
+        
+        // find position from given rowNum and colNum;
+        this.bgLayer.addChild(unit);
     }
 });
