@@ -19,6 +19,5 @@ coh.Actor = cc.Sprite.extend({
             self.position = node.name;
             callback && callback();
         });
-        // XXXXXX set sprite: run/walk
     }
 });
