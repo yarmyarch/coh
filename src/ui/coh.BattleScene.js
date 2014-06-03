@@ -6,7 +6,7 @@ coh.BattleScene = cc.Scene.extend({
         this.bgLayer = new cc.Layer();
         
         var _coh = coh,
-            map = cc.TMXTiledMap.create(_coh.res.map.battle.tmx),
+            map = cc.TMXTiledMap.create(_coh.res.map.market.tmx),
             winSize = cc.director.getWinSize(),
             scale = 0;
         

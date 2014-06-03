@@ -13,11 +13,11 @@
         "src/resource.js?v=2",
         "src/config.js",
         "src/util/SlideUtil.js",
-        "src/logic/coh.View.js?v=2",
-        "src/logic/coh.Actor.js?v=1",
+        "src/logic/coh.View.js?v=4",
+        "src/logic/coh.Actor.js?v=2",
         "src/logic/coh.Battle.js?v=7",
         "src/ui/coh.MapScene.js",
-        "src/ui/coh.MapLayer.js?v=1",
-        "src/ui/coh.BattleScene.js?v=1"
+        "src/ui/coh.MapLayer.js?v=2",
+        "src/ui/coh.BattleScene.js?v=2"
     ]
 }

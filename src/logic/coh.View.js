@@ -47,7 +47,15 @@ coh.View = (function() {
             self.moveMap({x : -node.x - node.width/2 + winSize.width / 2, y : -node.y - node.height/2  + winSize.height / 2}, callback);
         },
     
-        getSprite : function(unitName, actionName, color, rate) {
+        /**
+         *@param [spriteConfig], configurations related to the animation.
+         *  each property is having default values.
+            {
+                rate : frame rate, LC.FRAME_RATE for default.
+                constructor : sprite constructor. cc.Sprite for default.
+            }
+         */
+        getSprite : function(unitName, actionName, spriteConfig) {
             
             var animFrame = [],
                 anim,
@@ -56,18 +64,25 @@ coh.View = (function() {
                 _coh = coh,
                 _sc = buf.spriteCache;
             
+            // rebuild the config
+            var sc = {
+                rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
+                constructor : spriteConfig.constructor || cc.Sprite,
+                color : spriteConfig.color === undefined ? -1 : spriteConfig.color
+            }
+            
             _sc.addSpriteFrames(
                 _coh.res.sprite[unitName][actionName].plist, 
-                _coh.res.sprite[unitName][actionName]["img" + (color === undefined ? "" : "_" + (+color))]
+                _coh.res.sprite[unitName][actionName]["img" + (sc.color === -1 ? "" : "_" + (+sc.color))]
             );
             
             for (var i in _sc._spriteFrames) {
                 animFrame.push(_sc._spriteFrames[i]);
             }
-            anim = cc.Animation.create(animFrame, rate || _coh.LocalConfig.FRAME_RATE);
+            anim = cc.Animation.create(animFrame, sc.rate);
             action = cc.RepeatForever.create(cc.Animate.create(anim));
             
-            var sprite = new cc.Sprite(animFrame[0], null);
+            var sprite = new sc.constructor(animFrame[0], null);
             sprite.runAction(action);
             
             return {

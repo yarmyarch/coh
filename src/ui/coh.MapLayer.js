@@ -18,7 +18,7 @@ coh.MapLayer = cc.Layer.extend({
                 var nextNode;
                 if ((nextNode = mapPositons.objectNamed(self.sprite.position)) && (nextNode = nextNode[keyMap[key]]) && (nextNode = mapPositons.objectNamed(nextNode))) {
                     //~ self.sprite.goTo(nextNode, function() {
-                    _coh.Actor.goTo(self.sprite, nextNode, function() {
+                    self.sprite.goTo(nextNode, function() {
                         if (nextNode.passingBy) {
                             setTimeout(function(){
                                 gogogo(key);
@@ -60,8 +60,12 @@ coh.MapLayer = cc.Layer.extend({
             }, this);
         }
         
-        var actor = new _coh.Actor(_coh.View.getSprite("awen", "walking"), mapPositons.objectNamed("first").sprite);
-        this.addChild(actor);
+        self.sprite = _coh.View.getSprite("awen", "walking", {constructor : 
+            function(startFrame, rect) {
+                return new _coh.Actor(startFrame, rect, mapPositons.objectNamed("first"));
+            }
+        }).sprite;
+        this.addChild(self.sprite);
         
         return true;
     }
