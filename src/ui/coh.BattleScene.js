@@ -46,8 +46,6 @@ coh.BattleScene = cc.Scene.extend({
                 this.placeUnit(player, status, i, j);
             }
         }
-        
-        // ToDo: translate dataGroup into map positions;
     },
     
     placeUnit : function(player, status, rowNum, colNum) {
