@@ -6,11 +6,20 @@ echo "loading jsList..."
 
 echo "compiling js files..."
 
-sfile = "jsList.json"
-tfile = "project.json"
-mfile = "asset/coh.js"
+sfile="jsList.json"
+tfile="project.json"
+mfile="asset/coh.js"
+mfileCmp="asset\/coh\.js"
+vNum=`awk -F '=|"' '/jsList/ {print $5+1}' ${tfile}`
 
-RESFILES=`cat {sfile} | awk /\\\.js/`
+if 
+    [ ! -n $vNum ]
+then
+    mv "/asset/${tfile}.build.bak" "${tfile}"
+    vNum=`awk -F '=|"' '/jsList/ {print $5+1}' ${tfile}`
+fi
+
+RESFILES=`cat ${sfile} | awk -F '"' '/\.js/ {print $2}'`
 echo > ${mfile}.merge
 for data in ${RESFILES}
 do 
@@ -18,15 +27,21 @@ do
     echo -n >> ${mfile}.merge
 done
 echo "${mfile} merge finished!"
-"$JAVA_HOME/bin/java" -jar ./tool/yuicompressor.jar "${mfile}.merge" --charset utf-8 -o "${mfile}.compress"
+"$JAVA_HOME/bin/java" -jar ./tool/yuicompressor.jar --type js --charset utf-8 -o "${mfile}.compress" "${mfile}.merge"
 mv "${mfile}.compress" "${mfile}"
+rm "${mfile}.merge"
 
 echo "${mfile} compress finished!"
 
+echo "making backup files for project.json..."
+
+cp ${tfile} "asset/${tfile}.build.bak"
+
 echo "rewriting project.json..."
 
-vNum = awk -F '=|"' '/jsLi(st)/ {print $5+1}' ${tfile}
-sed "s/jsList.*?v=[0-9]\+/jsList\" : [${mfile}?v=${vNum}]/" ${tfile} > ${tfile}.tmp
+sed "s/jsList.*?v=[0-9]\+/jsList\" :[\"${mfileCmp}?v=${vNum}/" ${tfile} > ${tfile}.tmp
 mv "${tfile}.tmp" "${tfile}"
 
 echo "build success!"
+
+# sed "s/jsList.*?v=[0-9]\+/jsList\" : [asset/coh.js?v=200]/" project.json > project.json.tmp
