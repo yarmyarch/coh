@@ -1,1 +1,925 @@
-var coh=coh||{};coh.res={HelloWorld_png:"res/HelloWorld.png",CloseNormal_png:"res/CloseNormal.png",CloseSelected_png:"res/CloseSelected.png",map:{forest:{tmx:"res/tmxmap/forest.tmx",img:"res/tmxmap/forest.jpg"},market:{tmx:"res/tmxmap/b_market.tmx",img:"res/tmxmap/b_market.jpg"}},sprite:{awen:{walking:{plist:"res/sprite/sprite.plist",img:"res/sprite/sprite.png"}}}};(function(){var a=function(d){var b=[];for(var c in d){if(d[c] instanceof Object){b=b.concat(a(d[c]))}else{b.push(d[c])}}return b};coh.resources=a(coh.res)})();var coh=coh||{};coh.LocalConfig={COLOR:{GREEN:1,RED:2,BLUE:3},LOCATION_TYPE:{1:[1,1],2:[2,1],3:[1,2],4:[2,2]},CONVERT_TYPE:{1:[[1],[1],[1]],2:[[2],[2],[1],[1]],3:[[1,1,1]],4:[[3,3],[1,1]],5:[[4,4],[4,4],[1,1],[1,1]]},BLANK:0,COLOR_COUNT:3,BLANK_DATA_GROUP:[[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0]],FRAME_RATE:0.1,COLOR_CONFIG:{elf:["blue","white","gold"]}};var SlideUtil=(function(){var d,a=arguments;var e={interval:false,slides:false,newInstance:false,oriSlides:false};var f={FLOAT_RANGE:0.00002,PARAM:{START:0,END:1,SPEED:2,INTERVAL:3,CALLBACK:4}};var c={getDivisor:function(h,g){if(h<g){var i;i=h;h=g;g=i}while(g!=0){i=h%g;h=g;g=i}return h}};var b={judge:function(h){var g=f;h[g.PARAM.START]=+h[g.PARAM.START];h[g.PARAM.END]=+h[g.PARAM.END];h[g.PARAM.SPEED]=+h[g.PARAM.SPEED];h[g.PARAM.INTERVAL]=Math.abs(+h[g.PARAM.INTERVAL]);h[5]&&(h[5]=+h[5]);h[g.PARAM.INTERVAL]=Math.ceil(h[g.PARAM.INTERVAL]/17)*17;if(isNaN(Math.max(h[g.PARAM.START],h[g.PARAM.END],h[g.PARAM.SPEED],h[g.PARAM.INTERVAL]))){return false}return h},slide:function(){var n=[],o=0,l=e,h=f,m=e.slides=[];var j;for(var k=0,g=arguments.length;k<g;++k){j=b.judge(arguments[k]);if(!j){continue}m.push(j);o=o||j[h.PARAM.INTERVAL];o=c.getDivisor(o,j[h.PARAM.INTERVAL])}l.newInstance&&(l.oriSlides=m);clearInterval(l.interval);m.length&&(l.interval=setInterval(function(){var r=[],q=true,t=false;for(var s=0,p=m.length;s<p;++s){if(o%m[s][h.PARAM.INTERVAL]!=0||n[s]){q=q&&!!n[s];continue}r[s]=m[s][h.PARAM.END]-m[s][h.PARAM.START];if(r[s]==0||Math.abs(r[s])<=m[s][5]||Math.abs(r[s])<=f.FLOAT_RANGE){n[s]=1;q=q&&!!n[s];(m[s][h.PARAM.CALLBACK] instanceof Function)&&m[s][h.PARAM.CALLBACK](m[s][h.PARAM.END],r[s],!!n[s]);continue}else{n[s]=0;q=q&&!!n[s]}t=m[s][h.PARAM.START]===~~m[s][h.PARAM.START]&&m[s][h.PARAM.END]===~~m[s][h.PARAM.END];m[s][h.PARAM.START]=m[s][h.PARAM.START]+r[s]*m[s][h.PARAM.SPEED];t&&(m[s][h.PARAM.START]=r[s]>0?Math.ceil(m[s][h.PARAM.START]):Math.floor(m[s][h.PARAM.START]));(m[s][h.PARAM.CALLBACK] instanceof Function)&&m[s][h.PARAM.CALLBACK](m[s][h.PARAM.START],r[s],!!n[s])}o+=o;q&&clearInterval(l.interval)},o));l.newInstance=false}};d=function(){var g=e;g.newInstance=1;g.slides=a};d.pause=function(){clearInterval(e.interval)};d.run=function(){var g=e;!!arguments.length&&(g.newInstance=1);if(arguments&&arguments.length){b.slide.apply({},arguments)}else{b.slide(g.slides)}};d.restore=function(){var j=e,g=f;for(var h in j.oriSlides){j.slides[g.PARM.END]=j.oriSlides[g.PARM.START]}b.slide(j.slides)};d.clear=function(){var j=e,g=f;for(var h in j.oriSlides){j.slides[g.PARM.START]=j.oriSlides[g.PARM.START]}};return d})();var coh=coh||{};coh.View=(function(){var a;var b={spriteCache:cc.spriteFrameCache};return a={moveMap:function(c,i){var h=coh.map,e=h.getPosition(),g=false,d=false;var f=function(){g&&d&&i&&i()};SlideUtil.run([e.x,c.x,0.3,40,function(l,j,k){h.setPosition(l,h.getPosition().y);g=k;f()},0.5],[e.y,c.y,0.3,40,function(l,j,k){h.setPosition(h.getPosition().x,l);d=k;f()},0.5])},setSprite:function(){},locateNode:function(d){var e=coh.map,c=cc.director.getWinSize();e.setPosition(-d.x-d.width/2+c.width/2,-d.y-d.height/2+c.height/2)},moveMapToNode:function(d,f){var e=coh.map,c=cc.director.getWinSize();a.moveMap({x:-d.x-d.width/2+c.width/2,y:-d.y-d.height/2+c.height/2},f)},getSprite:function(c,l,d){var j=[],f,g,n,k=coh,e=b.spriteCache;var m={rate:d.rate||k.LocalConfig.FRAME_RATE,constructor:d.constructor||cc.Sprite,color:d.color===undefined?-1:d.color};e.addSpriteFrames(k.res.sprite[c][l].plist,k.res.sprite[c][l]["img"+(m.color===-1?"":"_"+(+m.color))]);for(var h in e._spriteFrames){j.push(e._spriteFrames[h])}f=cc.Animation.create(j,m.rate);g=cc.RepeatForever.create(cc.Animate.create(f));var n=new m.constructor(j[0],null);n.runAction(g);return{sprite:n,action:g}}}})();var coh=coh||{};coh.Actor=cc.Sprite.extend({position:"",ctor:function(c,d,b){this._super(c,d);this.position=b.name;coh.View.locateNode(b);var a=cc.director.getWinSize();this.setPosition(a.width/2,a.height/2+this.height/4)},goTo:function(b,c){var a=this;a.position="";coh.View.moveMapToNode(b,function(){a.position=b.name;c&&c()})}});var coh=coh||{};coh.Battle=(function(){var b;var e=coh.LocalConfig;var c={occupiedRowIndex:{}};var d={locationTest:{1:function(g,f){return +g[g.length-1][f]==e.BLANK},2:function(g,f){return +g[g.length-1][f]==e.BLANK&&g[g.length-2][f]==e.BLANK},3:function(g,f){return +g[g.length-1][f]==e.BLANK&&+g[g.length-1][f+1]==e.BLANK},4:function(g,f){return +g[g.length-1][f]==e.BLANK&&+g[g.length-1][f+1]==e.BLANK&&+g[g.length-2][f]==e.BLANK&&+g[g.length-2][f+1]==e.BLANK}}};var a={getBlankIndex:function(h,f){var j=e.BLANK;for(var g=h.length-1;g>=0;--g){if(+h[g][f]!=j){return g+1}}return 0},findConvert:function(f,g,p,h){var q=e,o,l,s=[];for(var k in q.CONVERT_TYPE){o=q.CONVERT_TYPE[k];l=true;if(o.length>p+1||o[0].length>g+1){continue}for(var n=o.length-1,m;m=o[n];--n){for(var r=m.length-1,j;j=m[r];--r){if(n==o.length-1&&r==m.length-1){continue}j=j*q.COLOR_COUNT+h;l=l&&(+j==+f[p+1-o.length+n][g+1-m.length+r]);if(!l){break}}if(!l){break}}if(l){s.push(k)}}return s},locationTest:function(h,g,f){return d.locationTest[g](h,f)},colorTest:function(i,h,g,f){if(h!=1){return true}if(b.findAllPossibleConverts(i,g,a.getBlankIndex(i,g),f).length){return false}return true},checkResultSet:function(i,j,g){var h=c;if(!i[h.occupiedRowIndex[g]]){var f=0;while(f<=h.occupiedRowIndex[g]){i.push(j.join(" ").replace(/\d+/g,0).split(" "));++f}}return i},copy2Array:function(f){var h=f.concat();for(var g=0,j;j=f[g];++g){h[g]=h[g].concat()}return h}};return b={generate:function(g,f){},recharge:function(q,x){var n=[],f=[],o=a.copy2Array(q);totalCount=0,items=[],_lc=e,_buf=c,_util=a;for(var u in x){totalCount+=x[u];for(var t=0;t<x[u];++t){items.push(u)}}var y,s,v=o[0].length,g,w,r,h,k=true;_buf.occupiedRowIndex={};while(items.length>0){y=~~(Math.random()*items.length);s=items[y];if(!_lc.LOCATION_TYPE[s]){continue}items[y]=items[items.length-1];items.length=items.length-1;w=0;h=0;do{if(w==0){g=~~(Math.random()*v)}else{g=(g+1)%v}++w}while(w<=v&&!(k=_util.locationTest(o,s,g)));if(k){do{if(h==0){r=~~(Math.random()*_lc.COLOR_COUNT)}else{r=(r+1)%_lc.COLOR_COUNT}++h}while(h<=_lc.COLOR_COUNT&&!(k=_util.colorTest(o,s,g,r)))}if(!k){f.push(s)}else{var l=_lc.LOCATION_TYPE[s],p=0;for(var m=0;m<l[0];++m){for(var w=0;w<l[1];++w){p=Math.max(p,_util.getBlankIndex(o,g+w))}for(var w=0;w<l[1];++w){if(!_buf.occupiedRowIndex[g+w]){_buf.occupiedRowIndex[g+w]=0}n=_util.checkResultSet(n,o[0],g+w);n[_buf.occupiedRowIndex[g+w]][g+w]=o[p][g+w]=s*_lc.COLOR_COUNT+r;++_buf.occupiedRowIndex[g+w]}}}}return{succeed:n,faild:f,dataGroup:o}},findAllPossibleConverts:function(f,g,n,j){var h=g,l,p=[],o=e,i=a,k=1*o.COLOR_COUNT+j,m=i.copy2Array(f);m[n][g]=k;while(h>=0&&+m[n][h]==+k){l=i.findConvert(m,h,n,j);l.length&&p.push({column:h,row:n,converts:l});--h}h=g+1;while(h<m[0].length&&+m[n][h]==+k){l=i.findConvert(m,h,n,j);l.length&&p.push({column:h,row:n,converts:l});++h}return p}}})();var coh=coh||{};coh.MapScene=cc.Scene.extend({onEnter:function(){this._super();var a=new coh.MapLayer();this.addChild(a)}});var coh=coh||{};coh.MapLayer=cc.Layer.extend({sprite:null,ctor:function(){this._super();var f=coh;f.map=cc.TMXTiledMap.create(f.res.map.forest.tmx);this.addChild(f.map,0,1);var c=cc.director.getWinSize(),b=this,e=f.map.getObjectGroup("positions"),g={},d=function(i){var h;if((h=e.objectNamed(b.sprite.position))&&(h=h[g[i]])&&(h=e.objectNamed(h))){b.sprite.goTo(h,function(){if(h.passingBy){setTimeout(function(){d(i)},0)}})}else{return}},a=function(){cc.director.runScene(cc.TransitionFadeDown.create(1.2,f.scene.battle||(f.scene.battle=new f.BattleScene())));f.scene.battle.generate()};g[cc.KEY.left]="left";g[cc.KEY.right]="right";g[cc.KEY.up]="up";g[cc.KEY.down]="down";if(cc.sys.capabilities.hasOwnProperty("keyboard")){cc.eventManager.addListener({event:cc.EventListener.KEYBOARD,onKeyPressed:function(h,i){if(h==cc.KEY.left||h==cc.KEY.right||h==cc.KEY.up||h==cc.KEY.down){d(h)}if(h==cc.KEY.enter){a()}},onKeyReleased:function(h,i){}},this)}b.sprite=f.View.getSprite("awen","walking",{constructor:function(h,i){return new f.Actor(h,i,e.objectNamed("first"))}}).sprite;this.addChild(b.sprite);return true}});var coh=coh||{};coh.BattleScene=cc.Scene.extend({bgLayer:null,onEnter:function(){this._super();this.bgLayer=new cc.Layer();var c=coh,b=cc.TMXTiledMap.create(c.res.map.market.tmx),a=cc.director.getWinSize(),d=0;this.bgLayer.addChild(b,0,1);b.setAnchorPoint(0.5,0.5);b.setScale(a.height/b.height);b.setPosition(a.width/2,a.height/2);c.map2=b;this.addChild(this.bgLayer)},generate:function(){var a=new coh.Player("",1,{archer:24});this.placePlayer(a);console.log("Go!")},placePlayer:function(k){var m={},f=k.getUnits(),e=coh;var g;for(var a in f){g=e.Unit.getType(a);m[g]||(m[g]=0);m[g]+=f[a].length}var h=e.Battle.recharge(e.LocalConfig.BLANK_DATA_GROUP,m);for(var d=0,l;l=h.succeed[d];++d){for(var c=0,b;b=l[c];++c){this.placeUnit(k,b,d,c)}}},placeUnit:function(c,a,e,b){var d=coh.View.getSprite("archer","idle",{color:a%coh.LocalConfig.COLOR_COUNT});this.bgLayer.addChild(d)}});
+
+var coh = coh || {};
+coh.res = {
+    //image
+    //plist
+    //fnt
+    //tmx
+    //bgm
+    //effect
+    
+    HelloWorld_png : "res/HelloWorld.png",
+    CloseNormal_png : "res/CloseNormal.png",
+    CloseSelected_png : "res/CloseSelected.png",
+    
+    map : {
+        forest : {
+            tmx : "res/tmxmap/forest.tmx",
+            img : "res/tmxmap/forest.jpg"
+        },
+        market : {
+            tmx : "res/tmxmap/b_market.tmx",
+            img : "res/tmxmap/b_market.jpg"
+        }
+    },
+    sprite : {
+        awen : {
+            walking : {
+                plist : "res/sprite/sprite.plist",
+                img : "res/sprite/sprite.png"
+            }
+            }
+        //~ },
+        //~ archer : {
+            //~ idle : {
+                //~ plist : "res/sprite/archer_idle.plist",
+                //~ img_0 : "res/sprite/archer_idle_blue.png",
+                //~ img_1 : "res/sprite/archer_idle_gold.png",
+                //~ img_2 : "res/sprite/archer_idle_white.png"
+            //~ }
+        //~ }
+    }
+};
+
+(function() {
+    var generateRes = function(obj) {
+        var result = [];
+        for (var i in obj) {
+            if (obj[i] instanceof Object) {
+                result = result.concat(generateRes(obj[i]));
+            } else {
+                result.push(obj[i]);
+            }
+        }
+        return result;
+    }
+    coh.resources = generateRes(coh.res);
+})();
+
+/**
+TODO : 
+    set sprite: run/walk in Actor;
+    translate dataGroup into map positions in BattleScene;
+*/var coh = coh || {};
+coh.LocalConfig = {
+    COLOR : {
+        GREEN : 1,
+        RED : 2,
+        BLUE : 3
+    },
+    LOCATION_TYPE : {
+        // 0 - reserved
+        // [row count, column count]
+        1 : [1,1],
+        2 : [2,1],
+        3 : [1,2],
+        4 : [2,2]
+    },
+    CONVERT_TYPE : {
+        // possible location type may create a convert.
+        1 : [
+            [1], 
+            [1], 
+            [1]
+        ],
+        2 : [
+            [2], 
+            [2], 
+            [1], 
+            [1]
+        ],
+        3 : [
+            [1, 1, 1]
+        ],
+        4 : [
+            [3, 3], 
+            [1, 1]
+        ],
+        5 : [
+            [4, 4], 
+            [4, 4], 
+            [1, 1], 
+            [1, 1]
+        ]
+    },
+    BLANK : 0,
+    COLOR_COUNT : 3,
+    BLANK_DATA_GROUP : [
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0]
+    ],
+    // frame rate for general animations.
+    FRAME_RATE : 0.1,
+    COLOR_CONFIG : {
+        elf : ["blue", "white", "gold"]
+    }
+};//~ usage:
+//~ var Fuck = function(){
+
+//~ SlideUtil.run([document.getElementById("Fucker").clientWidth, 10, 0.3, 100, function(target, range, isEnd){
+  //~ document.getElementById("Fucker").style.width = target + "px";
+//~ }]);
+
+//~ }
+var SlideUtil = (function() {
+    
+    var self,
+        arg = arguments;
+    
+    var buf = {
+        interval : false,
+        slides : false,
+        
+        //when self.run() gets a group of new agruments. false after controller.slides.
+        newInstance : false,
+        
+        //assigned with arguments when it's a "newInstance" when validated.
+        oriSlides : false
+    };
+    
+    var LC = {
+        FLOAT_RANGE : 0.00002,
+        PARAM : {
+            START : 0,
+            END : 1,
+            SPEED : 2,
+            INTERVAL : 3,
+            CALLBACK : 4
+        }
+    };
+    
+    var util = {
+        /**
+         *get the greatest common divisor with Euclidean Algorithm
+         */
+        getDivisor : function(a, b) {
+            
+            if (a < b) {
+                var c;
+                c = a;
+                a = b;
+                b = c;
+            }
+            
+            while (b != 0) {
+                c = a % b;
+                a = b;
+                b = c;
+            }
+            
+            return a;
+        }
+    };
+    
+    var controller = {
+        
+        /**
+         *function that judges the legitimacy of a group of param,
+         *also do some basic data transformations.
+         *@return array transformed data if legal, false while data not useable.
+         */
+        judge : function(arg) {
+            
+            var _lc = LC;
+            
+            arg[_lc.PARAM.START] = +arg[_lc.PARAM.START];
+            arg[_lc.PARAM.END] = +arg[_lc.PARAM.END];
+            arg[_lc.PARAM.SPEED] = +arg[_lc.PARAM.SPEED];
+            arg[_lc.PARAM.INTERVAL] = Math.abs(+arg[_lc.PARAM.INTERVAL]);
+            arg[5] && (arg[5] = +arg[5]);
+            
+            //set 17(ms) as the floor range.
+            arg[_lc.PARAM.INTERVAL] = Math.ceil(arg[_lc.PARAM.INTERVAL] / 17) * 17;
+            
+            //any param is not a number
+            if (isNaN(Math.max(arg[_lc.PARAM.START], arg[_lc.PARAM.END], arg[_lc.PARAM.SPEED], arg[_lc.PARAM.INTERVAL]))) return false;
+            
+            //~ //the case that when "start" is bigger than "end" while "speed" is bigger than 0 will be treated as illgal, and vice versa.
+            //~ //at the same time, speed should not be 0.
+            //~ if (arg[_lc.PARAM.SPEED] == 0 || (arg[_lc.PARAM.SPEED] > 0 && arg[_lc.PARAM.START] > arg[_lc.PARAM.END]) || (arg[_lc.PARAM.SPEED] < 0 && arg[_lc.PARAM.START] < arg[_lc.PARAM.END])) return false;
+            
+            //success
+            return arg;
+        },
+        
+        /**
+         *@param arrays
+         *  arguments[0][0] : start value;
+         *  arguments[0][1] : end value;
+         *  arguments[0][2] : speed, for example 0.3 for 30% per interval;
+         *  arguments[0][3] : interval range, 100(ms) is suit for most cases, 10(ms) is the floor range;
+         *  arguments[0][4] : callback function, will be evalued at the end of every interval, reviece param as below:
+         *  [arguments[0][5]] : float range, if it's a float slide, the range that defines end tag:
+         *@paramForCallback target value;
+         *@paramForCallback range value;
+         *@paramForCallback isEnd is this interval the last one;
+         */
+        slide : function() {
+            var endTags = [],
+                timer = 0,
+                _buf = buf,
+                _lc = LC,
+                slides = buf.slides = [];
+            
+            var temp;
+            //format input data.
+            for (var i = 0, len = arguments.length; i < len; ++i) {
+                
+                temp = controller.judge(arguments[i]);
+                
+                //skip if illgal
+                if (!temp) continue;
+                
+                slides.push(temp);
+                timer = timer || temp[_lc.PARAM.INTERVAL];
+                
+                //get the greatest common divisor of all intervals.
+                timer = util.getDivisor(timer, temp[_lc.PARAM.INTERVAL]);
+            }
+            
+            //update buf
+            _buf.newInstance && (_buf.oriSlides = slides);
+            
+            clearInterval(_buf.interval);
+            //let's go!
+            slides.length && (_buf.interval = setInterval(function(){
+                
+                var ranges = [],
+                    end = true,
+                    isInteger = false;
+                for (var i = 0, len = slides.length; i < len; ++i) {
+                    
+                    if (timer % slides[i][_lc.PARAM.INTERVAL] != 0 || endTags[i]) {
+                        end = end && !!endTags[i];
+                        continue;
+                    }
+                    
+                    ranges[i] = slides[i][_lc.PARAM.END] - slides[i][_lc.PARAM.START];
+                    
+                    //end flag judgement
+                    if (ranges[i] == 0 ||  Math.abs(ranges[i]) <= slides[i][5] || Math.abs(ranges[i]) <= LC.FLOAT_RANGE) {
+                        endTags[i] = 1;
+                        end = end && !!endTags[i];
+                    
+                        //the last callback
+                        (slides[i][_lc.PARAM.CALLBACK] instanceof Function) && slides[i][_lc.PARAM.CALLBACK](slides[i][_lc.PARAM.END], ranges[i], !!endTags[i]);
+                    
+                        continue;
+                    } else {
+                        endTags[i] = 0;
+                        end = end && !!endTags[i];
+                    }
+                    
+                    //range = (end - start) * speed;
+                    //start = start + range;
+                    isInteger = slides[i][_lc.PARAM.START] === ~~slides[i][_lc.PARAM.START] && slides[i][_lc.PARAM.END] === ~~slides[i][_lc.PARAM.END];
+                    slides[i][_lc.PARAM.START] = slides[i][_lc.PARAM.START] + ranges[i] * slides[i][_lc.PARAM.SPEED];
+                    isInteger && (slides[i][_lc.PARAM.START] = ranges[i] > 0 ? Math.ceil(slides[i][_lc.PARAM.START]) : Math.floor(slides[i][_lc.PARAM.START]));
+                    
+                    //callback
+                    /**
+                     *@param target value
+                     *@param range value
+                     *@param end tag
+                     */
+                    (slides[i][_lc.PARAM.CALLBACK] instanceof Function) && slides[i][_lc.PARAM.CALLBACK](slides[i][_lc.PARAM.START], ranges[i], !!endTags[i]);
+                }
+                
+                timer += timer;
+                end && clearInterval(_buf.interval);
+            }, timer));
+            
+            _buf.newInstance = false;
+        }
+    };
+    
+    /**
+     * constructor, not needed for derect call.
+     */
+    self = function() {
+        
+        var _buf = buf;
+        _buf.newInstance = 1;
+        _buf.slides = arg;
+    };
+    
+    self.pause = function() {
+        
+        clearInterval(buf.interval);
+    };
+    
+    /**
+     * continue when paused(no arguments needed) or start a new group of intances.
+     *@param see #controller.slide for the detail.
+     */
+    self.run = function() {
+        
+        var _buf = buf;
+        !!arguments.length && (_buf.newInstance = 1);
+        //~ _buf.slides && _buf.slides.length && controller.slide(_buf.slides) || controller.slide.apply({}, arguments);
+        if (arguments && arguments.length) {
+            controller.slide.apply({}, arguments);
+        } else controller.slide(_buf.slides);
+    };
+    
+    self.restore = function() {
+        
+        var _buf = buf,
+            _lc = LC;
+        
+        for (var i in _buf.oriSlides) {
+            _buf.slides[_lc.PARM.END] = _buf.oriSlides[_lc.PARM.START];
+        }
+        controller.slide(_buf.slides);
+    };
+    
+    /**
+     * used to clear current (slided) info, allow the slide rolling again with self.run.
+     */
+    self.clear = function() {
+        
+        var _buf = buf,
+            _lc = LC;
+        
+        for (var i in _buf.oriSlides) {
+            _buf.slides[_lc.PARM.START] = _buf.oriSlides[_lc.PARM.START];
+        }
+    };
+    
+    return self;
+})();var coh = coh || {};
+coh.View = (function() {
+    
+    var self;
+    
+    var buf = {
+        spriteCache : cc.spriteFrameCache
+    }
+    
+    return self = {
+        moveMap : function(position, callback) {
+            var map = coh.map,
+                curPosition = map.getPosition(),
+                isEndX = false,
+                isEndY = false;
+            
+            var doCallback = function() {
+                isEndX && isEndY && callback && callback();
+            };
+            
+            SlideUtil.run([curPosition.x, position.x, 0.3, 40, function(target, range, isEnd){
+                map.setPosition(target, map.getPosition().y);
+                isEndX = isEnd;
+                doCallback();
+            }, 0.5], [curPosition.y, position.y, 0.3, 40, function(target, range, isEnd){
+                map.setPosition(map.getPosition().x, target);
+                isEndY = isEnd;
+                doCallback();
+            }, 0.5]);
+        },
+        
+        setSprite: function() {
+            
+        },
+        
+        locateNode: function(node) {
+            var map = coh.map,
+                winSize = cc.director.getWinSize();
+            
+            map.setPosition(-node.x - node.width/2 + winSize.width / 2, -node.y - node.height/2  + winSize.height / 2);
+        },
+        
+        moveMapToNode: function(node, callback) {
+            var map = coh.map,
+                winSize = cc.director.getWinSize();
+            
+            self.moveMap({x : -node.x - node.width/2 + winSize.width / 2, y : -node.y - node.height/2  + winSize.height / 2}, callback);
+        },
+    
+        /**
+         *@param [spriteConfig], configurations related to the animation.
+         *  each property is having default values.
+            {
+                rate : frame rate, LC.FRAME_RATE for default.
+                constructor : sprite constructor. cc.Sprite for default.
+            }
+         */
+        getSprite : function(unitName, actionName, spriteConfig) {
+            
+            var animFrame = [],
+                anim,
+                action,
+                sprite,
+                _coh = coh,
+                _sc = buf.spriteCache;
+            
+            // rebuild the config
+            var sc = {
+                rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
+                constructor : spriteConfig.constructor || cc.Sprite,
+                color : spriteConfig.color === undefined ? -1 : spriteConfig.color
+            }
+            
+            _sc.addSpriteFrames(
+                _coh.res.sprite[unitName][actionName].plist, 
+                _coh.res.sprite[unitName][actionName]["img" + (sc.color === -1 ? "" : "_" + (+sc.color))]
+            );
+            
+            for (var i in _sc._spriteFrames) {
+                animFrame.push(_sc._spriteFrames[i]);
+            }
+            anim = cc.Animation.create(animFrame, sc.rate);
+            action = cc.RepeatForever.create(cc.Animate.create(anim));
+            
+            var sprite = new sc.constructor(animFrame[0], null);
+            sprite.runAction(action);
+            
+            return {
+                sprite : sprite,
+                // animation
+                action : action
+            }
+        }
+    }
+    
+})();var coh = coh || {};
+coh.Actor = cc.Sprite.extend({
+    position : "",
+    ctor : function(startFrame, rect, startNode) {
+        this._super(startFrame, rect);
+        // starts from "first"
+        this.position = startNode.name;
+        coh.View.locateNode(startNode);
+        
+        var winSize = cc.director.getWinSize();
+        
+        this.setPosition(winSize.width / 2, winSize.height / 2 + this.height / 4);
+    },
+    goTo : function(node, callback) {
+        // go to target position, and roll the map at the same time.
+        var self = this;
+        self.position = "";
+        coh.View.moveMapToNode(node, function() {
+            self.position = node.name;
+            callback && callback();
+        });
+    }
+});var coh = coh || {};
+coh.Battle = (function(){
+    
+    var self;
+    
+    var LC = coh.LocalConfig;
+    
+    var buf = {
+        occupiedRowIndex : {}
+    };
+    
+    var handlerList = {
+        // indexed by the type configed in local config.
+        locationTest : {
+            1 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK;
+            },
+            2 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.BLANK;
+            },
+            3 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK;
+            },
+            4 : function(dataGroup, colNum) {
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK
+                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum] == LC.BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.BLANK;
+            }
+        }
+    }
+    
+    var util = {
+        /**
+         * @return the first index that's followed by a non blank target, when checked from bottom to top. Starts from 0.
+         */
+        getBlankIndex : function(dataGroup, colNum) {
+            
+            // what if there are blanks blocked by some a 2*2 target?
+            var blank = LC.BLANK;
+            for (var i = dataGroup.length - 1; i >= 0; --i) {
+                if (+dataGroup[i][colNum] != blank) return i + 1;
+            }
+            return 0;
+        },
+        
+        /**
+         * try to find a convert at the given position in the current data group.
+         * we assume the target position is blank in the data group, and we're going to add a single status with the given color(3/4/5).
+         * this function will only find the possible convert based on the given convert type config, 
+         * while the target position is one at the right bottom corner.
+         * @param rowNum starts from 0.
+         */
+        findConvert : function(dataGroup, colNum, rowNum, color) {
+            
+            var _lc = LC,
+                convert,
+                match,
+                result = [];
+            for (var i in _lc.CONVERT_TYPE) {
+                convert = _lc.CONVERT_TYPE[i];
+                match = true;
+                if (convert.length > rowNum + 1 || convert[0].length > colNum + 1) continue;
+                for (var rowInCon = convert.length - 1, queue; queue = convert[rowInCon]; --rowInCon) {
+                    for (var colInQueue = queue.length - 1, status; status = queue[colInQueue]; --colInQueue) {
+                        // ignore the last element, we assume it would be the one with a given color.
+                        if (rowInCon == convert.length - 1 && colInQueue == queue.length - 1) continue;
+                        status = status * _lc.COLOR_COUNT + color;
+                        match = match && (+status == +dataGroup[rowNum+ 1 - convert.length + rowInCon][colNum + 1 - queue.length + colInQueue]);
+                        if (!match) break;
+                    }
+                    if (!match) break;
+                }
+                // find a convert that matches the config, restore it and return.
+                if (match) {
+                    result.push(i);
+                }
+            }
+            return result;
+        },
+        
+        locationTest : function(dataGroup, type, colNum) {
+            return handlerList.locationTest[type](dataGroup, colNum);
+        },
+        
+        colorTest : function(dataGroup, type, colNum, color) {
+            
+            if (type != 1) return true;
+            
+            // type 1, test all possible converts to the right or left side of the given position.
+            if (self.findAllPossibleConverts(dataGroup, colNum, util.getBlankIndex(dataGroup, colNum), color).length) {
+                return false;
+            }
+            
+            return true;
+        },
+        
+        /**
+         * check and append new row data into the result set if necessary.
+         * for the given target array like [0,1,2], newly appended result would be ["0","0","0"].
+         */
+        checkResultSet : function(resultSet, targetArray, colNum) {
+            var _buf = buf;
+            
+            // init the result set.
+            if (!resultSet[_buf.occupiedRowIndex[colNum]]) {
+                var rowCount = 0;
+                while (rowCount <= _buf.occupiedRowIndex[colNum]) {
+                    resultSet.push(targetArray.join(" ").replace(/\d+/g, 0).split(" "));
+                    ++rowCount;
+                }
+            }
+            return resultSet;
+        },
+        
+        /**
+         * deep copy a data group that's a Two-dimensional array.
+         */
+        copy2Array : function(arr) {
+            var arrBuf = arr.concat();
+            
+            for (var i = 0, row; row = arr[i]; ++i) {
+                arrBuf[i] = arrBuf[i].concat();
+            }
+            return arrBuf;
+        }
+    }
+    
+    return self = {
+        /**
+         * @param attacker [String] attacker faction
+         * @param defender [String] defender faction
+         */
+        generate : function(attacker, defender) {
+            
+        },
+        
+        /**
+         * @param current
+         * @param config {Object}
+         *  {
+                [location type1] : [count of this type1],
+                // ...
+            }
+         * null = status == 0;
+         * color = status % _lc.COLOR_COUNT;
+         * type  = (status - colors) / _lc.COLOR_COUNT = ~~(status / _lc.COLOR_COUNT);
+         * for status == 12: 
+            color == 0;
+            type == 4;
+         * 0 - blank;
+         * 1 - reserved;
+         * 2 - reserved;
+         * 3 - 0/1;
+         * 4 - 1/1;
+         * 5 - 2/1;
+         * ...
+         * @return {
+                succeed : [[]], // Two-dimensional array with similay data type given by the current data group.
+                faild : [] // faild list, filled with data type.
+            }
+         */
+        recharge : function(current, config) {
+            
+            var result = [],
+                faild = [],
+                currentBuf = util.copy2Array(current);
+                totalCount = 0,
+                items = [],
+                _lc = LC,
+                _buf = buf,
+                _util = util;
+            
+            for (var i in config) {
+                totalCount += config[i];
+                for (var j = 0; j < config[i]; ++j) {
+                    items.push(i);
+                }
+            }
+            
+            var targetIndex, targetType, totalColumns = currentBuf[0].length, column, columnCount, color, colorCount, match = true;
+            
+            // clear the cache
+            _buf.occupiedRowIndex = {};
+            
+            while (items.length > 0) {
+                targetIndex = ~~(Math.random() * items.length);
+                targetType = items[targetIndex];
+                
+                if (!_lc.LOCATION_TYPE[targetType]) continue;
+                
+                items[targetIndex] = items[items.length - 1];
+                items.length = items.length - 1;
+                
+                columnCount = 0;
+                colorCount = 0;
+                
+                // position check
+                do {
+                    if (columnCount == 0) {
+                        column = ~~(Math.random() * totalColumns);
+                    } else {
+                        column = (column + 1) % totalColumns;
+                    }
+                    ++columnCount;
+                } while (columnCount <= totalColumns && !(match = _util.locationTest(currentBuf, targetType, column)));
+                
+                // color check
+                if (match) do {
+                    if (colorCount == 0) {
+                        color = ~~(Math.random() * _lc.COLOR_COUNT);
+                    } else {
+                        color = (color + 1) % _lc.COLOR_COUNT;
+                    }
+                    ++colorCount;
+                } while (colorCount <= _lc.COLOR_COUNT && !(match = _util.colorTest(currentBuf, targetType, column, color)));
+                
+                // if faild - for instance, no places for a 2*2 target.
+                // otherwise, place the target into buffered data group.
+                if (!match) {
+                    faild.push(targetType);
+                } else {
+                    var typeConfig = _lc.LOCATION_TYPE[targetType],
+                        blankIndex = 0;
+                    for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
+                        for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                            blankIndex = Math.max(blankIndex, _util.getBlankIndex(currentBuf, column + columnCount));
+                        }
+                        for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                            if (!_buf.occupiedRowIndex[column + columnCount]) _buf.occupiedRowIndex[column + columnCount] = 0;
+                            
+                            // init result row with all 0;
+                            result = _util.checkResultSet(result, currentBuf[0], column + columnCount);
+                            
+                            // inject generated status into the resultset and buffered data/
+                            result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
+                                = currentBuf[blankIndex][column + columnCount]
+                                = targetType * _lc.COLOR_COUNT + color;
+                            
+                            // record avaliable row index, for next possible 
+                            ++_buf.occupiedRowIndex[column + columnCount];
+                        }
+                    }
+                }
+            }
+            
+            return {
+                succeed : result,
+                faild : faild,
+                dataGroup : currentBuf
+            }
+        },
+        
+        /**
+         * find all possible convert at the given position for the color,
+         * thus will test all those nodes with the same color at both left and right side to the target position.
+         * we won't test those ones behind (row number + 1) the target position,
+         * because that means the node was moved (position changed), while another findAllPossibleConverts required for that node.
+         * this function is based on util.findConvert.
+         * @return 
+         */
+        findAllPossibleConverts : function(dataGroup, colNum, rowNum, color) {
+            
+            var columnPointer = colNum, 
+                convertList, 
+                result = [],
+                _lc = LC,
+                _util = util,
+                status = 1 * _lc.COLOR_COUNT + color,
+                dataBuf = _util.copy2Array(dataGroup);
+            
+            // assume the target is injected, try to find possible converts related to the change.
+            dataBuf[rowNum][colNum] = status;
+            
+            // check left
+            while (columnPointer >= 0 && +dataBuf[rowNum][columnPointer] == +status) {
+                convertList = _util.findConvert(dataBuf, columnPointer, rowNum, color);
+                
+                convertList.length && result.push({
+                    column : columnPointer,
+                    row : rowNum,
+                    converts : convertList
+                });
+                
+                --columnPointer;
+            }
+            
+            // check right
+            columnPointer = colNum + 1;
+            while (columnPointer < dataBuf[0].length && +dataBuf[rowNum][columnPointer] == +status) {
+                convertList = _util.findConvert(dataBuf, columnPointer, rowNum, color);
+                convertList.length && result.push({
+                    column : columnPointer,
+                    row : rowNum,
+                    converts : convertList
+                });
+                ++columnPointer;
+            }
+            
+            return result;
+        }
+    }
+})();
+
+/**
+ * Sample data group:
+[
+    [4,6,3,3,12,12,3,3],
+    [3,6,4,5,12,12,3,3],
+    [3,5,3,5,5, 3, 4,4],
+    [5,4,4,3,3, 0, 3,3],
+    [0,0,0,0,0, 0, 0,5],
+    [0,0,0,0,0, 0, 0,0]
+]
+*/var coh = coh || {};
+coh.MapScene = cc.Scene.extend({
+    onEnter:function () {
+        this._super();
+        var layer = new coh.MapLayer();
+        this.addChild(layer);
+    }
+});
+var coh = coh || {};
+coh.MapLayer = cc.Layer.extend({
+    sprite:null,
+    ctor:function () {
+        this._super();
+        
+        var _coh = coh;
+        
+        _coh.map = cc.TMXTiledMap.create(_coh.res.map.forest.tmx);
+        
+        this.addChild(_coh.map, 0, 1);
+        
+        var MpSize = cc.director.getWinSize(),
+            self = this,
+            mapPositons = _coh.map.getObjectGroup("positions"),
+            keyMap = {},                                
+            gogogo = function(key) {
+                var nextNode;
+                if ((nextNode = mapPositons.objectNamed(self.sprite.position)) && (nextNode = nextNode[keyMap[key]]) && (nextNode = mapPositons.objectNamed(nextNode))) {
+                    //~ self.sprite.goTo(nextNode, function() {
+                    self.sprite.goTo(nextNode, function() {
+                        if (nextNode.passingBy) {
+                            setTimeout(function(){
+                                gogogo(key);
+                            }, 0);
+                        }
+                    });
+                } else {
+                    return;
+                }
+            },
+            investigate = function() {
+                cc.director.runScene(
+                    cc.TransitionFadeDown.create(1.2, 
+                        _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene())
+                    )
+                );
+                // Run battle logic here, place the player.
+                _coh.scene["battle"].generate();
+            };
+        
+        keyMap[cc.KEY.left] = "left";
+        keyMap[cc.KEY.right] = "right";
+        keyMap[cc.KEY.up] = "up";
+        keyMap[cc.KEY.down] = "down";
+        
+        if (cc.sys.capabilities.hasOwnProperty('keyboard')) {
+            cc.eventManager.addListener({
+                event: cc.EventListener.KEYBOARD,
+                onKeyPressed:function (key, e) {
+                    
+                    if(key == cc.KEY.left || key == cc.KEY.right || key == cc.KEY.up || key == cc.KEY.down){
+                        gogogo(key);
+                    }
+                    if(key == cc.KEY.enter){
+                        investigate();
+                    }
+                },
+                onKeyReleased:function (key, event) {
+                    //~ MW.KEYS[key] = false;
+                }
+            }, this);
+        }
+        
+        self.sprite = _coh.View.getSprite("awen", "walking", {constructor : 
+            function(startFrame, rect) {
+                return new _coh.Actor(startFrame, rect, mapPositons.objectNamed("first"));
+            }
+        }).sprite;
+        this.addChild(self.sprite);
+        
+        return true;
+    }
+});var coh = coh || {};
+coh.BattleScene = cc.Scene.extend({
+    bgLayer : null, 
+    onEnter:function () {
+        this._super();
+        this.bgLayer = new cc.Layer();
+        
+        var _coh = coh,
+            map = cc.TMXTiledMap.create(_coh.res.map.market.tmx),
+            winSize = cc.director.getWinSize(),
+            scale = 0;
+        
+        this.bgLayer.addChild(map, 0, 1);
+        map.setAnchorPoint(0.5,0.5);
+        map.setScale(winSize.height / map.height);
+        map.setPosition(winSize.width / 2, winSize.height / 2);
+
+        _coh.map2 = map;
+        
+        this.addChild(this.bgLayer);
+    },
+    
+    generate : function() {
+        var player = new coh.Player("", 1, { archer : 24 });
+        this.placePlayer(player);
+console.log("Go!");
+    },
+    
+    placePlayer : function(player) {
+        
+        var unitConfig = {},
+            units = player.getUnits(),
+            _coh = coh;
+        
+        var unitType;
+        for (var unitName in units) {
+            // no interfaces changed.
+            unitType = _coh.Unit.getType(unitName);
+            unitConfig[unitType] || (unitConfig[unitType] = 0);
+            unitConfig[unitType] += units[unitName].length;
+        }
+        
+        var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+        
+        for (var i = 0, row; row = recharge.succeed[i]; ++i) {
+            for (var j = 0, status; status = row[j]; ++j) {
+                this.placeUnit(player, status, i, j);
+            }
+        }
+    },
+    
+    placeUnit : function(player, status, rowNum, colNum) {
+        
+        // find correct unit from the player via given status(type defined);
+        var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT});
+        
+        // XXXXXX find position from given rowNum and colNum;
+        this.bgLayer.addChild(unit);
+    }
+});

@@ -28,10 +28,6 @@ done
 mv "${mfile}.merge" ${mfile}
 
 echo "${mfile} merge finished!"
-"$JAVA_HOME/bin/java" -jar ./tool/yuicompressor.jar --type js --charset utf-8 -o "${mfile}.compress" "${mfile}"
-mv "${mfile}.compress" "${mfile}"
-
-echo "${mfile} compress finished!"
 
 echo "making backup files for project.json..."
 
