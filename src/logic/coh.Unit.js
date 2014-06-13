@@ -5,10 +5,14 @@ var coh = coh || {};
 /**
  * Super class for all units.
  */
-var UnitInstance = function(unitName) {
+var UnitObject = function(unitName) {
     
     var self = this,
-        self._super;
+        self._super,
+        _coh = coh,
+        LC = _coh.units[unitName];
+    
+    if (!LC) return null;
     
     var buf = {
         name : false, 
@@ -24,6 +28,7 @@ var UnitInstance = function(unitName) {
     var construct = function(unitName) {
         buf.name = unitName;
         // other initializations required;
+        buf.type = LC.type;
     }
     
     self.getType = function() {
@@ -62,8 +67,8 @@ coh.Unit = (function(level) {
         /**
          * factory function that returns the unit object via the given key.
          */
-        getUnit : function(unitName) {
-            return new UnitInstance(unitName);
+        getInstance : function(unitName) {
+            return new UnitObject(unitName);
         }
     }
     

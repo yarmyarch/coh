@@ -10,7 +10,7 @@
     "modules" : ["cocos2d", "cocostudio"],
 
     "jsList" : [
-        "src/resource.js?v=2",
+        "src/resource.js?v=3",
         "src/config.js",
         "src/util/SlideUtil.js",
         "src/logic/coh.View.js?v=4",

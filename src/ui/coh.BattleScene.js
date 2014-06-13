@@ -21,8 +21,8 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function() {
-        var player = new coh.Player("", 1, { Archer : 24 });
-        //~ player.
+        var player = new coh.Player("", 1, { archer : 24 });
+        this.placePlayer(player);
     },
     
     placePlayer : function(player) {
@@ -35,8 +35,8 @@ coh.BattleScene = cc.Scene.extend({
         for (var unitName in units) {
             // no interfaces changed.
             unitType = _coh.Unit.getType(unitName);
-            unitConfig[unitType] && (unitConfig[unitType]);
-            unitConfig[unitType] += units[unitName];
+            unitConfig[unitType] || (unitConfig[unitType] = 0);
+            unitConfig[unitType] += units[unitName].length;
         }
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
@@ -53,7 +53,7 @@ coh.BattleScene = cc.Scene.extend({
         // find correct unit from the player via given status(type defined);
         var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT});
         
-        // find position from given rowNum and colNum;
+        // XXXXXX find position from given rowNum and colNum;
         this.bgLayer.addChild(unit);
     }
 });

@@ -2,13 +2,18 @@ var coh = coh || {};
 
 (function() {
 /**
- * @param units 
+ * @param unitConfig
     {
         [unitName] : [unitCount],
         // ... others
     }
+ * Would be translated into Units list:
+    {
+        [unitName] : Array(<UnitObject>),
+        // ... others
+    }
  */
-coh.Player = function(faction, level, units) {
+coh.Player = function(faction, level, unitConfig) {
     
     var self = this;
     
@@ -21,11 +26,21 @@ coh.Player = function(faction, level, units) {
         
         // generated from level
         currentHP : 0,
-        totalHP : 0
+        totalHP : 0,
+        
+        units : {}
     };
     
-    var construct = function(faction, level, units) {
+    var construct = function(faction, level, unitConfig) {
         
+        var _buf = buf,
+            _coh = coh;
+        for (var unitName in unitConfig) {
+            !_buf.units[unitName] && (_buf.units[unitName] = []);
+            for (var unitCount = 0, total = unitConfig[unitName]; unitCount < total; ++unitCount) {
+                _buf.units[unitName].push(_coh.Unit.getInstance(i));
+            }
+        }
     };
     
     self.getDataGroup = function() {
@@ -41,7 +56,11 @@ coh.Player = function(faction, level, units) {
     };
     
     self.getUnits = function() {
-        return units;
+        return buf.units;
+    };
+    
+    self.getUnitConfig = function() {
+        return unitConfig;
     };
     
     construct.apply(self, arguments);

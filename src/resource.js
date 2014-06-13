@@ -59,3 +59,4 @@ coh.res = {
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
+*/

@@ -35,6 +35,8 @@ coh.MapLayer = cc.Layer.extend({
                         _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene())
                     )
                 );
+                // Run battle logic here, place the player.
+                _coh.scene["battle"].generate();
             };
         
         keyMap[cc.KEY.left] = "left";
