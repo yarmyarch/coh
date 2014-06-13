@@ -2,8 +2,6 @@
 
 echo "build begin"
 
-echo "loading jsList..."
-
 echo "compiling js files..."
 
 sfile="jsList.json"
