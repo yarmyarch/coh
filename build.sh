@@ -4,7 +4,7 @@ echo "build begin"
 
 echo "compiling js files..."
 
-sfile="jsList.json"
+sfile="src/jsList.json"
 tfile="project.json"
 mfile="asset/coh.js"
 mfileCmp="asset\/coh\.js"
@@ -35,7 +35,7 @@ echo "${mfile} compress finished!"
 
 echo "making backup files for project.json..."
 
-cp ${tfile} "asset/${tfile}.build.bak"
+cp ${tfile} "src/${tfile}.build.bak"
 
 echo "rewriting project.json..."
 
