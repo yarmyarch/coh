@@ -24,7 +24,7 @@ coh.Player = function(faction, level, units) {
         totalHP : 0
     };
     
-    var construct = function() {
+    var construct = function(faction, level, units) {
         
     };
     
@@ -44,7 +44,7 @@ coh.Player = function(faction, level, units) {
         return units;
     };
     
-    construct();
+    construct.apply(self, arguments);
     
     return self;
 };

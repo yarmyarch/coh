@@ -1,11 +1,11 @@
 var coh = coh || {};
 
 (function() {
+
 /**
- * public functions for all actions related to units.
- * @interface static getType
+ * Super class for all units.
  */
-coh.Unit = function(level) {
+var UnitInstance = function(unitName) {
     
     var self = this,
         self._super;
@@ -21,8 +21,13 @@ coh.Unit = function(level) {
         attack : 0,
     };
     
+    var construct = function(unitName) {
+        buf.name = unitName;
+        // other initializations required;
+    }
+    
     self.getType = function() {
-        return _buf.type;
+        return buf.type;
     };
     
     self.getLevel = function() {
@@ -37,23 +42,31 @@ coh.Unit = function(level) {
         return buf.attack;
     };
     
+    construct.apply(self, arguments);
+    
     return self;
 };
 
-// public functions
-
 /**
- * @interface static getType
+ * Unit factary and all public functions related to units.
  */
-/*
-coh.Unit.getType = function(unitName) {
-    if (coh.units[unitName] && coh.util.isExecutable(coh.units[unitName].getType)) return coh.units[unitName].getType();
-    // 0 - reserved.
-    else return 0;
-};
-*/
-coh.Unit.getType = function(unitName) {
-    return (coh.units[unitName] && coh.units[unitName].type) || 0;
-}
+coh.Unit = (function(level) {
+    
+    var self;
+
+    return self = {
+        getType : function(unitName) {
+            return (coh.units[unitName] && coh.units[unitName].type) || 0;
+        },
+        
+        /**
+         * factory function that returns the unit object via the given key.
+         */
+        getUnit : function(unitName) {
+            return new UnitInstance(unitName);
+        }
+    }
+    
+})();
 
 })();

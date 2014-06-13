@@ -51,7 +51,7 @@ coh.BattleScene = cc.Scene.extend({
     placeUnit : function(player, status, rowNum, colNum) {
         
         // find correct unit from the player via given status(type defined);
-        var unit = coh.View.getSprite("archer", "idle", status % coh.LocalConfig.COLOR_COUNT);
+        var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT});
         
         // find position from given rowNum and colNum;
         this.bgLayer.addChild(unit);
