@@ -38,7 +38,7 @@ coh.Player = function(faction, level, unitConfig) {
         for (var unitName in unitConfig) {
             !_buf.units[unitName] && (_buf.units[unitName] = []);
             for (var unitCount = 0, total = unitConfig[unitName]; unitCount < total; ++unitCount) {
-                _buf.units[unitName].push(_coh.Unit.getInstance(i));
+                _buf.units[unitName].push(_coh.Unit.getInstance(unitName));
             }
         }
     };

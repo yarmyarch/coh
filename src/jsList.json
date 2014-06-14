@@ -2,10 +2,17 @@
     "jsList" : [
         "src/resource.js",
         "src/config.js",
+        
         "src/util/SlideUtil.js",
+        
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",
+        "src/logic/coh.Unit.js",
+        "src/logic/coh.Player.js",
         "src/logic/coh.Battle.js",
+        
+        "src/units/coh.units.js",
+        
         "src/ui/coh.MapScene.js",
         "src/ui/coh.MapLayer.js",
         "src/ui/coh.BattleScene.js"

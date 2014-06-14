@@ -27,16 +27,15 @@ coh.res = {
                 plist : "res/sprite/sprite.plist",
                 img : "res/sprite/sprite.png"
             }
+        },
+        archer : {
+            idle : {
+                plist : "res/sprite/archer_idle.plist",
+                img_0 : "res/sprite/archer_idle_blue.png",
+                img_1 : "res/sprite/archer_idle_gold.png",
+                img_2 : "res/sprite/archer_idle_white.png"
             }
-        //~ },
-        //~ archer : {
-            //~ idle : {
-                //~ plist : "res/sprite/archer_idle.plist",
-                //~ img_0 : "res/sprite/archer_idle_blue.png",
-                //~ img_1 : "res/sprite/archer_idle_gold.png",
-                //~ img_2 : "res/sprite/archer_idle_white.png"
-            //~ }
-        //~ }
+        }
     }
 };
 

@@ -8,7 +8,6 @@ var coh = coh || {};
 var UnitObject = function(unitName) {
     
     var self = this,
-        self._super,
         _coh = coh,
         LC = _coh.units[unitName];
     
@@ -39,11 +38,11 @@ var UnitObject = function(unitName) {
         return buf.level;
     };
     
-    self.getDefend : function() {
+    self.getDefend = function() {
         return buf.defend;
     };
     
-    self.getAttack : function() {
+    self.getAttack = function() {
         return buf.attack;
     };
     

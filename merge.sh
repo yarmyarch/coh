@@ -39,5 +39,3 @@ sed "s/jsList.*?v=[0-9]\+/jsList\" :[\"${mfileCmp}?v=${vNum}/" ${tfile} > ${tfil
 mv "${tfile}.tmp" "${tfile}"
 
 echo "build success!"
-
-# sed "s/jsList.*?v=[0-9]\+/jsList\" : [asset/coh.js?v=200]/" project.json > project.json.tmp
