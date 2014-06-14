@@ -60,6 +60,9 @@ XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
+
+ERROR using spriteFrameCache in coh.View.js, line 75.
+
 */var coh = coh || {};
 coh.LocalConfig = {
     COLOR : {
@@ -425,6 +428,9 @@ coh.View = (function() {
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
+            // XXXXXX
+            // Bug here. How can I depart different animations from each other in the cache without conficts,
+            // While the plist file could be reused?
             _sc.addSpriteFrames(
                 _coh.res.sprite[unitName][actionName].plist, 
                 _coh.res.sprite[unitName][actionName]["img" + (sc.color === -1 ? "" : "_" + (+sc.color))]
