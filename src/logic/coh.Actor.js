@@ -4,8 +4,10 @@ coh.Actor = cc.Sprite.extend({
     ctor : function(startFrame, rect, startNode) {
         this._super(startFrame, rect);
         // starts from "first"
-        this.position = startNode.name;
-        coh.View.locateNode(startNode);
+        if (startNode && startNode.name) {
+            this.position = startNode.name;
+            coh.View.locateNode(startNode);
+        }
         
         var winSize = cc.director.getWinSize();
         

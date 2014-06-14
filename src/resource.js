@@ -31,9 +31,9 @@ coh.res = {
         archer : {
             idle : {
                 plist : "res/sprite/archer_idle.plist",
-                img_0 : "res/sprite/archer_idle_blue.png",
-                img_1 : "res/sprite/archer_idle_gold.png",
-                img_2 : "res/sprite/archer_idle_white.png"
+                img_0 : "res/sprite/archer_blue.png",
+                img_1 : "res/sprite/archer_gold.png",
+                img_2 : "res/sprite/archer_white.png"
             }
         }
     }
@@ -55,7 +55,11 @@ coh.res = {
 })();
 
 /**
+XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
+
+ERROR using spriteFrameCache in coh.View.js, line 75.
+
 */

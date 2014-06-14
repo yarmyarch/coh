@@ -28,16 +28,15 @@ coh.res = {
                 plist : "res/sprite/sprite.plist",
                 img : "res/sprite/sprite.png"
             }
+        },
+        archer : {
+            idle : {
+                plist : "res/sprite/archer_idle.plist",
+                img_0 : "res/sprite/archer_blue.png",
+                img_1 : "res/sprite/archer_gold.png",
+                img_2 : "res/sprite/archer_white.png"
             }
-        //~ },
-        //~ archer : {
-            //~ idle : {
-                //~ plist : "res/sprite/archer_idle.plist",
-                //~ img_0 : "res/sprite/archer_idle_blue.png",
-                //~ img_1 : "res/sprite/archer_idle_gold.png",
-                //~ img_2 : "res/sprite/archer_idle_white.png"
-            //~ }
-        //~ }
+        }
     }
 };
 
@@ -57,6 +56,7 @@ coh.res = {
 })();
 
 /**
+XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
@@ -405,7 +405,8 @@ coh.View = (function() {
          *  each property is having default values.
             {
                 rate : frame rate, LC.FRAME_RATE for default.
-                constructor : sprite constructor. cc.Sprite for default.
+                cons : sprite constructor. cc.Sprite for default.
+                color : color, 0/1/2
             }
          */
         getSprite : function(unitName, actionName, spriteConfig) {
@@ -420,7 +421,7 @@ coh.View = (function() {
             // rebuild the config
             var sc = {
                 rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
-                constructor : spriteConfig.constructor || cc.Sprite,
+                cons : spriteConfig.cons || cc.Sprite,
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
@@ -435,7 +436,7 @@ coh.View = (function() {
             anim = cc.Animation.create(animFrame, sc.rate);
             action = cc.RepeatForever.create(cc.Animate.create(anim));
             
-            var sprite = new sc.constructor(animFrame[0], null);
+            var sprite = new sc.cons(animFrame[0], null);
             sprite.runAction(action);
             
             return {
@@ -452,8 +453,10 @@ coh.Actor = cc.Sprite.extend({
     ctor : function(startFrame, rect, startNode) {
         this._super(startFrame, rect);
         // starts from "first"
-        this.position = startNode.name;
-        coh.View.locateNode(startNode);
+        if (startNode && startNode.name) {
+            this.position = startNode.name;
+            coh.View.locateNode(startNode);
+        }
         
         var winSize = cc.director.getWinSize();
         
@@ -980,7 +983,9 @@ coh.MapLayer = cc.Layer.extend({
                     )
                 );
                 // Run battle logic here, place the player.
-                _coh.scene["battle"].generate();
+                setTimeout(function(){
+                    _coh.scene["battle"].generate();
+                }, 0);
             };
         
         keyMap[cc.KEY.left] = "left";
@@ -1006,7 +1011,7 @@ coh.MapLayer = cc.Layer.extend({
             }, this);
         }
         
-        self.sprite = _coh.View.getSprite("awen", "walking", {constructor : 
+        self.sprite = _coh.View.getSprite("awen", "walking", {cons : 
             function(startFrame, rect) {
                 return new _coh.Actor(startFrame, rect, mapPositons.objectNamed("first"));
             }
@@ -1072,6 +1077,9 @@ console.log("Go!");
         var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT});
         
         // XXXXXX find position from given rowNum and colNum;
-        this.bgLayer.addChild(unit);
+        this.bgLayer.addChild(unit.sprite, 0, 1);
+        
+        coh.unitList = coh.unitList || [];
+        coh.unitList.push(unit);
     }
 });

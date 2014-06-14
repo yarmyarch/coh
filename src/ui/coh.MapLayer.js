@@ -36,7 +36,9 @@ coh.MapLayer = cc.Layer.extend({
                     )
                 );
                 // Run battle logic here, place the player.
-                _coh.scene["battle"].generate();
+                setTimeout(function(){
+                    _coh.scene["battle"].generate();
+                }, 0);
             };
         
         keyMap[cc.KEY.left] = "left";
@@ -62,7 +64,7 @@ coh.MapLayer = cc.Layer.extend({
             }, this);
         }
         
-        self.sprite = _coh.View.getSprite("awen", "walking", {constructor : 
+        self.sprite = _coh.View.getSprite("awen", "walking", {cons : 
             function(startFrame, rect) {
                 return new _coh.Actor(startFrame, rect, mapPositons.objectNamed("first"));
             }

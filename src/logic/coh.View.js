@@ -52,7 +52,8 @@ coh.View = (function() {
          *  each property is having default values.
             {
                 rate : frame rate, LC.FRAME_RATE for default.
-                constructor : sprite constructor. cc.Sprite for default.
+                cons : sprite constructor. cc.Sprite for default.
+                color : color, 0/1/2
             }
          */
         getSprite : function(unitName, actionName, spriteConfig) {
@@ -67,10 +68,13 @@ coh.View = (function() {
             // rebuild the config
             var sc = {
                 rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
-                constructor : spriteConfig.constructor || cc.Sprite,
+                cons : spriteConfig.cons || cc.Sprite,
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
+            // XXXXXX
+            // Bug here. How can I depart different animations from each other in the cache without conficts,
+            // While the plist file could be reused?
             _sc.addSpriteFrames(
                 _coh.res.sprite[unitName][actionName].plist, 
                 _coh.res.sprite[unitName][actionName]["img" + (sc.color === -1 ? "" : "_" + (+sc.color))]
@@ -82,7 +86,7 @@ coh.View = (function() {
             anim = cc.Animation.create(animFrame, sc.rate);
             action = cc.RepeatForever.create(cc.Animate.create(anim));
             
-            var sprite = new sc.constructor(animFrame[0], null);
+            var sprite = new sc.cons(animFrame[0], null);
             sprite.runAction(action);
             
             return {
