@@ -23,7 +23,6 @@ coh.BattleScene = cc.Scene.extend({
     generate : function() {
         var player = new coh.Player("", 1, { archer : 24 });
         this.placePlayer(player);
-console.log("Go!");
     },
     
     placePlayer : function(player) {
