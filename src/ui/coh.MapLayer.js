@@ -68,7 +68,7 @@ coh.MapLayer = cc.Layer.extend({
             function(startFrame, rect) {
                 return new _coh.Actor(startFrame, rect, mapPositons.objectNamed("first"));
             }
-        }).sprite;
+        });
         this.addChild(self.sprite);
         
         return true;

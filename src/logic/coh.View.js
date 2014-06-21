@@ -4,7 +4,9 @@ coh.View = (function() {
     var self;
     
     var buf = {
-        spriteCache : cc.spriteFrameCache
+        spriteCache : cc.spriteFrameCache,
+        animations : {},
+        animFrames : {}
     }
     
     return self = {
@@ -57,7 +59,7 @@ coh.View = (function() {
                 animMode : animation mode constructor, cc.RepeatForever for default.
             }
          */
-        getSprite : function(unitName, actionName, spriteConfig) {
+        getSprite : function(unitName, animationName, spriteConfig) {
             
             var animFrame = [],
                 anim,
@@ -78,30 +80,61 @@ coh.View = (function() {
             
             srcName = "img" + (sc.color === -1 ? "" : "_" + (+sc.color));
             
-            // XXXXXX
-            // Bug here. How can I depart different animations from each other in the cache without conficts,
-            // While the plist file could be reused?
-            _sc.addSpriteFrames(
-                _coh.res.sprite[unitName][actionName].plist, 
-                _coh.res.sprite[unitName][actionName][srcName]
-            );
+            action = sc.animMode.create(self.getAnimation(unitName, animationName, srcName, sc.rate));
             
-            for (var i in _sc._spriteFrames) {
-                animFrame.push(_sc._spriteFrames[i]);
-            }
-            anim = _cc.Animation.create(animFrame, sc.rate);
-            action = sc.animMode.create(_cc.Animate.create(anim));
-            
-            var sprite = new sc.cons(animFrame[0], null);
-            // reset the texture for the sprite, as in the procedure _sc.addSpriteFrames, frames in all plists with the same name would always be covered by the last one.
-            sprite.setTexture(_coh.res.sprite[unitName][actionName][srcName]);
+            var sprite = new sc.cons(animFrame[0]);
             sprite.runAction(action);
             
-            return {
-                sprite : sprite,
-                // animation
-                action : action
+            return sprite;
+        },
+        
+        getAnimation : function(unitName, animationName, textureIndex, rate) {
+            
+            var _buf = buf,
+                _cc = cc;
+            
+            rate = rate || _coh.LocalConfig.FRAME_RATE;
+            
+            !_buf.animations[unitName] && (_buf.animations[unitName] = {});
+            !_buf.animations[unitName][animationName] && (_buf.animations[unitName][animationName] = {});
+            !_buf.animations[unitName][animationName][textureIndex] && (_buf.animations[unitName][animationName][textureIndex] = 
+                _cc.Animate.create(
+                    cc.Animation.create(
+                        self.getFrames(unitName, animationName, textureIndex), 
+                        rate
+                    )
+                )
+            );
+            
+            return _buf.animations[unitName][animationName][textureIndex];
+        },
+        
+        getFrames : function(unitName, animationName, textureIndex) {
+            
+            var _buf = buf,
+                _sc = _buf.spriteCache,
+                _coh = coh,
+                frames = [];
+            
+            !_buf.animFrames[unitName] && (_buf.animFrames[unitName] = {});
+            !_buf.animFrames[unitName][animationName] && (_buf.animFrames[unitName][animationName] = {});
+            
+            if (!_buf.animFrames[unitName][animationName][textureIndex]) {
+                _sc.removeSpriteFrames();
+                _sc.addSpriteFrames(
+                    _coh.res.sprite[unitName][animationName].plist, 
+                    _coh.res.sprite[unitName][animationName][textureIndex]
+                );
+                
+                for (var i in _sc._spriteFrames) {
+                    frames.push(_sc._spriteFrames[i]);
+                }
+                _sc.removeSpriteFrames();
+                
+                _buf.animFrames[unitName][animationName][textureIndex] = frames;
             }
+            
+            return _buf.animFrames[unitName][animationName][textureIndex];
         }
     }
     
