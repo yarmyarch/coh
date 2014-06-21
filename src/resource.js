@@ -24,8 +24,8 @@ coh.res = {
     sprite : {
         awen : {
             walking : {
-                plist : "res/sprite/sprite.plist",
-                img : "res/sprite/sprite.png"
+                plist : "res/sprite/sprite.plist?v=2",
+                img : "res/sprite/sprite.png?v=2"
             }
         },
         archer : {

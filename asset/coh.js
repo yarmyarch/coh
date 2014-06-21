@@ -25,8 +25,8 @@ coh.res = {
     sprite : {
         awen : {
             walking : {
-                plist : "res/sprite/sprite.plist",
-                img : "res/sprite/sprite.png"
+                plist : "res/sprite/sprite.plist?v=2",
+                img : "res/sprite/sprite.png?v=2"
             }
         },
         archer : {
@@ -60,6 +60,8 @@ XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
+    
+    1. Find another way creating swf with flash, if it could use the original texture file;
 
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
@@ -116,7 +118,7 @@ coh.LocalConfig = {
         [0,0,0,0,0,0,0,0]
     ],
     // frame rate for general animations.
-    FRAME_RATE : 0.1,
+    FRAME_RATE : 1/60,
     COLOR_CONFIG : {
         elf : ["blue", "white", "gold"]
     }
@@ -360,7 +362,9 @@ coh.View = (function() {
     var self;
     
     var buf = {
-        spriteCache : cc.spriteFrameCache
+        spriteCache : cc.spriteFrameCache,
+        animations : {},
+        animFrames : {}
     }
     
     return self = {
@@ -409,47 +413,86 @@ coh.View = (function() {
             {
                 rate : frame rate, LC.FRAME_RATE for default.
                 cons : sprite constructor. cc.Sprite for default.
-                color : color, 0/1/2
+                color : color, 0/1/2,
+                animMode : animation mode constructor, cc.RepeatForever for default.
             }
          */
-        getSprite : function(unitName, actionName, spriteConfig) {
+        getSprite : function(unitName, animationName, spriteConfig) {
             
             var animFrame = [],
                 anim,
                 action,
                 sprite,
                 _coh = coh,
-                _sc = buf.spriteCache;
+                _cc = cc,
+                _sc = buf.spriteCache,
+                srcName;
             
             // rebuild the config
             var sc = {
                 rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
-                cons : spriteConfig.cons || cc.Sprite,
+                cons : spriteConfig.cons || _cc.Sprite,
+                animMode : spriteConfig.animMode || _cc.RepeatForever,
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
-            // XXXXXX
-            // Bug here. How can I depart different animations from each other in the cache without conficts,
-            // While the plist file could be reused?
-            _sc.addSpriteFrames(
-                _coh.res.sprite[unitName][actionName].plist, 
-                _coh.res.sprite[unitName][actionName]["img" + (sc.color === -1 ? "" : "_" + (+sc.color))]
-            );
+            srcName = "img" + (sc.color === -1 ? "" : "_" + (+sc.color));
             
-            for (var i in _sc._spriteFrames) {
-                animFrame.push(_sc._spriteFrames[i]);
-            }
-            anim = cc.Animation.create(animFrame, sc.rate);
-            action = cc.RepeatForever.create(cc.Animate.create(anim));
+            action = sc.animMode.create(self.getAnimation(unitName, animationName, srcName, sc.rate));
             
-            var sprite = new sc.cons(animFrame[0], null);
+            var sprite = new sc.cons(animFrame[0]);
             sprite.runAction(action);
             
-            return {
-                sprite : sprite,
-                // animation
-                action : action
+            return sprite;
+        },
+        
+        getAnimation : function(unitName, animationName, textureIndex, rate) {
+            
+            var _buf = buf,
+                _cc = cc;
+            
+            rate = rate || _coh.LocalConfig.FRAME_RATE;
+            
+            !_buf.animations[unitName] && (_buf.animations[unitName] = {});
+            !_buf.animations[unitName][animationName] && (_buf.animations[unitName][animationName] = {});
+            !_buf.animations[unitName][animationName][textureIndex] && (_buf.animations[unitName][animationName][textureIndex] = 
+                _cc.Animate.create(
+                    cc.Animation.create(
+                        self.getFrames(unitName, animationName, textureIndex), 
+                        rate
+                    )
+                )
+            );
+            
+            return _buf.animations[unitName][animationName][textureIndex];
+        },
+        
+        getFrames : function(unitName, animationName, textureIndex) {
+            
+            var _buf = buf,
+                _sc = _buf.spriteCache,
+                _coh = coh,
+                frames = [];
+            
+            !_buf.animFrames[unitName] && (_buf.animFrames[unitName] = {});
+            !_buf.animFrames[unitName][animationName] && (_buf.animFrames[unitName][animationName] = {});
+            
+            if (!_buf.animFrames[unitName][animationName][textureIndex]) {
+                _sc.removeSpriteFrames();
+                _sc.addSpriteFrames(
+                    _coh.res.sprite[unitName][animationName].plist, 
+                    _coh.res.sprite[unitName][animationName][textureIndex]
+                );
+                
+                for (var i in _sc._spriteFrames) {
+                    frames.push(_sc._spriteFrames[i]);
+                }
+                _sc.removeSpriteFrames();
+                
+                _buf.animFrames[unitName][animationName][textureIndex] = frames;
             }
+            
+            return _buf.animFrames[unitName][animationName][textureIndex];
         }
     }
     
@@ -943,7 +986,11 @@ coh.units = {
     archer : {
         type : 1
     }
-};var coh = coh || {};
+};/**
+ *@version draft
+ */
+
+var coh = coh || {};
 coh.MapScene = cc.Scene.extend({
     onEnter:function () {
         this._super();
@@ -951,6 +998,10 @@ coh.MapScene = cc.Scene.extend({
         this.addChild(layer);
     }
 });
+/**
+ *@version draft
+ */
+
 var coh = coh || {};
 coh.MapLayer = cc.Layer.extend({
     sprite:null,
@@ -1021,7 +1072,7 @@ coh.MapLayer = cc.Layer.extend({
             function(startFrame, rect) {
                 return new _coh.Actor(startFrame, rect, mapPositons.objectNamed("first"));
             }
-        }).sprite;
+        });
         this.addChild(self.sprite);
         
         return true;
@@ -1051,7 +1102,6 @@ coh.BattleScene = cc.Scene.extend({
     generate : function() {
         var player = new coh.Player("", 1, { archer : 24 });
         this.placePlayer(player);
-console.log("Go!");
     },
     
     placePlayer : function(player) {

@@ -51,7 +51,7 @@ coh.LocalConfig = {
         [0,0,0,0,0,0,0,0]
     ],
     // frame rate for general animations.
-    FRAME_RATE : 0.1,
+    FRAME_RATE : 1/60,
     COLOR_CONFIG : {
         elf : ["blue", "white", "gold"]
     }
