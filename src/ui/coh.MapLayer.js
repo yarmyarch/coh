@@ -1,3 +1,7 @@
+/**
+ *@version draft
+ */
+
 var coh = coh || {};
 coh.MapLayer = cc.Layer.extend({
     sprite:null,

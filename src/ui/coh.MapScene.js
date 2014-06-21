@@ -1,3 +1,7 @@
+/**
+ *@version draft
+ */
+
 var coh = coh || {};
 coh.MapScene = cc.Scene.extend({
     onEnter:function () {

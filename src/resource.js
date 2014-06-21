@@ -60,9 +60,7 @@ TODO :
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
     
-    1. Find something to replace the spriteFrameCache, or just simply clear all caches each time creating the sprite;
-    2. Find another way creating swf with flash, if it could use the original texture file;
-    3. How could it be resolved about the dulplicated keyframes' name in different plists? Well it won't be a problem if item 1 is resolved.
+    1. Find another way creating swf with flash, if it could use the original texture file;
 
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
