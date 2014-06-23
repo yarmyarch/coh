@@ -59,9 +59,7 @@ XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
-    
-    1. Find another way creating swf with flash, if it could use the original texture file;
-
+  
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
 */
