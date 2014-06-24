@@ -54,7 +54,7 @@ coh.BattleScene = cc.Scene.extend({
         var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT});
         
         // XXXXXX find position from given rowNum and colNum;
-        this.bgLayer.addChild(unit.sprite, 0, 1);
+        this.bgLayer.addChild(unit, 0, 1);
         
         coh.unitList = coh.unitList || [];
         coh.unitList.push(unit);
