@@ -1078,10 +1078,12 @@ coh.MapLayer = cc.Layer.extend({
 });var coh = coh || {};
 coh.BattleScene = cc.Scene.extend({
     bgLayer : null, 
-    onEnter:function () {
+    ctor:function () {
         this._super();
         this.bgLayer = new cc.Layer();
-        
+        this.addChild(this.bgLayer);
+    },
+    onEnter:function () {
         var _coh = coh,
             map = cc.TMXTiledMap.create(_coh.res.map.market.tmx),
             winSize = cc.director.getWinSize(),
@@ -1093,8 +1095,6 @@ coh.BattleScene = cc.Scene.extend({
         map.setPosition(winSize.width / 2, winSize.height / 2);
 
         _coh.map2 = map;
-        
-        this.addChild(this.bgLayer);
     },
     
     generate : function() {
