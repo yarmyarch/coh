@@ -417,9 +417,7 @@ coh.View = (function() {
          */
         getSprite : function(unitName, animationName, spriteConfig) {
             
-            var animFrame = [],
-                anim,
-                action,
+            var action,
                 sprite,
                 _coh = coh,
                 _cc = cc,
@@ -438,7 +436,7 @@ coh.View = (function() {
             
             action = sc.animMode.create(self.getAnimation(unitName, animationName, srcName, sc.rate));
             
-            var sprite = new sc.cons(animFrame[0]);
+            var sprite = new sc.cons(buf.animFrames[unitName][animationName][srcName][0]);
             sprite.runAction(action);
             
             return sprite;
