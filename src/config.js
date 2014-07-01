@@ -54,5 +54,7 @@ coh.LocalConfig = {
     FRAME_RATE : 1/60,
     COLOR_CONFIG : {
         elf : ["blue", "white", "gold"]
-    }
+    },
+    
+    MAP_BATTLE_LAYER_NAME : "battleField"
 };

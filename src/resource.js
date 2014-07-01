@@ -14,9 +14,9 @@ coh.res = {
     map : {
         districts : {
             forest : "res/tmxmap/forest.tmx"
-        }
+        },
         battle : {
-            field_16X16 : "res/tmxmap/battle_16X16.tmx"
+            field_16X16 : "res/tmxmap/battle_16X16.tmx?v=1"
         }
     },
     imgs : {
@@ -26,8 +26,8 @@ coh.res = {
     sprite : {
         awen : {
             walking : {
-                plist : "res/sprite/sprite.plist?v=2",
-                img : "res/sprite/sprite.png?v=2"
+                plist : "res/sprite/sprite.plist",
+                img : "res/sprite/sprite.png"
             }
         },
         archer : {

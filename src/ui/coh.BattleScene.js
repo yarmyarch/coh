@@ -45,10 +45,11 @@ coh.BattleScene = cc.Scene.extend({
                 winSize = cc.director.getWinSize();
             
             sprite.attr({
-                x: 0,
-                y: 0,
-                width : winSize.width,
-                height : winSize.height,
+                anchorX : 0.5,
+                anchorY : 0.5,
+                scale : winSize.height / sprite.height,
+                x : winSize.width / 2,
+                y : winSize.height / 2 
             });
             
             _buf.bgList[imgSrc] = sprite;
@@ -70,8 +71,8 @@ coh.BattleScene = cc.Scene.extend({
         if (!mapSrc) return;
         
         var _buf = buf;
-        if (!_buf.tmxList[imgSrc]) {
-            var map = cc.TMXTiledMap.create(_coh.res.map.battle.tmx),
+        if (!_buf.tmxList[mapSrc]) {
+            var map = cc.TMXTiledMap.create(mapSrc),
                 winSize = cc.director.getWinSize();
             
             map.attr({
@@ -79,7 +80,7 @@ coh.BattleScene = cc.Scene.extend({
                 anchorY : 0.5,
                 scale : winSize.height / map.height,
                 x : winSize.width / 2,
-                y : winSize.height / 2
+                y : winSize.height / 2 
             });
             
             _buf.tmxList[mapSrc] = map;
@@ -102,7 +103,7 @@ coh.BattleScene = cc.Scene.extend({
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
-        player[isAttacker]();
+        player[isDefender]();
         
         this.placePlayer(player);
     },
@@ -136,8 +137,10 @@ coh.BattleScene = cc.Scene.extend({
     placeUnit : function(player, status, rowNum, colNum) {
         
         // find correct unit from the player via given status(type defined);
-        var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT}),
-            tile = handlerList.tileSelector.getTile(player.isAttacker(), rowNum, colNum);;
+        var _coh = coh,
+            unit = _coh.View.getSprite("archer", "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
+            tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
+            tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
         unit.attr({
             x : tile.x,
@@ -148,8 +151,8 @@ coh.BattleScene = cc.Scene.extend({
         
         this.battleLayer.addChild(unit, 0, 1);
         
-        coh.unitList = coh.unitList || [];
-        coh.unitList.push(unit);
+        _coh.unitList = _coh.unitList || [];
+        _coh.unitList.push(unit);
     }
 });
 
