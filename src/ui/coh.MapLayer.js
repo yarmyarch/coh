@@ -10,7 +10,7 @@ coh.MapLayer = cc.Layer.extend({
         
         var _coh = coh;
         
-        _coh.map = cc.TMXTiledMap.create(_coh.res.map.forest.tmx);
+        _coh.map = cc.TMXTiledMap.create(_coh.res.map.districts.forest);
         
         this.addChild(_coh.map, 0, 1);
         
@@ -36,7 +36,7 @@ coh.MapLayer = cc.Layer.extend({
             investigate = function() {
                 cc.director.runScene(
                     cc.TransitionFadeDown.create(1.2, 
-                        _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene())
+                        _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene(_coh.res.map.battle.field_16X16, _coh.res.imgs.market))
                     )
                 );
                 // Run battle logic here, place the player.

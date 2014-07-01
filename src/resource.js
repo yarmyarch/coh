@@ -12,14 +12,16 @@ coh.res = {
     CloseSelected_png : "res/CloseSelected.png",
     
     map : {
-        forest : {
-            tmx : "res/tmxmap/forest.tmx",
-            img : "res/tmxmap/forest.jpg"
-        },
-        market : {
-            tmx : "res/tmxmap/b_market.tmx",
-            img : "res/tmxmap/b_market.jpg"
+        districts : {
+            forest : "res/tmxmap/forest.tmx"
         }
+        battle : {
+            field_16X16 : "res/tmxmap/battle_16X16.tmx"
+        }
+    },
+    imgs : {
+        market : "res/tmxmap/b_market.jpg",
+        forest : "res/tmxmap/forest.jpg"
     },
     sprite : {
         awen : {
@@ -59,6 +61,8 @@ XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
+
+    in battle, the map with a background should be split out from the battle layer.
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 

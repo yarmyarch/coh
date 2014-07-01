@@ -28,6 +28,9 @@ coh.Player = function(faction, level, unitConfig) {
         currentHP : 0,
         totalHP : 0,
         
+        // attacker for default.
+        isAttacker : true,
+        
         units : {}
     };
     
@@ -62,6 +65,16 @@ coh.Player = function(faction, level, unitConfig) {
     self.getUnitConfig = function() {
         return unitConfig;
     };
+    
+    self.isAttacker = function() {
+        return buf.isAttacker;
+    }
+    self.setAsAttacker = function() {
+        buf.isAttacker = true;
+    }
+    self.setAsDefender = function() {
+        buf.isAttacker = false;
+    }
     
     construct.apply(self, arguments);
     
