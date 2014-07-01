@@ -13,14 +13,16 @@ coh.res = {
     CloseSelected_png : "res/CloseSelected.png",
     
     map : {
-        forest : {
-            tmx : "res/tmxmap/forest.tmx",
-            img : "res/tmxmap/forest.jpg"
-        },
-        market : {
-            tmx : "res/tmxmap/b_market.tmx",
-            img : "res/tmxmap/b_market.jpg"
+        districts : {
+            forest : "res/tmxmap/forest.tmx"
         }
+        battle : {
+            field_16X16 : "res/tmxmap/battle_16X16.tmx"
+        }
+    },
+    imgs : {
+        market : "res/tmxmap/b_market.jpg",
+        forest : "res/tmxmap/forest.jpg"
     },
     sprite : {
         awen : {
@@ -60,6 +62,8 @@ XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     translate dataGroup into map positions in BattleScene;
+
+    in battle, the map with a background should be split out from the battle layer.
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
@@ -621,6 +625,9 @@ coh.Player = function(faction, level, unitConfig) {
         currentHP : 0,
         totalHP : 0,
         
+        // attacker for default.
+        isAttacker : true,
+        
         units : {}
     };
     
@@ -655,6 +662,16 @@ coh.Player = function(faction, level, unitConfig) {
     self.getUnitConfig = function() {
         return unitConfig;
     };
+    
+    self.isAttacker = function() {
+        return buf.isAttacker;
+    }
+    self.setAsAttacker = function() {
+        buf.isAttacker = true;
+    }
+    self.setAsDefender = function() {
+        buf.isAttacker = false;
+    }
     
     construct.apply(self, arguments);
     
@@ -1006,7 +1023,7 @@ coh.MapLayer = cc.Layer.extend({
         
         var _coh = coh;
         
-        _coh.map = cc.TMXTiledMap.create(_coh.res.map.forest.tmx);
+        _coh.map = cc.TMXTiledMap.create(_coh.res.map.districts.forest);
         
         this.addChild(_coh.map, 0, 1);
         
@@ -1032,7 +1049,7 @@ coh.MapLayer = cc.Layer.extend({
             investigate = function() {
                 cc.director.runScene(
                     cc.TransitionFadeDown.create(1.2, 
-                        _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene())
+                        _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene(_coh.res.map.battle.field_16X16, _coh.res.imgs.market))
                     )
                 );
                 // Run battle logic here, place the player.
@@ -1073,30 +1090,112 @@ coh.MapLayer = cc.Layer.extend({
         
         return true;
     }
-});var coh = coh || {};
-coh.BattleScene = cc.Scene.extend({
-    bgLayer : null, 
-    ctor:function () {
-        this._super();
-        this.bgLayer = new cc.Layer();
-        this.addChild(this.bgLayer);
-    },
-    onEnter:function () {
-        var _coh = coh,
-            map = cc.TMXTiledMap.create(_coh.res.map.market.tmx),
-            winSize = cc.director.getWinSize(),
-            scale = 0;
-        
-        this.bgLayer.addChild(map, 0, 1);
-        map.setAnchorPoint(0.5,0.5);
-        map.setScale(winSize.height / map.height);
-        map.setPosition(winSize.width / 2, winSize.height / 2);
+});/**
+ * relay on tileSelector, if you would like to place units to the battle ground.
+ * inject it from the outer factory.
+ */
+var coh = coh || {};
+    
+(function() {
 
-        _coh.map2 = map;
+// local buffer for class BattleScene only.
+var buf = {
+    tmxList : {},
+    bgList : {}
+};
+
+var handlerList = {
+    // private properties
+    // should be injected from outside.
+    tileSelector : null
+};
+
+coh.BattleScene = cc.Scene.extend({
+    battleLayer : null,
+    battleField : null,
+    battleMap : null,
+    ctor:function (mapSrc, imgSrc) {
+        this._super();
+        this.battleLayer = new cc.Layer();
+        
+        this.setBattleField(imgSrc);
+        this.setBattleMap(mapSrc);
+        
+        this.addChild(this.battleLayer);
     },
     
-    generate : function() {
+    /**
+     * set background image.
+     */
+    setBattleField : function(imgSrc) {
+        // 
+        if (!imgSrc) return;
+        
+        var _buf = buf;
+        if (!_buf.bgList[imgSrc]) {
+            var sprite = cc.Sprite.create(imgSrc),
+                winSize = cc.director.getWinSize();
+            
+            sprite.attr({
+                x: 0,
+                y: 0,
+                width : winSize.width,
+                height : winSize.height,
+            });
+            
+            _buf.bgList[imgSrc] = sprite;
+        }
+        
+        if (this.battleField) {
+            this.battleLayer.removeChild(this.battleField);
+        }
+        
+        this.battleLayer.addChild(_buf.bgList[imgSrc], 0);
+        this.battleField = _buf.bgList[imgSrc];
+    },
+    
+    /**
+     * set battle ground tmx map.
+     */
+    setBattleMap : function(mapSrc) {
+        // 
+        if (!mapSrc) return;
+        
+        var _buf = buf;
+        if (!_buf.tmxList[imgSrc]) {
+            var map = cc.TMXTiledMap.create(_coh.res.map.battle.tmx),
+                winSize = cc.director.getWinSize();
+            
+            map.attr({
+                anchorX : 0.5,
+                anchorY : 0.5,
+                scale : winSize.height / map.height,
+                x : winSize.width / 2,
+                y : winSize.height / 2
+            });
+            
+            _buf.tmxList[mapSrc] = map;
+        }
+        
+        if (this.battleMap) {
+            this.battleLayer.removeChild(this.battleMap);
+        }
+        
+        this.battleLayer.addChild(_buf.tmxList[mapSrc], 1);
+        this.battleMap = _buf.tmxList[mapSrc];
+    },
+    
+    setTileSelector : function(selector) {
+        handlerList.tileSelector = selector;
+    },
+    
+    generate : function(isDefender) {
         var player = new coh.Player("", 1, { archer : 24 });
+        
+        // attacker for default.
+        isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
+        player[isAttacker]();
+        
         this.placePlayer(player);
     },
     
@@ -1123,15 +1222,27 @@ coh.BattleScene = cc.Scene.extend({
         }
     },
     
+    /**
+     * tileSelector required. Should be injected from outside.
+     */
     placeUnit : function(player, status, rowNum, colNum) {
         
         // find correct unit from the player via given status(type defined);
-        var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT});
+        var unit = coh.View.getSprite("archer", "idle", {color : status % coh.LocalConfig.COLOR_COUNT}),
+            tile = handlerList.tileSelector.getTile(player.isAttacker(), rowNum, colNum);;
         
-        // XXXXXX find position from given rowNum and colNum;
-        this.bgLayer.addChild(unit, 0, 1);
+        unit.attr({
+            x : tile.x,
+            y : tile.y,
+            width : tile.width,
+            height : tile.height,
+        });
+        
+        this.battleLayer.addChild(unit, 0, 1);
         
         coh.unitList = coh.unitList || [];
         coh.unitList.push(unit);
     }
 });
+
+})();
