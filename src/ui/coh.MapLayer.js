@@ -35,16 +35,8 @@ coh.MapLayer = cc.Layer.extend({
             },
             investigate = function() {
                 _coh.scene["battle"] = _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene(_coh.res.map.battle.field_16X16, _coh.res.imgs.market));
-                var unitCount = 0;
-                // XXXXXX Just a demo here.
-                _coh.scene["battle"].setTileSelector({
-                    getTilePosition : function() {
-                        return {
-                            x : ~~(unitCount / 16),
-                            y : unitCount++ % 16
-                        };
-                    }
-                });
+                
+                _coh.scene["battle"].setTileSelector(coh.TileSelector_16X16.getInstance());
                 
                 cc.director.runScene(
                     cc.TransitionFadeDown.create(1.2, _coh.scene["battle"])

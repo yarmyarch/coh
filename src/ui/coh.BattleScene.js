@@ -143,10 +143,9 @@ coh.BattleScene = cc.Scene.extend({
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
         unit.attr({
-            x : tile.x,
-            y : tile.y,
-            width : tile.width,
-            height : tile.height,
+            x : tile.x * this.battleMap.scale,
+            y : tile.y * this.battleMap.scale,
+            scale : this.battleMap.scale * _coh.LocalConfig.UNIT_GLOBAL_SCALE
         });
         
         this.battleLayer.addChild(unit, 0, 1);

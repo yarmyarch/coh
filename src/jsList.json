@@ -4,6 +4,7 @@
         "src/config.js",
         
         "src/util/SlideUtil.js",
+        "src/util/coh.TileSelector_16X16.js",
         
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",

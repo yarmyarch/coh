@@ -125,7 +125,9 @@ coh.LocalConfig = {
         elf : ["blue", "white", "gold"]
     },
     
-    MAP_BATTLE_LAYER_NAME : "battleField"
+    MAP_BATTLE_LAYER_NAME : "battleField",
+    
+    UNIT_GLOBAL_SCALE : 1.25
 };//~ usage:
 //~ var Fuck = function(){
 
@@ -360,6 +362,30 @@ var SlideUtil = (function() {
     };
     
     return self;
+})();var coh = coh || {};
+(function() {
+    var instance;
+    
+    var getInstance = function() {
+        if (!instance) {
+            instance = {
+                getTilePosition : function(isAttacker, row, column) {
+                    return {
+                        y : 8 - row - 2,
+                        x : 6 + column
+                    };
+                }
+            }
+        }
+        return instance;
+    };
+    
+    coh.TileSelector_16X16 = function() {
+        //getTilePosition
+        return getInstance();
+    }
+
+    coh.TileSelector_16X16.getInstance = getInstance;
 })();var coh = coh || {};
 coh.View = (function() {
     
@@ -1050,16 +1076,8 @@ coh.MapLayer = cc.Layer.extend({
             },
             investigate = function() {
                 _coh.scene["battle"] = _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene(_coh.res.map.battle.field_16X16, _coh.res.imgs.market));
-                var unitCount = 0;
-                // XXXXXX Just a demo here.
-                _coh.scene["battle"].setTileSelector({
-                    getTilePosition : function() {
-                        return {
-                            x : ~~(unitCount / 16),
-                            y : unitCount++ % 16
-                        };
-                    }
-                });
+                
+                _coh.scene["battle"].setTileSelector(coh.TileSelector_16X16.getInstance());
                 
                 cc.director.runScene(
                     cc.TransitionFadeDown.create(1.2, _coh.scene["battle"])
@@ -1247,10 +1265,9 @@ coh.BattleScene = cc.Scene.extend({
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
         unit.attr({
-            x : tile.x,
-            y : tile.y,
-            width : tile.width,
-            height : tile.height,
+            x : tile.x * this.battleMap.scale,
+            y : tile.y * this.battleMap.scale,
+            scale : this.battleMap.scale * _coh.LocalConfig.UNIT_GLOBAL_SCALE
         });
         
         this.battleLayer.addChild(unit, 0, 1);
