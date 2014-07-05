@@ -952,6 +952,9 @@ coh.Battle = (function(){
                 }
             }
             
+            // reset the size of result, to avoid the extra row appended by checkResultSet.
+            result.length = currentBuf.length;
+            
             return {
                 succeed : result,
                 faild : faild,
@@ -1250,11 +1253,10 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        console.log(recharge.succeed);
+        console.log(recharge);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                console.log(i + " " + j + " " + status);
                 status && this.placeUnit(player, status, i, j);
             }
         }

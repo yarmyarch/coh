@@ -244,6 +244,9 @@ coh.Battle = (function(){
                 }
             }
             
+            // reset the size of result, to avoid the extra row appended by checkResultSet.
+            result.length = currentBuf.length;
+            
             return {
                 succeed : result,
                 faild : faild,
