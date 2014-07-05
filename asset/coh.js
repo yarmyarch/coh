@@ -34,9 +34,9 @@ coh.res = {
         archer : {
             idle : {
                 plist : "res/sprite/archer_idle.plist",
-                img_0 : "res/sprite/archer_blue.png",
-                img_1 : "res/sprite/archer_gold.png",
-                img_2 : "res/sprite/archer_white.png"
+                img_0 : "res/sprite/archer_blue.png?v=1",
+                img_1 : "res/sprite/archer_gold.png?v=1",
+                img_2 : "res/sprite/archer_white.png?v=1"
             }
         }
     }
@@ -1252,8 +1252,6 @@ coh.BattleScene = cc.Scene.extend({
         }
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
-        
-        console.log(recharge);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
