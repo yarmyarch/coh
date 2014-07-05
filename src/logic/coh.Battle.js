@@ -97,7 +97,7 @@ coh.Battle = (function(){
         
         /**
          * check and append new row data into the result set if necessary.
-         * for the given target array like [0,1,2], newly appended result would be ["0","0","0"].
+         * for the given target array like [0,1,2], newly appended result would be [0,0,0].
          */
         checkResultSet : function(resultSet, targetArray, colNum) {
             var _buf = buf;
@@ -106,7 +106,7 @@ coh.Battle = (function(){
             if (!resultSet[_buf.occupiedRowIndex[colNum]]) {
                 var rowCount = 0;
                 while (rowCount <= _buf.occupiedRowIndex[colNum]) {
-                    resultSet.push(targetArray.join(" ").replace(/\d+/g, 0).split(" "));
+                    resultSet.push(eval("[" + targetArray.join(",").replace(/\d+/g, 0) + "]"));
                     ++rowCount;
                 }
             }

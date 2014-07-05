@@ -371,8 +371,8 @@ var SlideUtil = (function() {
             instance = {
                 getTilePosition : function(isAttacker, row, column) {
                     return {
-                        y : 8 - row - 2,
-                        x : 6 + column
+                        x : 4 + column,
+                        y : isAttacker ? 8 + row : 5 - row
                     };
                 }
             }
@@ -805,7 +805,7 @@ coh.Battle = (function(){
         
         /**
          * check and append new row data into the result set if necessary.
-         * for the given target array like [0,1,2], newly appended result would be ["0","0","0"].
+         * for the given target array like [0,1,2], newly appended result would be [0,0,0].
          */
         checkResultSet : function(resultSet, targetArray, colNum) {
             var _buf = buf;
@@ -814,7 +814,7 @@ coh.Battle = (function(){
             if (!resultSet[_buf.occupiedRowIndex[colNum]]) {
                 var rowCount = 0;
                 while (rowCount <= _buf.occupiedRowIndex[colNum]) {
-                    resultSet.push(targetArray.join(" ").replace(/\d+/g, 0).split(" "));
+                    resultSet.push(eval("[" + targetArray.join(",").replace(/\d+/g, 0) + "]"));
                     ++rowCount;
                 }
             }
@@ -1084,7 +1084,10 @@ coh.MapLayer = cc.Layer.extend({
                 );
                 // Run battle logic here, place the player.
                 setTimeout(function(){
+                    // attacker
                     _coh.scene["battle"].generate();
+                    // defender
+                    _coh.scene["battle"].generate(1);
                 }, 0);
             };
         
@@ -1202,7 +1205,8 @@ coh.BattleScene = cc.Scene.extend({
                 anchorY : 0.5,
                 scale : winSize.height / map.height,
                 x : winSize.width / 2,
-                y : winSize.height / 2 
+                y : winSize.height / 2,
+                
             });
             
             _buf.tmxList[mapSrc] = map;
@@ -1246,9 +1250,12 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
+        console.log(recharge.succeed);
+        
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
-            for (var j = 0, status; status = row[j]; ++j) {
-                this.placeUnit(player, status, i, j);
+            for (var j = 0, status; (status = row[j]) != undefined; ++j) {
+                console.log(i + " " + j + " " + status);
+                status && this.placeUnit(player, status, i, j);
             }
         }
     },
@@ -1265,12 +1272,23 @@ coh.BattleScene = cc.Scene.extend({
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
         unit.attr({
-            x : tile.x * this.battleMap.scale,
-            y : tile.y * this.battleMap.scale,
-            scale : this.battleMap.scale * _coh.LocalConfig.UNIT_GLOBAL_SCALE
+            x : tile.x,
+            y : tile.y,
+            scale : _coh.LocalConfig.UNIT_GLOBAL_SCALE,
+            anchorX: 0,
+            anchorY: 1
         });
         
-        this.battleLayer.addChild(unit, 0, 1);
+        var label = cc.LabelTTF.create(rowNum + ", " + colNum, "Arial", 24);
+        label.attr({
+            x : tile.x,
+            y : tile.y,
+            anchorX: 0,
+            anchorY: 1
+        });
+        
+        this.battleMap.addChild(unit, tilePosition.y);
+        this.battleMap.addChild(label, tile.x);
         
         _coh.unitList = _coh.unitList || [];
         _coh.unitList.push(unit);

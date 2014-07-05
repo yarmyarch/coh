@@ -7,8 +7,8 @@ var coh = coh || {};
             instance = {
                 getTilePosition : function(isAttacker, row, column) {
                     return {
-                        y : 8 - row - 2,
-                        x : 6 + column
+                        x : 4 + column,
+                        y : isAttacker ? 8 + row : 5 - row
                     };
                 }
             }

@@ -43,7 +43,10 @@ coh.MapLayer = cc.Layer.extend({
                 );
                 // Run battle logic here, place the player.
                 setTimeout(function(){
+                    // attacker
                     _coh.scene["battle"].generate();
+                    // defender
+                    _coh.scene["battle"].generate(1);
                 }, 0);
             };
         
