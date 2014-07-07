@@ -125,8 +125,6 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        console.log(unitConfig);
-        
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                 status && this.placeUnit(player, status, i, j);
@@ -141,11 +139,13 @@ coh.BattleScene = cc.Scene.extend({
         
         // find correct unit from the player via given status(type defined);
         var _coh = coh,
-            unit = _coh.View.getSprite("archer", "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
+            unit = getUnplacedUnit(status),
+            // color is the UI based property. So let's just keep it in Scene.
+            unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
             tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
-        unit.attr({
+        unitSprite.attr({
             x : tile.x,
             y : tile.y,
             scale : _coh.LocalConfig.UNIT_GLOBAL_SCALE,
@@ -161,11 +161,27 @@ coh.BattleScene = cc.Scene.extend({
             anchorY: 1
         });
         
-        this.battleMap.addChild(unit, tilePosition.y);
+        this.battleMap.addChild(unitSprite, tilePosition.y);
         this.battleMap.addChild(label, tile.x);
         
         _coh.unitList = _coh.unitList || [];
-        _coh.unitList.push(unit);
+        _coh.unitList.push(unitSprite);
+        
+        /**
+         * XXXXXX
+         * How to locate unit via the position? unitId?
+        1. Event triggered;
+            click
+        2. Handlers in controller captured;
+        3. Find Unit instance in model via position;
+            instance of Player
+        4. Update model if necessary;
+            HP decrease 1;
+        5. Dispatch filter event, filter triggered;
+        6. Handlers in controller captured;
+        7. Do update in View;
+            BattleScene, update HP info for a sprite.
+        */
     }
 });
 

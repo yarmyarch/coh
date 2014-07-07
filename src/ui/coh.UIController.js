@@ -1,3 +1,7 @@
+/**
+ * Do events and filters binding.
+ */
+
 if ('mouse' in cc.sys.capabilities)
     
     //~ onMouseDown: null,

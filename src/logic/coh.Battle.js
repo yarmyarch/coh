@@ -127,6 +127,15 @@ coh.Battle = (function(){
     }
     
     return self = {
+        
+        getTypeFromStatus : function(status) {
+            return ~~(status / LC.COLOR_COUNT);
+        },
+        
+        getColorFromStatus : function(status) {
+            return status % LC.COLOR_COUNT;
+        },
+        
         /**
          * @param attacker [String] attacker faction
          * @param defender [String] defender faction
@@ -168,6 +177,7 @@ coh.Battle = (function(){
                 totalCount = 0,
                 items = [],
                 _lc = LC,
+                _coh = coh,
                 _buf = buf,
                 _util = util;
             
@@ -178,19 +188,15 @@ coh.Battle = (function(){
                 }
             }
             
-            var targetIndex, targetType, totalColumns = currentBuf[0].length, column, columnCount, color, colorCount, match = true;
+            var targetType, totalColumns = currentBuf[0].length, column, columnCount, color, colorCount, match = true;
             
             // clear the cache
             _buf.occupiedRowIndex = {};
             
             while (items.length > 0) {
-                targetIndex = ~~(Math.random() * items.length);
-                targetType = items[targetIndex];
+                targetType = _coh.util.popRandom(items);
                 
                 if (!_lc.LOCATION_TYPE[targetType]) continue;
-                
-                items[targetIndex] = items[items.length - 1];
-                items.length = items.length - 1;
                 
                 columnCount = 0;
                 colorCount = 0;

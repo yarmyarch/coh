@@ -31,24 +31,70 @@ coh.Player = function(faction, level, unitConfig) {
         // attacker for default.
         isAttacker : true,
         
-        units : {}
+        units : {},
+        
+        /**
+         * indexed by priority and unit type.
+         */
+        unitsUnplaced : {}
     };
     
     var construct = function(faction, level, unitConfig) {
         
         var _buf = buf,
-            _coh = coh;
+            _coh = coh,
+            unit;
+        
         for (var unitName in unitConfig) {
-            !_buf.units[unitName] && (_buf.units[unitName] = []);
+            unit = _coh.units[unitName];
+            if (!unit) continue;
+            
+            unitsUnplaced[unit.priority] = unitsUnplaced[unit.priority] || {};
+            unitsUnplaced[unit.priority][unit.type] = unitsUnplaced[unit.priority][unit.type] || [];
             for (var unitCount = 0, total = unitConfig[unitName]; unitCount < total; ++unitCount) {
-                _buf.units[unitName].push(_coh.Unit.getInstance(unitName));
+                unitsUnplaced[unit.priority][unit.type].push(unitName);
             }
         }
     };
     
+    self.getUnplacedUnit = function(status) {
+        var _coh = coh,
+            _u = unitsUnplaced,
+            type = coh.battle.getTypeFromStatus(status),
+            unit =null, 
+            unitName;
+        
+        for (var i in _u) {
+            if (_u[i][type]) {
+                unitName = _coh.util.popRandom(_u[i][type]);
+                unit = _coh.Unit.getInstance(unitName);
+                break;
+            }
+        }
+        
+        if (!unit) return null;
+        
+        buf.units[unit.getId()] = unit;
+        return unit;
+    };
+    
+    self.killUnit = function(unitId) {
+        var _buf = buf,
+            unit = _buf.units[unitId];
+        
+        if (unit) {
+            _buf.unitsUnplaced[unit.getPriority()][unit.getType()].push(unit.getName());
+            delete(_buf.units[unitId]);
+        }
+    };
+    
+    self.getUnit = function(unitId) {
+        
+    };
+    
     self.getDataGroup = function() {
         return buf.dataGroup;
-    },
+    };
     
     self.getCurrentHP = function() {
         return buf.currentHP;
@@ -58,6 +104,9 @@ coh.Player = function(faction, level, unitConfig) {
         return buf.totalHP;
     };
     
+    /**
+     * get all units that's on the ground.
+     */
     self.getUnits = function() {
         return buf.units;
     };

@@ -58,5 +58,7 @@ coh.LocalConfig = {
     
     MAP_BATTLE_LAYER_NAME : "battleField",
     
-    UNIT_GLOBAL_SCALE : 1.25
+    UNIT_GLOBAL_SCALE : 1.25,
+    
+    PRE_RAND_ID : "YarRi_"
 };

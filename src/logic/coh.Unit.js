@@ -14,24 +14,46 @@ var UnitObject = function(unitName) {
     if (!LC) return null;
     
     var buf = {
-        name : false, 
-        type : 0, 
+        id : 0,
+        name : false,
         
         level : 0,
         
         // generated from level
         defend : 0,
         attack : 0,
+        
+        // other configurations from LC.
+        conf : {}
     };
     
     var construct = function(unitName) {
-        buf.name = unitName;
+        
+        var _buf = buf;
+        
+        _buf.name = unitName;
+        
         // other initializations required;
-        buf.type = LC.type;
+        for (var i in LC) {
+            _buf.conf[i] = LC[i];
+            
+            // append getter for all configs.
+            self["get" + i[0].toUpperCaes() + i.substr(1)] = (function(i) {
+                return function() {
+                    return buf.conf[i];
+                }
+            })(i);
+        }
+        
+        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.util.getRandId();
     }
     
-    self.getType = function() {
-        return buf.type;
+    self.getName = function() {
+        return buf.name;
+    };
+    
+    self.getId = function() {
+        return buf.id;
     };
     
     self.getLevel = function() {

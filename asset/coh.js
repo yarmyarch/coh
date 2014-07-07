@@ -59,19 +59,25 @@ coh.LocalConfig = {
     
     MAP_BATTLE_LAYER_NAME : "battleField",
     
-    UNIT_GLOBAL_SCALE : 1.25
+    UNIT_GLOBAL_SCALE : 1.25,
+    
+    PRE_RAND_ID : "YarRi_"
 };var coh = coh || {};
 
 // ui related config exists in resource.js
 coh.units = {
     archer : {
-        type : 1
+        type : 1,
+        // lower priority results in a closer position to the front line.
+        priority : 10
     },
     knight : {
-        type : 2
+        type : 2,
+        priority : 10
     },
     paladin : {
-        type : 4
+        type : 4,
+        priority : 10
     }
 };var coh = coh || {};
 coh.res = {
@@ -601,24 +607,46 @@ var UnitObject = function(unitName) {
     if (!LC) return null;
     
     var buf = {
-        name : false, 
-        type : 0, 
+        id : 0,
+        name : false,
         
         level : 0,
         
         // generated from level
         defend : 0,
         attack : 0,
+        
+        // other configurations from LC.
+        conf : {}
     };
     
     var construct = function(unitName) {
-        buf.name = unitName;
+        
+        var _buf = buf;
+        
+        _buf.name = unitName;
+        
         // other initializations required;
-        buf.type = LC.type;
+        for (var i in LC) {
+            _buf.conf[i] = LC[i];
+            
+            // append getter for all configs.
+            self["get" + i[0].toUpperCaes() + i.substr(1)] = (function(i) {
+                return function() {
+                    return buf.conf[i];
+                }
+            })(i);
+        }
+        
+        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.util.getRandId();
     }
     
-    self.getType = function() {
-        return buf.type;
+    self.getName = function() {
+        return buf.name;
+    };
+    
+    self.getId = function() {
+        return buf.id;
     };
     
     self.getLevel = function() {
@@ -693,24 +721,70 @@ coh.Player = function(faction, level, unitConfig) {
         // attacker for default.
         isAttacker : true,
         
-        units : {}
+        units : {},
+        
+        /**
+         * indexed by priority and unit type.
+         */
+        unitsUnplaced : {}
     };
     
     var construct = function(faction, level, unitConfig) {
         
         var _buf = buf,
-            _coh = coh;
+            _coh = coh,
+            unit;
+        
         for (var unitName in unitConfig) {
-            !_buf.units[unitName] && (_buf.units[unitName] = []);
+            unit = _coh.units[unitName];
+            if (!unit) continue;
+            
+            unitsUnplaced[unit.priority] = unitsUnplaced[unit.priority] || {};
+            unitsUnplaced[unit.priority][unit.type] = unitsUnplaced[unit.priority][unit.type] || [];
             for (var unitCount = 0, total = unitConfig[unitName]; unitCount < total; ++unitCount) {
-                _buf.units[unitName].push(_coh.Unit.getInstance(unitName));
+                unitsUnplaced[unit.priority][unit.type].push(unitName);
             }
         }
     };
     
+    self.getUnplacedUnit = function(status) {
+        var _coh = coh,
+            _u = unitsUnplaced,
+            type = coh.battle.getTypeFromStatus(status),
+            unit =null, 
+            unitName;
+        
+        for (var i in _u) {
+            if (_u[i][type]) {
+                unitName = _coh.util.popRandom(_u[i][type]);
+                unit = _coh.Unit.getInstance(unitName);
+                break;
+            }
+        }
+        
+        if (!unit) return null;
+        
+        buf.units[unit.getId()] = unit;
+        return unit;
+    };
+    
+    self.killUnit = function(unitId) {
+        var _buf = buf,
+            unit = _buf.units[unitId];
+        
+        if (unit) {
+            _buf.unitsUnplaced[unit.getPriority()][unit.getType()].push(unit.getName());
+            delete(_buf.units[unitId]);
+        }
+    };
+    
+    self.getUnit = function(unitId) {
+        
+    };
+    
     self.getDataGroup = function() {
         return buf.dataGroup;
-    },
+    };
     
     self.getCurrentHP = function() {
         return buf.currentHP;
@@ -720,6 +794,9 @@ coh.Player = function(faction, level, unitConfig) {
         return buf.totalHP;
     };
     
+    /**
+     * get all units that's on the ground.
+     */
     self.getUnits = function() {
         return buf.units;
     };
@@ -872,6 +949,15 @@ coh.Battle = (function(){
     }
     
     return self = {
+        
+        getTypeFromStatus : function(status) {
+            return ~~(status / LC.COLOR_COUNT);
+        },
+        
+        getColorFromStatus : function(status) {
+            return status % LC.COLOR_COUNT;
+        },
+        
         /**
          * @param attacker [String] attacker faction
          * @param defender [String] defender faction
@@ -913,6 +999,7 @@ coh.Battle = (function(){
                 totalCount = 0,
                 items = [],
                 _lc = LC,
+                _coh = coh,
                 _buf = buf,
                 _util = util;
             
@@ -923,19 +1010,15 @@ coh.Battle = (function(){
                 }
             }
             
-            var targetIndex, targetType, totalColumns = currentBuf[0].length, column, columnCount, color, colorCount, match = true;
+            var targetType, totalColumns = currentBuf[0].length, column, columnCount, color, colorCount, match = true;
             
             // clear the cache
             _buf.occupiedRowIndex = {};
             
             while (items.length > 0) {
-                targetIndex = ~~(Math.random() * items.length);
-                targetType = items[targetIndex];
+                targetType = _coh.util.popRandom(items);
                 
                 if (!_lc.LOCATION_TYPE[targetType]) continue;
-                
-                items[targetIndex] = items[items.length - 1];
-                items.length = items.length - 1;
                 
                 columnCount = 0;
                 colorCount = 0;
@@ -1283,8 +1366,6 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        console.log(unitConfig);
-        
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                 status && this.placeUnit(player, status, i, j);
@@ -1299,11 +1380,13 @@ coh.BattleScene = cc.Scene.extend({
         
         // find correct unit from the player via given status(type defined);
         var _coh = coh,
-            unit = _coh.View.getSprite("archer", "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
+            unit = getUnplacedUnit(status),
+            // color is the UI based property. So let's just keep it in Scene.
+            unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
             tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
-        unit.attr({
+        unitSprite.attr({
             x : tile.x,
             y : tile.y,
             scale : _coh.LocalConfig.UNIT_GLOBAL_SCALE,
@@ -1319,11 +1402,27 @@ coh.BattleScene = cc.Scene.extend({
             anchorY: 1
         });
         
-        this.battleMap.addChild(unit, tilePosition.y);
+        this.battleMap.addChild(unitSprite, tilePosition.y);
         this.battleMap.addChild(label, tile.x);
         
         _coh.unitList = _coh.unitList || [];
-        _coh.unitList.push(unit);
+        _coh.unitList.push(unitSprite);
+        
+        /**
+         * XXXXXX
+         * How to locate unit via the position? unitId?
+        1. Event triggered;
+            click
+        2. Handlers in controller captured;
+        3. Find Unit instance in model via position;
+            instance of Player
+        4. Update model if necessary;
+            HP decrease 1;
+        5. Dispatch filter event, filter triggered;
+        6. Handlers in controller captured;
+        7. Do update in View;
+            BattleScene, update HP info for a sprite.
+        */
     }
 });
 
