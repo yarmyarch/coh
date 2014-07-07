@@ -38,7 +38,7 @@ var UnitObject = function(unitName) {
             _buf.conf[i] = LC[i];
             
             // append getter for all configs.
-            self["get" + i[0].toUpperCaes() + i.substr(1)] = (function(i) {
+            self["get" + i[0].toUpperCase() + i.substr(1)] = (function(i) {
                 return function() {
                     return buf.conf[i];
                 }

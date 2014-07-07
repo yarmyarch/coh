@@ -6,7 +6,7 @@ coh.util = (function(){
         riList : {0 : 1}
     }
     
-    return self = function() {
+    return self = {
         isExecutable : function(target) {
             return target instanceof Function && (typeof(target)).toLowerCase() == "function";
         },

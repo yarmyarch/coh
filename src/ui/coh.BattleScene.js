@@ -112,7 +112,7 @@ coh.BattleScene = cc.Scene.extend({
     placePlayer : function(player) {
         
         var unitConfig = {},
-            units = player.getUnits(),
+            units = player.getUnitConfig(),
             _coh = coh;
         
         var unitType;
@@ -120,13 +120,15 @@ coh.BattleScene = cc.Scene.extend({
             // no interfaces changed.
             unitType = _coh.Unit.getType(unitName);
             unitConfig[unitType] || (unitConfig[unitType] = 0);
-            unitConfig[unitType] += units[unitName].length;
+            unitConfig[unitType] += units[unitName];
         }
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
+                // XXXXXX
+                // BUG exsiting here.
                 status && this.placeUnit(player, status, i, j);
             }
         }
@@ -139,11 +141,13 @@ coh.BattleScene = cc.Scene.extend({
         
         // find correct unit from the player via given status(type defined);
         var _coh = coh,
-            unit = getUnplacedUnit(status),
+            unit = player.getUnplacedUnit(status),
             // color is the UI based property. So let's just keep it in Scene.
             unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
             tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
+        
+        console.log(unit);
         
         unitSprite.attr({
             x : tile.x,

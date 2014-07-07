@@ -43,24 +43,26 @@ coh.Player = function(faction, level, unitConfig) {
         
         var _buf = buf,
             _coh = coh,
+            _u = _buf.unitsUnplaced,
             unit;
         
         for (var unitName in unitConfig) {
             unit = _coh.units[unitName];
             if (!unit) continue;
             
-            unitsUnplaced[unit.priority] = unitsUnplaced[unit.priority] || {};
-            unitsUnplaced[unit.priority][unit.type] = unitsUnplaced[unit.priority][unit.type] || [];
+            _u[unit.priority] = _u[unit.priority] || {};
+            _u[unit.priority][unit.type] = _u[unit.priority][unit.type] || [];
             for (var unitCount = 0, total = unitConfig[unitName]; unitCount < total; ++unitCount) {
-                unitsUnplaced[unit.priority][unit.type].push(unitName);
+                _u[unit.priority][unit.type].push(unitName);
             }
         }
     };
     
     self.getUnplacedUnit = function(status) {
         var _coh = coh,
-            _u = unitsUnplaced,
-            type = coh.battle.getTypeFromStatus(status),
+            _buf = buf,
+            _u = _buf.unitsUnplaced,
+            type = _coh.Battle.getTypeFromStatus(status),
             unit =null, 
             unitName;
         
@@ -74,7 +76,7 @@ coh.Player = function(faction, level, unitConfig) {
         
         if (!unit) return null;
         
-        buf.units[unit.getId()] = unit;
+        _buf.units[unit.getId()] = unit;
         return unit;
     };
     

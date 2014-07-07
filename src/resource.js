@@ -84,9 +84,8 @@ coh.res = {
 XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
-    translate dataGroup into map positions in BattleScene;
-
-    in battle, the map with a background should be split out from the battle layer.
+    But when translate dataGroup into map positions in BattleScene;
+    MVC structure based on filterUtil, see battleScene.js;
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 

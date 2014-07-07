@@ -165,13 +165,44 @@ coh.res = {
 XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
-    translate dataGroup into map positions in BattleScene;
-
-    in battle, the map with a background should be split out from the battle layer.
+    But when translate dataGroup into map positions in BattleScene;
+    MVC structure based on filterUtil, see battleScene.js;
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
-*///~ usage:
+*/var coh = coh || {};
+coh.util = (function(){
+    var self;
+    
+    var buf = {
+        riList : {0 : 1}
+    }
+    
+    return self = {
+        isExecutable : function(target) {
+            return target instanceof Function && (typeof(target)).toLowerCase() == "function";
+        },
+        
+        popRandom : function(arr) {
+            var randomIndex = ~~(Math.random() * arr.length);
+                inst = arr[randomIndex];
+            
+            arr[randomIndex] = arr[arr.length - 1];
+            arr.length -= 1;
+            return inst;
+        },
+        
+        getRandId : function() {
+            var ri = 0,
+                _buf = buf;
+            while (_buf.riList[ri]) {
+                ri = (+(Math.random() + "").substring(2,10)).toString(36);
+            }
+            buf[ri] = 1;
+            return ri;
+        }
+    };
+})();//~ usage:
 //~ var Fuck = function(){
 
 //~ SlideUtil.run([document.getElementById("Fucker").clientWidth, 10, 0.3, 100, function(target, range, isEnd){
@@ -631,7 +662,7 @@ var UnitObject = function(unitName) {
             _buf.conf[i] = LC[i];
             
             // append getter for all configs.
-            self["get" + i[0].toUpperCaes() + i.substr(1)] = (function(i) {
+            self["get" + i[0].toUpperCase() + i.substr(1)] = (function(i) {
                 return function() {
                     return buf.conf[i];
                 }
@@ -733,24 +764,26 @@ coh.Player = function(faction, level, unitConfig) {
         
         var _buf = buf,
             _coh = coh,
+            _u = _buf.unitsUnplaced,
             unit;
         
         for (var unitName in unitConfig) {
             unit = _coh.units[unitName];
             if (!unit) continue;
             
-            unitsUnplaced[unit.priority] = unitsUnplaced[unit.priority] || {};
-            unitsUnplaced[unit.priority][unit.type] = unitsUnplaced[unit.priority][unit.type] || [];
+            _u[unit.priority] = _u[unit.priority] || {};
+            _u[unit.priority][unit.type] = _u[unit.priority][unit.type] || [];
             for (var unitCount = 0, total = unitConfig[unitName]; unitCount < total; ++unitCount) {
-                unitsUnplaced[unit.priority][unit.type].push(unitName);
+                _u[unit.priority][unit.type].push(unitName);
             }
         }
     };
     
     self.getUnplacedUnit = function(status) {
         var _coh = coh,
-            _u = unitsUnplaced,
-            type = coh.battle.getTypeFromStatus(status),
+            _buf = buf,
+            _u = _buf.unitsUnplaced,
+            type = _coh.Battle.getTypeFromStatus(status),
             unit =null, 
             unitName;
         
@@ -764,7 +797,7 @@ coh.Player = function(faction, level, unitConfig) {
         
         if (!unit) return null;
         
-        buf.units[unit.getId()] = unit;
+        _buf.units[unit.getId()] = unit;
         return unit;
     };
     
@@ -1353,7 +1386,7 @@ coh.BattleScene = cc.Scene.extend({
     placePlayer : function(player) {
         
         var unitConfig = {},
-            units = player.getUnits(),
+            units = player.getUnitConfig(),
             _coh = coh;
         
         var unitType;
@@ -1361,13 +1394,15 @@ coh.BattleScene = cc.Scene.extend({
             // no interfaces changed.
             unitType = _coh.Unit.getType(unitName);
             unitConfig[unitType] || (unitConfig[unitType] = 0);
-            unitConfig[unitType] += units[unitName].length;
+            unitConfig[unitType] += units[unitName];
         }
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
+                // XXXXXX
+                // BUG exsiting here.
                 status && this.placeUnit(player, status, i, j);
             }
         }
@@ -1380,11 +1415,13 @@ coh.BattleScene = cc.Scene.extend({
         
         // find correct unit from the player via given status(type defined);
         var _coh = coh,
-            unit = getUnplacedUnit(status),
+            unit = player.getUnplacedUnit(status),
             // color is the UI based property. So let's just keep it in Scene.
             unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
             tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
+        
+        console.log(unit);
         
         unitSprite.attr({
             x : tile.x,
