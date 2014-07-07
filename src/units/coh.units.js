@@ -8,7 +8,7 @@ coh.units = {
     knight : {
         type : 2
     },
-    paradin : {
+    paladin : {
         type : 4
     }
 };

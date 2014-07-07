@@ -100,7 +100,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24,  });
+        var player = new coh.Player("", 1, { archer : 24, knight: 4 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -124,6 +124,8 @@ coh.BattleScene = cc.Scene.extend({
         }
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+        
+        console.log(unitConfig);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {

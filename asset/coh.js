@@ -1,73 +1,5 @@
 
 var coh = coh || {};
-coh.res = {
-    //image
-    //plist
-    //fnt
-    //tmx
-    //bgm
-    //effect
-    
-    HelloWorld_png : "res/HelloWorld.png",
-    CloseNormal_png : "res/CloseNormal.png",
-    CloseSelected_png : "res/CloseSelected.png",
-    
-    map : {
-        districts : {
-            forest : "res/tmxmap/forest.tmx"
-        },
-        battle : {
-            field_16X16 : "res/tmxmap/battle_16X16.tmx?v=1"
-        }
-    },
-    imgs : {
-        market : "res/tmxmap/b_market.jpg",
-        forest : "res/tmxmap/forest.jpg"
-    },
-    sprite : {
-        awen : {
-            walking : {
-                plist : "res/sprite/sprite.plist",
-                img : "res/sprite/sprite.png"
-            }
-        },
-        archer : {
-            idle : {
-                plist : "res/sprite/archer_idle.plist",
-                img_0 : "res/sprite/archer_blue.png?v=1",
-                img_1 : "res/sprite/archer_gold.png?v=1",
-                img_2 : "res/sprite/archer_white.png?v=1"
-            }
-        }
-    }
-};
-
-(function() {
-    var generateRes = function(obj) {
-        var result = [];
-        for (var i in obj) {
-            if (obj[i] instanceof Object) {
-                result = result.concat(generateRes(obj[i]));
-            } else {
-                result.push(obj[i]);
-            }
-        }
-        return result;
-    }
-    coh.resources = generateRes(coh.res);
-})();
-
-/**
-XXXXXX
-TODO : 
-    set sprite: run/walk in Actor;
-    translate dataGroup into map positions in BattleScene;
-
-    in battle, the map with a background should be split out from the battle layer.
-  
-ERROR using spriteFrameCache in coh.View.js, line 75.
-
-*/var coh = coh || {};
 coh.LocalConfig = {
     COLOR : {
         GREEN : 1,
@@ -128,7 +60,112 @@ coh.LocalConfig = {
     MAP_BATTLE_LAYER_NAME : "battleField",
     
     UNIT_GLOBAL_SCALE : 1.25
-};//~ usage:
+};var coh = coh || {};
+
+// ui related config exists in resource.js
+coh.units = {
+    archer : {
+        type : 1
+    },
+    knight : {
+        type : 2
+    },
+    paladin : {
+        type : 4
+    }
+};var coh = coh || {};
+coh.res = {
+    //image
+    //plist
+    //fnt
+    //tmx
+    //bgm
+    //effect
+    
+    HelloWorld_png : "res/HelloWorld.png",
+    CloseNormal_png : "res/CloseNormal.png",
+    CloseSelected_png : "res/CloseSelected.png",
+    
+    map : {
+        districts : {
+            forest : "res/tmxmap/forest.tmx"
+        },
+        battle : {
+            field_16X16 : "res/tmxmap/battle_16X16.tmx?v=1"
+        }
+    },
+    imgs : {
+        market : "res/tmxmap/b_market.jpg",
+        forest : "res/tmxmap/forest.jpg"
+    },
+    sprite : {
+        awen : {
+            walking : {
+                plist : "res/sprite/sprite.plist",
+                img : "res/sprite/imgs/sprite.png"
+            }
+        },
+        /**
+         * geneted by unit generator.
+        archer : {
+            idle : {
+                plist : "res/sprite/archer_idle.plist",
+                img_0 : "res/sprite/imgs/archer_blue.png?v=1",
+                img_1 : "res/sprite/imgs/archer_gold.png?v=1",
+                img_2 : "res/sprite/imgs/archer_white.png?v=1"
+            }
+        },
+        */
+    }
+};
+
+(function() {
+    /**
+     * Generate pure resource object without layer.
+     */
+    var generateRes = function(obj) {
+        var result = [];
+        for (var i in obj) {
+            if (obj[i] instanceof Object) {
+                result = result.concat(generateRes(obj[i]));
+            } else {
+                result.push(obj[i]);
+            }
+        }
+        return result;
+    };
+    
+    /**
+     * Full fill the configs of sprite from coh.units.
+     */
+    var generateUnits = function(resObj) {
+        var _coh = coh;
+        for (var i in _coh.units) {
+            resObj.sprite[i] = {};
+            resObj.sprite[i].idle = {
+                plist : "res/sprite/" + i + "_idle.plist",
+                img_0 : "res/sprite/imgs/" + i + "_blue.png",
+                img_1 : "res/sprite/imgs/" + i + "_gold.png",
+                img_2 : "res/sprite/imgs/" + i + "_white.png"
+            };
+        }
+        return resObj;
+    };
+    
+    coh.resources = generateRes(generateUnits(coh.res));
+})();
+
+/**
+XXXXXX
+TODO : 
+    set sprite: run/walk in Actor;
+    translate dataGroup into map positions in BattleScene;
+
+    in battle, the map with a background should be split out from the battle layer.
+  
+ERROR using spriteFrameCache in coh.View.js, line 75.
+
+*///~ usage:
 //~ var Fuck = function(){
 
 //~ SlideUtil.run([document.getElementById("Fucker").clientWidth, 10, 0.3, 100, function(target, range, isEnd){
@@ -1023,14 +1060,7 @@ coh.Battle = (function(){
     [0,0,0,0,0, 0, 0,5],
     [0,0,0,0,0, 0, 0,0]
 ]
-*/var coh = coh || {};
-
-// ui related config exists in resource.js
-coh.units = {
-    archer : {
-        type : 1
-    }
-};/**
+*//**
  *@version draft
  */
 
@@ -1228,7 +1258,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24 });
+        var player = new coh.Player("", 1, { archer : 24, knight: 4 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -1252,6 +1282,8 @@ coh.BattleScene = cc.Scene.extend({
         }
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+        
+        console.log(unitConfig);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
