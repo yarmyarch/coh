@@ -100,7 +100,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24 });
+        var player = new coh.Player("", 1, { archer : 24,  });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";

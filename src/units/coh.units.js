@@ -4,5 +4,11 @@ var coh = coh || {};
 coh.units = {
     archer : {
         type : 1
+    },
+    knight : {
+        type : 2
+    },
+    paradin : {
+        type : 4
     }
 };

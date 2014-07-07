@@ -27,21 +27,27 @@ coh.res = {
         awen : {
             walking : {
                 plist : "res/sprite/sprite.plist",
-                img : "res/sprite/sprite.png"
+                img : "res/sprite/images/sprite.png"
             }
         },
+        /**
+         * geneted by unit generator.
         archer : {
             idle : {
                 plist : "res/sprite/archer_idle.plist",
-                img_0 : "res/sprite/archer_blue.png?v=1",
-                img_1 : "res/sprite/archer_gold.png?v=1",
-                img_2 : "res/sprite/archer_white.png?v=1"
+                img_0 : "res/sprite/images/archer_blue.png?v=1",
+                img_1 : "res/sprite/images/archer_gold.png?v=1",
+                img_2 : "res/sprite/images/archer_white.png?v=1"
             }
-        }
+        },
+        */
     }
 };
 
 (function() {
+    /**
+     * Generate pure resource object without layer.
+     */
     var generateRes = function(obj) {
         var result = [];
         for (var i in obj) {
@@ -52,8 +58,26 @@ coh.res = {
             }
         }
         return result;
-    }
-    coh.resources = generateRes(coh.res);
+    };
+    
+    /**
+     * Full fill the configs of sprite from coh.units.
+     */
+    var generateUnits = function(resObj) {
+        var _coh = coh;
+        for (var i in _coh.units) {
+            resObj.sprite[i] = {};
+            resObj.sprite[i].idle = {
+                plist : "res/sprite/" + i + "_idle.plist",
+                img_0 : "res/sprite/images/" + i + "_blue.png",
+                img_1 : "res/sprite/images/" + i + "_gold.png",
+                img_2 : "res/sprite/images/" + i + "_white.png"
+            };
+        }
+        return resObj;
+    };
+    
+    coh.resources = generateRes(generateUnits(coh.res));
 })();
 
 /**
