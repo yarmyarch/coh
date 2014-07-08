@@ -934,19 +934,19 @@ coh.Battle = (function(){
         // indexed by the type configed in local config.
         locationTest : {
             1 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK;
             },
             2 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK;
             },
             3 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK;
             },
             4 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK
-                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK
+                    && dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK
+                    && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK
+                    && dataGroup[dataGroup.length - 2][colNum + 1] == LC.STATUS_BLANK;
             }
         }
     }
@@ -1162,8 +1162,9 @@ coh.Battle = (function(){
                             // inject generated status into the resultset and buffered data/
                             result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
                                 = currentBuf[blankIndex][column + columnCount]
-                                = rowCount == 0 && columnCount == 0 ? 
-                                    targetType * _lc.COLOR_COUNT + color : _lc.STATUS_OCCUPIED;
+                                //~ = targetType * _lc.COLOR_COUNT + color
+                                = (rowCount == 0 && columnCount == 0 ? 
+                                    (targetType * _lc.COLOR_COUNT + color) : _lc.STATUS_OCCUPIED);
                             
                             // record avaliable row index, for next possible 
                             ++_buf.occupiedRowIndex[column + columnCount];
@@ -1444,7 +1445,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin : 2 });
+        var player = new coh.Player("", 1, { archer : 12, knight: 4, paladin : 6 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -1469,7 +1470,8 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        for (var i = 0, row; row = recharge.succeed[i]; ++i) {
+        for (var i = 0, row; row = recharge.dataGroup[i]; ++i) {
+            console.log(row);
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                 status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
             }
@@ -1489,8 +1491,6 @@ coh.BattleScene = cc.Scene.extend({
             // get tile and do the possible translation, for example for a type 2 defender unit.
             tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
-        
-        console.log(unit);
         
         unitSprite.attr({
             x : tile.x,

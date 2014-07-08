@@ -13,19 +13,19 @@ coh.Battle = (function(){
         // indexed by the type configed in local config.
         locationTest : {
             1 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK;
             },
             2 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK;
             },
             3 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK;
             },
             4 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK
-                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.STATUS_BLANK;
+                return dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK
+                    && dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK
+                    && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK
+                    && dataGroup[dataGroup.length - 2][colNum + 1] == LC.STATUS_BLANK;
             }
         }
     }
@@ -241,8 +241,9 @@ coh.Battle = (function(){
                             // inject generated status into the resultset and buffered data/
                             result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
                                 = currentBuf[blankIndex][column + columnCount]
-                                = rowCount == 0 && columnCount == 0 ? 
-                                    targetType * _lc.COLOR_COUNT + color : _lc.STATUS_OCCUPIED;
+                                //~ = targetType * _lc.COLOR_COUNT + color
+                                = (rowCount == 0 && columnCount == 0 ? 
+                                    (targetType * _lc.COLOR_COUNT + color) : _lc.STATUS_OCCUPIED);
                             
                             // record avaliable row index, for next possible 
                             ++_buf.occupiedRowIndex[column + columnCount];

@@ -101,7 +101,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin : 2 });
+        var player = new coh.Player("", 1, { archer : 12, knight: 4, paladin : 6 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -126,7 +126,8 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        for (var i = 0, row; row = recharge.succeed[i]; ++i) {
+        for (var i = 0, row; row = recharge.dataGroup[i]; ++i) {
+            console.log(row);
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                 status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
             }
@@ -146,8 +147,6 @@ coh.BattleScene = cc.Scene.extend({
             // get tile and do the possible translation, for example for a type 2 defender unit.
             tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
-        
-        console.log(unit);
         
         unitSprite.attr({
             x : tile.x,
