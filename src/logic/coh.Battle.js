@@ -6,7 +6,6 @@ coh.Battle = (function(){
     var LC = coh.LocalConfig;
     
     var buf = {
-        occupiedRowIndex : {}
     };
     
     var handlerList = {
@@ -99,13 +98,12 @@ coh.Battle = (function(){
          * check and append new row data into the result set if necessary.
          * for the given target array like [0,1,2], newly appended result would be [0,0,0].
          */
-        checkResultSet : function(resultSet, targetArray, colNum) {
-            var _buf = buf;
+        checkResultSet : function(resultSet, targetArray, rowNum) {
             
             // init the result set.
-            if (!resultSet[_buf.occupiedRowIndex[colNum]]) {
+            if (!resultSet[rowNum]) {
                 var rowCount = 0;
-                while (rowCount <= _buf.occupiedRowIndex[colNum]) {
+                while (rowCount <= rowNum) {
                     resultSet.push(eval("[" + targetArray.join(",").replace(/\d+/g, 0) + "]"));
                     ++rowCount;
                 }
@@ -227,33 +225,27 @@ coh.Battle = (function(){
                     faild.push(targetType);
                 } else {
                     var typeConfig = _lc.LOCATION_TYPE[targetType],
-                        blankIndex = 0;
+                        blankIndex = 0,
+                        rBlankIndex = 0;
                     for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                         for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
                             blankIndex = Math.max(blankIndex, _util.getBlankIndex(currentBuf, column + columnCount));
+                            rBlankIndex = Math.max(blankIndex, _util.getBlankIndex(result, column + columnCount));
                         }
                         for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
-                            if (!_buf.occupiedRowIndex[column + columnCount]) _buf.occupiedRowIndex[column + columnCount] = 0;
-                            
                             // init result row with all 0;
-                            result = _util.checkResultSet(result, currentBuf[0], column + columnCount);
+                            result = _util.checkResultSet(result, currentBuf[0], rBlankIndex);
                             
-                            // inject generated status into the resultset and buffered data/
-                            result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
+                            // inject generated status into the resultset and buffered data
+                            result[rBlankIndex][column + columnCount]
                                 = currentBuf[blankIndex][column + columnCount]
                                 //~ = targetType * _lc.COLOR_COUNT + color
                                 = (rowCount == 0 && columnCount == 0 ? 
                                     (targetType * _lc.COLOR_COUNT + color) : _lc.STATUS_OCCUPIED);
-                            
-                            // record avaliable row index, for next possible 
-                            ++_buf.occupiedRowIndex[column + columnCount];
                         }
                     }
                 }
             }
-            
-            // reset the size of result, to avoid the extra row appended by checkResultSet.
-            result.length = currentBuf.length;
             
             return {
                 succeed : result,

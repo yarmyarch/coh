@@ -101,7 +101,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 12, knight: 4, paladin : 6 });
+        var player = new coh.Player("", 1, { archer : 18, knight: 4, paladin : 2 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -126,7 +126,7 @@ coh.BattleScene = cc.Scene.extend({
         
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
-        for (var i = 0, row; row = recharge.dataGroup[i]; ++i) {
+        for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             console.log(row);
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                 status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
@@ -151,7 +151,8 @@ coh.BattleScene = cc.Scene.extend({
         unitSprite.attr({
             x : tile.x,
             y : tile.y,
-            scale : _coh.LocalConfig.UNIT_GLOBAL_SCALE,
+            scale : _coh.LocalConfig.SPRITE_SCALE[unit.getType()],
+            //~ scale : 1,
             anchorX: 0,
             anchorY: 1
         });
