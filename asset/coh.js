@@ -41,7 +41,8 @@ coh.LocalConfig = {
             [1, 1]
         ]
     },
-    BLANK : 0,
+    STATUS_BLANK : 0,
+    STATUS_OCCUPIED : 1,
     COLOR_COUNT : 3,
     BLANK_DATA_GROUP : [
         [0,0,0,0,0,0,0,0],
@@ -171,7 +172,7 @@ TODO :
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
 */var coh = coh || {};
-coh.util = (function(){
+coh.Util = (function(){
     var self;
     
     var buf = {
@@ -436,17 +437,25 @@ var SlideUtil = (function() {
     };
     
     return self;
-})();var coh = coh || {};
+})();/**
+ *@implements TileSelector
+ */
+ 
+var coh = coh || {};
+coh.utils = coh.utils || {};
 (function() {
     var instance;
     
     var getInstance = function() {
         if (!instance) {
             instance = {
-                getTilePosition : function(isAttacker, row, column) {
+                getTilePosition : function(isAttacker, type, row, column) {
+                    var x = 4 + column,
+                        y = isAttacker ? 8 + row : 5 - row;
+                    
                     return {
-                        x : 4 + column,
-                        y : isAttacker ? 8 + row : 5 - row
+                        x : x,
+                        y : y
                     };
                 }
             }
@@ -454,12 +463,69 @@ var SlideUtil = (function() {
         return instance;
     };
     
-    coh.TileSelector_16X16 = function() {
+    coh.utils.TileSelector_16X16 = function() {
         //getTilePosition
         return getInstance();
     }
 
-    coh.TileSelector_16X16.getInstance = getInstance;
+    coh.utils.TileSelector_16X16.getInstance = getInstance;
+})();/**
+ *@implements TileSelector
+ * relay on instance of TileSelector,
+ * Decorator of tileSelectors.
+ */
+
+var coh = coh || {};
+coh.utils = coh.utils || {};
+(function() {
+    var instance;
+    
+    var handlerList = {
+        baseTransformer : {
+            2 : function(isAttacker, position) {
+                if (!isAttacker) {
+                    position.y -= 1;
+                }
+                return position;
+            },
+            3 : function(isAttacker, position) {
+                if (!isAttacker) {
+                    position.x -= 1;
+                }
+                return position;
+            },
+            4 : function(isAttacker, position) {
+                if (!isAttacker) {
+                    position.y -= 1;
+                    //~ position.x -= 1;
+                }
+                return position;
+            }
+        }
+    };
+    
+    var getInstance = function(tileSelector) {
+        if (!instance) {
+            instance = {
+                getTilePosition : function(isAttacker, type, row, column) {
+                    if (!tileSelector) return null;
+                    else {
+                        var position = tileSelector.getTilePosition(isAttacker, type, row, column);
+                        handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](isAttacker, position));
+                    }
+                    return position;
+                }
+            }
+        }
+        return instance;
+    };
+    
+    coh.utils.BaseTileTransformer = function(tileSelector) {
+        //getTilePosition
+        return getInstance(tileSelector);
+    }
+
+    coh.utils.BaseTileTransformer.getInstance = getInstance;
 })();var coh = coh || {};
 coh.View = (function() {
     
@@ -669,7 +735,7 @@ var UnitObject = function(unitName) {
             })(i);
         }
         
-        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.util.getRandId();
+        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
     }
     
     self.getName = function() {
@@ -789,7 +855,7 @@ coh.Player = function(faction, level, unitConfig) {
         
         for (var i in _u) {
             if (_u[i][type]) {
-                unitName = _coh.util.popRandom(_u[i][type]);
+                unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
                 break;
             }
@@ -868,19 +934,19 @@ coh.Battle = (function(){
         // indexed by the type configed in local config.
         locationTest : {
             1 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK;
             },
             2 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK;
             },
             3 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK;
             },
             4 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK
-                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum] == LC.BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK
+                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.STATUS_BLANK;
             }
         }
     }
@@ -892,7 +958,7 @@ coh.Battle = (function(){
         getBlankIndex : function(dataGroup, colNum) {
             
             // what if there are blanks blocked by some a 2*2 target?
-            var blank = LC.BLANK;
+            var blank = LC.STATUS_BLANK;
             for (var i = dataGroup.length - 1; i >= 0; --i) {
                 if (+dataGroup[i][colNum] != blank) return i + 1;
             }
@@ -1049,7 +1115,7 @@ coh.Battle = (function(){
             _buf.occupiedRowIndex = {};
             
             while (items.length > 0) {
-                targetType = _coh.util.popRandom(items);
+                targetType = _coh.Util.popRandom(items);
                 
                 if (!_lc.LOCATION_TYPE[targetType]) continue;
                 
@@ -1096,7 +1162,8 @@ coh.Battle = (function(){
                             // inject generated status into the resultset and buffered data/
                             result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
                                 = currentBuf[blankIndex][column + columnCount]
-                                = targetType * _lc.COLOR_COUNT + color;
+                                = rowCount == 0 && columnCount == 0 ? 
+                                    targetType * _lc.COLOR_COUNT + color : _lc.STATUS_OCCUPIED;
                             
                             // record avaliable row index, for next possible 
                             ++_buf.occupiedRowIndex[column + columnCount];
@@ -1226,7 +1293,9 @@ coh.MapLayer = cc.Layer.extend({
             investigate = function() {
                 _coh.scene["battle"] = _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene(_coh.res.map.battle.field_16X16, _coh.res.imgs.market));
                 
-                _coh.scene["battle"].setTileSelector(coh.TileSelector_16X16.getInstance());
+                _coh.scene["battle"].setTileSelector(
+                    _coh.utils.BaseTileTransformer.getInstance(_coh.utils.TileSelector_16X16.getInstance())
+                );
                 
                 cc.director.runScene(
                     cc.TransitionFadeDown.create(1.2, _coh.scene["battle"])
@@ -1273,7 +1342,8 @@ coh.MapLayer = cc.Layer.extend({
         return true;
     }
 });/**
- * relay on tileSelector, if you would like to place units to the battle ground.
+ * relay on :
+    TileSelector: if you would like to place units to the battle ground;
  * inject it from the outer factory.
  */
 var coh = coh || {};
@@ -1374,7 +1444,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24, knight: 4 });
+        var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin : 2 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -1401,9 +1471,7 @@ coh.BattleScene = cc.Scene.extend({
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                // XXXXXX
-                // BUG exsiting here.
-                status && this.placeUnit(player, status, i, j);
+                status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
             }
         }
     },
@@ -1418,7 +1486,8 @@ coh.BattleScene = cc.Scene.extend({
             unit = player.getUnplacedUnit(status),
             // color is the UI based property. So let's just keep it in Scene.
             unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
-            tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
+            // get tile and do the possible translation, for example for a type 2 defender unit.
+            tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
         console.log(unit);

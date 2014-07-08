@@ -1,5 +1,6 @@
 /**
- * relay on tileSelector, if you would like to place units to the battle ground.
+ * relay on :
+    TileSelector: if you would like to place units to the battle ground;
  * inject it from the outer factory.
  */
 var coh = coh || {};
@@ -100,7 +101,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 24, knight: 4 });
+        var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin : 2 });
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -127,9 +128,7 @@ coh.BattleScene = cc.Scene.extend({
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                // XXXXXX
-                // BUG exsiting here.
-                status && this.placeUnit(player, status, i, j);
+                status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
             }
         }
     },
@@ -144,7 +143,8 @@ coh.BattleScene = cc.Scene.extend({
             unit = player.getUnplacedUnit(status),
             // color is the UI based property. So let's just keep it in Scene.
             unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
-            tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), rowNum, colNum),
+            // get tile and do the possible translation, for example for a type 2 defender unit.
+            tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
             tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
         
         console.log(unit);

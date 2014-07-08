@@ -13,19 +13,19 @@ coh.Battle = (function(){
         // indexed by the type configed in local config.
         locationTest : {
             1 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK;
             },
             2 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK;
             },
             3 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK;
             },
             4 : function(dataGroup, colNum) {
-                return +dataGroup[dataGroup.length - 1][colNum] == LC.BLANK
-                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum] == LC.BLANK
-                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.BLANK;
+                return +dataGroup[dataGroup.length - 1][colNum] == LC.STATUS_BLANK
+                    && +dataGroup[dataGroup.length - 1][colNum + 1] == LC.STATUS_BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum] == LC.STATUS_BLANK
+                    && +dataGroup[dataGroup.length - 2][colNum + 1] == LC.STATUS_BLANK;
             }
         }
     }
@@ -37,7 +37,7 @@ coh.Battle = (function(){
         getBlankIndex : function(dataGroup, colNum) {
             
             // what if there are blanks blocked by some a 2*2 target?
-            var blank = LC.BLANK;
+            var blank = LC.STATUS_BLANK;
             for (var i = dataGroup.length - 1; i >= 0; --i) {
                 if (+dataGroup[i][colNum] != blank) return i + 1;
             }
@@ -194,7 +194,7 @@ coh.Battle = (function(){
             _buf.occupiedRowIndex = {};
             
             while (items.length > 0) {
-                targetType = _coh.util.popRandom(items);
+                targetType = _coh.Util.popRandom(items);
                 
                 if (!_lc.LOCATION_TYPE[targetType]) continue;
                 
@@ -241,7 +241,8 @@ coh.Battle = (function(){
                             // inject generated status into the resultset and buffered data/
                             result[_buf.occupiedRowIndex[column + columnCount]][column + columnCount]
                                 = currentBuf[blankIndex][column + columnCount]
-                                = targetType * _lc.COLOR_COUNT + color;
+                                = rowCount == 0 && columnCount == 0 ? 
+                                    targetType * _lc.COLOR_COUNT + color : _lc.STATUS_OCCUPIED;
                             
                             // record avaliable row index, for next possible 
                             ++_buf.occupiedRowIndex[column + columnCount];

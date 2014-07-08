@@ -4,10 +4,11 @@
         "src/config.js",
         "src/units/coh.units.js",
         "src/resource.js",
-        "src/util/coh.util.js",
+        "src/util/coh.Util.js",
         
         "src/util/SlideUtil.js",
-        "src/util/coh.TileSelector_16X16.js",
+        "src/util/coh.utils.TileSelector_16X16.js",
+        "src/util/coh.utils.BaseTileTransformer.js",
         
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",

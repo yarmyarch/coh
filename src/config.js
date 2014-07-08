@@ -40,7 +40,8 @@ coh.LocalConfig = {
             [1, 1]
         ]
     },
-    BLANK : 0,
+    STATUS_BLANK : 0,
+    STATUS_OCCUPIED : 1,
     COLOR_COUNT : 3,
     BLANK_DATA_GROUP : [
         [0,0,0,0,0,0,0,0],

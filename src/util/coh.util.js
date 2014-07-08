@@ -1,5 +1,5 @@
 var coh = coh || {};
-coh.util = (function(){
+coh.Util = (function(){
     var self;
     
     var buf = {

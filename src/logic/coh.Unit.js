@@ -45,7 +45,7 @@ var UnitObject = function(unitName) {
             })(i);
         }
         
-        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.util.getRandId();
+        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
     }
     
     self.getName = function() {

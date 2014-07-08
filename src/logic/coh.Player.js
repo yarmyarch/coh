@@ -68,7 +68,7 @@ coh.Player = function(faction, level, unitConfig) {
         
         for (var i in _u) {
             if (_u[i][type]) {
-                unitName = _coh.util.popRandom(_u[i][type]);
+                unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
                 break;
             }
