@@ -9,6 +9,7 @@
         "src/util/SlideUtil.js",
         "src/util/coh.utils.TileSelector_16X16.js",
         "src/util/coh.utils.BaseTileTransformer.js",
+        "src/util/coh.utils.FilterUtil.js",
         
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",
@@ -19,5 +20,6 @@
         "src/ui/coh.MapScene.js",
         "src/ui/coh.MapLayer.js",
         "src/ui/coh.BattleScene.js"
+        "src/ui/coh.UIController.js"
     ]
 }

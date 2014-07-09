@@ -35,15 +35,17 @@ coh.utils = coh.utils || {};
     
     var getInstance = function(tileSelector) {
         if (!instance) {
-            instance = {
-                getTilePosition : function(isAttacker, type, row, column) {
-                    if (!tileSelector) return null;
-                    else {
-                        var position = tileSelector.getTilePosition(isAttacker, type, row, column);
-                        handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](isAttacker, position));
-                    }
-                    return position;
-                }
+            if (!tileSelector) return null;
+            instance = {};
+            
+            for (var i in tileSelector) {
+                instance[i] = tileSelector[i];
+            }
+            instance.getTilePosition = function(isAttacker, type, row, column) {
+                var position = tileSelector.getTilePosition(isAttacker, type, row, column);
+                handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](isAttacker, position));
+                
+                return position;
             }
         }
         return instance;

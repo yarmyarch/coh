@@ -16,7 +16,7 @@ coh.res = {
             forest : "res/tmxmap/forest.tmx"
         },
         battle : {
-            field_16X16 : "res/tmxmap/battle_16X16.tmx?v=1"
+            field_16X16 : "res/tmxmap/battle_16X16.tmx"
         }
     },
     imgs : {
