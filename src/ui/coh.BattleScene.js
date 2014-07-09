@@ -136,21 +136,16 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitSprite : function(posX, posY) {
-            var winSize = cc.director.getWinSize(),
-                tile = handlerList.tileSelector.getTilePositionFromCoord(winSize.width, winSize.height, posX, posY),
+        getUnitData : function(posX, posY) {
+            var scale = this.battleMap.scale,
+                tile = handlerList.tileSelector.getTilePositionFromCoord(
+                    this.battleMap.width * scale, 
+                    this.battleMap.height * scale,
+                    posX - this.battleMap.x * scale, 
+                    posY
+                ),
                 _buf = buf;
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unitSprite;
-        },
-        
-        /**
-         * get unit sprite via given position in the view.
-         */
-        getUnit : function(posX, posY) {
-            var winSize = cc.director.getWinSize(),
-                tile = handlerList.tileSelector.getTilePositionFromCoord(winSize.width, winSize.height, posX, posY),
-                _buf = buf;
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unit;
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
         generate : function(isDefender) {
@@ -214,11 +209,17 @@ coh.BattleScene = function() {
             this.battleMap.addChild(unitSprite, tilePosition.y);
             
             // set buffer
-            _buf.unitMatrix[tilePosition.x] = _buf.unitMatrix[tilePosition.x] || {};
-            _buf.unitMatrix[tilePosition.x][tilePosition.y] = {
-                unit : unit,
-                unitSprite : unitSprite
-            };
+            // mind types that's not having 1 tile.
+            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
+            for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
+                for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                    _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
+                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y + rowCount] = {
+                        unit : unit,
+                        unitSprite : unitSprite
+                    };
+                }
+            }
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);

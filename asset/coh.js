@@ -468,9 +468,13 @@ coh.utils = coh.utils || {};
                     var rangeX = screenWidth / 16,
                         rangeY = screenHeight / 16;
                     
+                    console.log("rangeX:" + rangeX + " y:" + rangeX + "\n");
+                    console.log("posX:" + (posX) + " posY:" + (posY) + "\n");
+                    console.log("x:" + (~~(posX / rangeX)) + " y:" + (~~(posY / rangeY)) + "\n");
+                    
                     return {
-                        x : ~~(posX / rangeX),
-                        y : 14 - ~~(posY / rangeY)
+                        x : ~~(posX / rangeX) + 2,
+                        y : ~~(posY / rangeY) - 1
                     }
                 }
             }
@@ -1449,6 +1453,7 @@ coh.MapLayer = cc.Layer.extend({
  * inject it from the outer factory.
  *
  *@dispatch filterName: battleSceneEntered
+ *@dispatch filterName: unitSpriteCreated
  */
 var coh = coh || {};
 
@@ -1484,7 +1489,7 @@ coh.BattleScene = function() {
         tileSelector : null
     };
     
-    // Sorry but I really don't mean to make it so ugly...
+    // Sorry but I really did't mean to make it so ugly...
     // Just for private fields.
     var argList = [];
     for (var i = 0, arg; arg = arguments[i]; ++i) {
@@ -1581,8 +1586,7 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          */
         getUnitSprite : function(posX, posY) {
-            var winSize = cc.director.getWinSize(),
-                tile = handlerList.tileSelector.getTilePositionFromCoord(winSize.width, winSize.height, posX, posY),
+            var tile = handlerList.tileSelector.getTilePositionFromCoord(this.battleMap.width * this.battleMap.scale, this.battleMap.height * this.battleMap.scale, posX - this.battleMap.x * this.battleMap.scale, posY),
                 _buf = buf;
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unitSprite;
         },
@@ -1591,8 +1595,7 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          */
         getUnit : function(posX, posY) {
-            var winSize = cc.director.getWinSize(),
-                tile = handlerList.tileSelector.getTilePositionFromCoord(winSize.width, winSize.height, posX, posY),
+            var tile = handlerList.tileSelector.getTilePositionFromCoord(this.battleMap.width, this.battleMap.height, posX, posY),
                 _buf = buf;
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unit;
         },
@@ -1658,11 +1661,17 @@ coh.BattleScene = function() {
             this.battleMap.addChild(unitSprite, tilePosition.y);
             
             // set buffer
-            _buf.unitMatrix[tilePosition.x] = _buf.unitMatrix[tilePosition.x] || {};
-            _buf.unitMatrix[tilePosition.x][tilePosition.y] = {
-                unit : unit,
-                unitSprite : unitSprite
-            };
+            // mind types that's not having 1 tile.
+            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
+            for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
+                for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                    _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
+                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y + rowCount] = {
+                        unit : unit,
+                        unitSprite : unitSprite
+                    };
+                }
+            }
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
@@ -1728,23 +1737,6 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
 
 (function() {
     
-    coh.utils.FilterUtil.addFilter("unitSpriteCreated", function(unitSprite) {
-        
-        var lastUnitSrite;
-        cc.eventManager.addListener({
-            event: cc.EventListener.MOUSE,
-            onMouseMove: function(event){
-                var p = event.getLocation(),
-                    rect = unitSprite.getBoundingBox();
-                if (rect.x <= p.x && rect.y <= p.y && rect.x + rect.width >= p.x && rect.y + rect.height >= p.y ) {
-                    lastUnitSrite && lastUnitSrite.setOpacity(1000);
-                    unitSprite.setOpacity(100);
-                    lastUnitSrite = unitSprite;
-                }
-            }
-        }, unitSprite);
-    });
-    /*
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
         var lastUnitSrite;
@@ -1758,7 +1750,7 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
-                var location = event.getLocation(),
+                var location = event.getLocationInView(),
                     //~ unitSprite = battleScene.getUnitSprite(location.x, location.y);
                     unitSprite = battleScene.getUnitSprite(location.x, location.y);
                 
@@ -1771,6 +1763,5 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
             }
         }, battleScene);
     });
-    */
     
 })();

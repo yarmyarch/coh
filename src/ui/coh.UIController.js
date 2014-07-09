@@ -53,16 +53,15 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
-                var location = event.getLocation(),
+                var location = event.getLocationInView(),
                     //~ unitSprite = battleScene.getUnitSprite(location.x, location.y);
-                    unitSprite = battleScene.getUnitSprite(location.x, location.y);
+                    unitSprite = battleScene.getUnitSprite(location.x, location.y).sprite;
                 
                 if (unitSprite) {
                     lastUnitSrite && lastUnitSrite.setOpacity(1000);
                     unitSprite.setOpacity(100);
                     lastUnitSrite = unitSprite;
                 }
-                //~ unit && console.log(unit.getName());
             }
         }, battleScene);
     });

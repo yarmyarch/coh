@@ -19,13 +19,17 @@ coh.utils = coh.utils || {};
                         y : y
                     };
                 },
+                
+                /**
+                 * Magic...
+                 */
                 getTilePositionFromCoord : function(screenWidth, screenHeight, posX, posY) {
                     var rangeX = screenWidth / 16,
                         rangeY = screenHeight / 16;
                     
                     return {
-                        x : ~~(posX / rangeX),
-                        y : 14 - ~~(posY / rangeY)
+                        x : ~~(posX / rangeX) + 2,
+                        y : ~~(posY / rangeY) - 1
                     }
                 }
             }
