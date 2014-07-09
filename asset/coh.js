@@ -174,6 +174,7 @@ TODO :
     But when translate dataGroup into map positions in BattleScene;
     MVC structure based on filterUtil, see battleScene.js;
     Animations on units initialized;
+    Locate to and Focus on units in battleScene;
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
@@ -464,13 +465,13 @@ coh.utils = coh.utils || {};
                         y : y
                     };
                 },
+                
+                /**
+                 * Magic...
+                 */
                 getTilePositionFromCoord : function(screenWidth, screenHeight, posX, posY) {
                     var rangeX = screenWidth / 16,
                         rangeY = screenHeight / 16;
-                    
-                    console.log("rangeX:" + rangeX + " y:" + rangeX + "\n");
-                    console.log("posX:" + (posX) + " posY:" + (posY) + "\n");
-                    console.log("x:" + (~~(posX / rangeX)) + " y:" + (~~(posY / rangeY)) + "\n");
                     
                     return {
                         x : ~~(posX / rangeX) + 2,
@@ -1585,20 +1586,21 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitSprite : function(posX, posY) {
-            var tile = handlerList.tileSelector.getTilePositionFromCoord(this.battleMap.width * this.battleMap.scale, this.battleMap.height * this.battleMap.scale, posX - this.battleMap.x * this.battleMap.scale, posY),
+        getUnitData : function(posX, posY) {
+            var scale = this.battleMap.scale,
+                tile = handlerList.tileSelector.getTilePositionFromCoord(
+                    this.battleMap.width * scale, 
+                    this.battleMap.height * scale,
+                    posX - this.battleMap.x * scale, 
+                    posY
+                ),
                 _buf = buf;
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unitSprite;
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
-        /**
-         * get unit sprite via given position in the view.
-         */
-        getUnit : function(posX, posY) {
-            var tile = handlerList.tileSelector.getTilePositionFromCoord(this.battleMap.width, this.battleMap.height, posX, posY),
-                _buf = buf;
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unit;
-        },
+        // XXXXXX
+        locateUnit : function(){},
+        focusUnit : function(){},
         
         generate : function(isDefender) {
             var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin: 2});
@@ -1741,25 +1743,20 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
         
         var lastUnitSrite;
         if ('mouse' in cc.sys.capabilities)
-    
-        //~ onMouseDown: null,
-        //~ onMouseUp: null,
-        //~ onMouseMove: null,
-        //~ onMouseScroll: null
-        
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocationInView(),
-                    //~ unitSprite = battleScene.getUnitSprite(location.x, location.y);
-                    unitSprite = battleScene.getUnitSprite(location.x, location.y);
+                    unitSprite = battleScene.getUnitSprite(location.x, location.y).sprite;
                 
                 if (unitSprite) {
                     lastUnitSrite && lastUnitSrite.setOpacity(1000);
                     unitSprite.setOpacity(100);
                     lastUnitSrite = unitSprite;
+                    
+                    // XXXXXX
+                    // Locate To in BattleScene
                 }
-                //~ unit && console.log(unit.getName());
             }
         }, battleScene);
     });

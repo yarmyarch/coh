@@ -148,6 +148,10 @@ coh.BattleScene = function() {
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
+        // XXXXXX
+        locateUnit : function(){},
+        focusUnit : function(){},
+        
         generate : function(isDefender) {
             var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin: 2});
             
