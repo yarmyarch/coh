@@ -2,6 +2,8 @@
  *@implements TileSelector
  * relay on instance of TileSelector,
  * Decorator of tileSelectors.
+ *
+ * It's departed from tileSelector because it's related to the unit types.
  */
 
 var coh = coh || {};

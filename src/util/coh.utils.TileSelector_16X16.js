@@ -18,6 +18,15 @@ coh.utils = coh.utils || {};
                         x : x,
                         y : y
                     };
+                },
+                getTilePositionFromCoord : function(screenWidth, screenHeight, posX, posY) {
+                    var rangeX = screenWidth / 16,
+                        rangeY = screenHeight / 16;
+                    
+                    return {
+                        x : ~~(posX / rangeX),
+                        y : 14 - ~~(posY / rangeY)
+                    }
                 }
             }
         }

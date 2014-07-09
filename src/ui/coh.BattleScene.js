@@ -4,6 +4,7 @@
  * inject it from the outer factory.
  *
  *@dispatch filterName: battleSceneEntered
+ *@dispatch filterName: unitSpriteCreated
  */
 var coh = coh || {};
 
@@ -14,7 +15,23 @@ coh.BattleScene = function() {
     // private fields
     var buf = {
         tmxList : {},
-        bgList : {}
+        bgList : {},
+        
+        /**
+         * Saved units in current battle scene.
+         * Index by poition x and position y.
+        unitMatrix = {
+            [positionX] : {
+                [positionY] : {
+                    unit : [unitObject],
+                    unitSprite : [unitSprite],
+                },
+                ... // other unit groups with the position x;
+            },
+            // other row data
+        }
+         */
+        unitMatrix : {}
     };
 
     var handlerList = {
@@ -23,7 +40,7 @@ coh.BattleScene = function() {
         tileSelector : null
     };
     
-    // Sorry but I really don't mean to make it so ugly...
+    // Sorry but I really did't mean to make it so ugly...
     // Just for private fields.
     var argList = [];
     for (var i = 0, arg; arg = arguments[i]; ++i) {
@@ -119,8 +136,21 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitSprite : function(x, y) {
-            
+        getUnitSprite : function(posX, posY) {
+            var winSize = cc.director.getWinSize(),
+                tile = handlerList.tileSelector.getTilePositionFromCoord(winSize.width, winSize.height, posX, posY),
+                _buf = buf;
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unitSprite;
+        },
+        
+        /**
+         * get unit sprite via given position in the view.
+         */
+        getUnit : function(posX, posY) {
+            var winSize = cc.director.getWinSize(),
+                tile = handlerList.tileSelector.getTilePositionFromCoord(winSize.width, winSize.height, posX, posY),
+                _buf = buf;
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y].unit;
         },
         
         generate : function(isDefender) {
@@ -163,12 +193,15 @@ coh.BattleScene = function() {
             
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
+                _buf = buf,
                 unit = player.getUnplacedUnit(status),
                 // color is the UI based property. So let's just keep it in Scene.
                 unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
                 tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
+            
+            _coh.utils.FilterUtil.applyFilters("unitSpriteCreated", unitSprite);
             
             unitSprite.attr({
                 x : tile.x,
@@ -179,6 +212,13 @@ coh.BattleScene = function() {
                 anchorY: 1
             });
             this.battleMap.addChild(unitSprite, tilePosition.y);
+            
+            // set buffer
+            _buf.unitMatrix[tilePosition.x] = _buf.unitMatrix[tilePosition.x] || {};
+            _buf.unitMatrix[tilePosition.x][tilePosition.y] = {
+                unit : unit,
+                unitSprite : unitSprite
+            };
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);

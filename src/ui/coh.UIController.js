@@ -42,6 +42,7 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
+        var lastUnitSrite;
         if ('mouse' in cc.sys.capabilities)
     
         //~ onMouseDown: null,
@@ -53,8 +54,15 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocation(),
+                    //~ unitSprite = battleScene.getUnitSprite(location.x, location.y);
                     unitSprite = battleScene.getUnitSprite(location.x, location.y);
                 
+                if (unitSprite) {
+                    lastUnitSrite && lastUnitSrite.setOpacity(1000);
+                    unitSprite.setOpacity(100);
+                    lastUnitSrite = unitSprite;
+                }
+                //~ unit && console.log(unit.getName());
             }
         }, battleScene);
     });
