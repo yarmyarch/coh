@@ -173,6 +173,7 @@ TODO :
     set sprite: run/walk in Actor;
     But when translate dataGroup into map positions in BattleScene;
     MVC structure based on filterUtil, see battleScene.js;
+    Animations on units initialized;
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 
@@ -1164,10 +1165,10 @@ coh.Battle = (function(){
                             
                             // inject generated status into the resultset and buffered data
                             result[rBlankIndex][column + columnCount]
-                                = currentBuf[blankIndex][column + columnCount]
                                 //~ = targetType * _lc.COLOR_COUNT + color
                                 = (rowCount == 0 && columnCount == 0 ? 
                                     (targetType * _lc.COLOR_COUNT + color) : _lc.STATUS_OCCUPIED);
+                            currentBuf[blankIndex][column + columnCount] = targetType * _lc.COLOR_COUNT + color;
                         }
                     }
                 }
@@ -1442,7 +1443,7 @@ coh.BattleScene = cc.Scene.extend({
     },
     
     generate : function(isDefender) {
-        var player = new coh.Player("", 1, { archer : 18, knight: 4, paladin : 2 });
+        var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin: 2});
         
         // attacker for default.
         isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
@@ -1468,7 +1469,6 @@ coh.BattleScene = cc.Scene.extend({
         var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
         
         for (var i = 0, row; row = recharge.succeed[i]; ++i) {
-            console.log(row);
             for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                 status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
             }

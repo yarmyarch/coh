@@ -238,10 +238,10 @@ coh.Battle = (function(){
                             
                             // inject generated status into the resultset and buffered data
                             result[rBlankIndex][column + columnCount]
-                                = currentBuf[blankIndex][column + columnCount]
                                 //~ = targetType * _lc.COLOR_COUNT + color
                                 = (rowCount == 0 && columnCount == 0 ? 
                                     (targetType * _lc.COLOR_COUNT + color) : _lc.STATUS_OCCUPIED);
+                            currentBuf[blankIndex][column + columnCount] = targetType * _lc.COLOR_COUNT + color;
                         }
                     }
                 }
