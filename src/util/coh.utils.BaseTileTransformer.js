@@ -15,20 +15,19 @@ coh.utils = coh.utils || {};
         baseTransformer : {
             2 : function(isAttacker, position) {
                 if (!isAttacker) {
-                    position.y -= 1;
+                    position.y += 1;
                 }
                 return position;
             },
             3 : function(isAttacker, position) {
                 if (!isAttacker) {
-                    position.x -= 1;
+                    //~ position.x -= 1;
                 }
                 return position;
             },
             4 : function(isAttacker, position) {
                 if (!isAttacker) {
-                    position.y -= 1;
-                    //~ position.x -= 1;
+                    position.y += 1;
                 }
                 return position;
             }

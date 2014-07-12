@@ -62,7 +62,7 @@ coh.LocalConfig = {
     
     SPRITE_SCALE : {
         1 : 1.25,
-        2 : 1.1,
+        2 : 1.2,
         3 : 1.25,
         4 : 1.1
     },
@@ -108,7 +108,8 @@ coh.res = {
     },
     imgs : {
         market : "res/tmxmap/b_market.jpg",
-        forest : "res/tmxmap/forest.jpg"
+        forest : "res/tmxmap/forest.jpg",
+        shadow : "res/imgs/shadow.png"
     },
     sprite : {
         awen : {
@@ -458,7 +459,7 @@ coh.utils = coh.utils || {};
             instance = {
                 getTilePosition : function(isAttacker, type, row, column) {
                     var x = 4 + column,
-                        y = isAttacker ? 8 + row : 5 - row;
+                        y = !isAttacker ? 9 + row : 6 - row;
                     
                     return {
                         x : x,
@@ -475,7 +476,7 @@ coh.utils = coh.utils || {};
                     
                     return {
                         x : ~~(posX / rangeX) + 2,
-                        y : ~~(posY / rangeY) - 1
+                        y : ~~(posY / rangeY)
                     }
                 }
             }
@@ -506,20 +507,19 @@ coh.utils = coh.utils || {};
         baseTransformer : {
             2 : function(isAttacker, position) {
                 if (!isAttacker) {
-                    position.y -= 1;
+                    position.y += 1;
                 }
                 return position;
             },
             3 : function(isAttacker, position) {
                 if (!isAttacker) {
-                    position.x -= 1;
+                    //~ position.x -= 1;
                 }
                 return position;
             },
             4 : function(isAttacker, position) {
                 if (!isAttacker) {
-                    position.y -= 1;
-                    //~ position.x -= 1;
+                    position.y += 1;
                 }
                 return position;
             }
@@ -550,7 +550,30 @@ coh.utils = coh.utils || {};
     }
 
     coh.utils.BaseTileTransformer.getInstance = getInstance;
-})();var coh = coh || {};
+})();/**
+ * Usage:
+    var handler1 = function(oriValue, param1, param2, param3){
+            return oriValue * param1 + param2;
+        };
+    var handler2 = function(oriValue, param1, param2, param3){
+            return oriValue * param2 + param3;
+        };
+    FilterUtil.addFilter("filterName", handler1, 11);
+    FilterUtil.addFilter("filterName", handler2);
+    
+    // 0 - originalValue;
+    // 1 - param1;
+    // 2 - param2;
+    // 3 - param3;
+    FilterUtil.applyFilters("filterName", 0, 1,2,3);
+    // returned result from handler2 as a new originalValue: 0 * 2 + 3;
+    // get result from handler1: 3 * 1 + 2
+    // final result returned: 5.
+    
+    FilterUtil.removeFilter("filterName", handler1, 12);
+ */
+
+var coh = coh || {};
 coh.utils = coh.utils || {};
 
 coh.utils.FilterUtil = (function() {
@@ -558,14 +581,7 @@ coh.utils.FilterUtil = (function() {
     var self;
     
     var buf = {
-        filters : {},
-        activedPriorities : {}
-    };
-    
-    var controller = {
-        sort : function(a, b) {
-            return a - b <= 0;
-        }
+        filters : {}
     };
     
     return self = {
@@ -579,12 +595,9 @@ coh.utils.FilterUtil = (function() {
                 priority = (undefined === priority) && 10 || priority;
             
             !_buf.filters[filterName] && (_buf.filters[filterName] = {});
-            !_buf.activedPriorities[filterName] && (_buf.activedPriorities[filterName] = []);
             
             if (!_buf.filters[filterName][priority]) {
                 _buf.filters[filterName][priority] = [];
-                _buf.activedPriorities[filterName].push(priority);
-                _buf.activedPriorities[filterName].sort(controller.sort);
             }
             
             (handler instanceof Function) && _buf.filters[filterName][priority].push(handler);
@@ -608,19 +621,17 @@ coh.utils.FilterUtil = (function() {
         
         applyFilters : function(filterName, originalValue) {
             var _buf = buf,
-                priorities,
+                priorities = _buf.filters[filterName],
                 filterList,
                 filter,
                 value = originalValue,
                 arg = [],
                 i, j, leni, lenj;
             
-            if (!_buf.filters[filterName]) return value;
+            if (!priorities) return value;
             
-            priorities = _buf.activedPriorities[filterName];
-            
-            for (i = 0, leni = priorities.length; i < leni; ++i) {
-                filterList = _buf.filters[filterName][priorities[i]];
+            for (i in priorities) {
+                filterList = priorities[i];
                 for (j = 0, lenj = filterList.length; j < lenj; ++j) {
                     // rebuild arguments for next filter. 
                     // first param is currend calculated value, additional arguments can be parsed via the input.
@@ -636,7 +647,6 @@ coh.utils.FilterUtil = (function() {
             var _buf = buf;
             
             _buf.filters[filterName] = {};
-            _buf.activedPriorities[filterName] = [];
         }
     }
     
@@ -1408,12 +1418,36 @@ coh.MapLayer = cc.Layer.extend({
                     cc.TransitionFadeDown.create(1.2, _coh.scene["battle"])
                 );
                 // Run battle logic here, place the player.
-                setTimeout(function(){
+                
+                // do placcePlayer when entered, to prevent 0 width for map tiles.
+                var attacker, aMatrix, defender, dMatrix;
+                var generatePlayer = function(battleScene) {
                     // attacker
-                    _coh.scene["battle"].generate();
+                    attacker = new _coh.Player("", 1, { archer : 24, knight: 8, paladin: 1});
+                    attacker.setAsAttacker();
+                    aMatrix = battleScene.generatePlayerMatrix(attacker);
                     // defender
-                    _coh.scene["battle"].generate(1);
-                }, 0);
+                    defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
+                    attacker.setAsDefender();
+                    dMatrix = battleScene.generatePlayerMatrix(defender);
+                        
+                    _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
+                    
+                    return battleScene;
+                };
+                
+                var render = function(battleScene) {
+                    
+                    battleScene.renderPlayer(attacker, aMatrix);
+                    battleScene.renderPlayer(defender, dMatrix);
+                    
+                    _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
+                    
+                    return battleScene;
+                };
+                
+                _coh.utils.FilterUtil.addFilter("battleSceneEntered", generatePlayer, 12);
+                _coh.utils.FilterUtil.addFilter("battleSceneReady", render, 12);
             };
         
         keyMap[cc.KEY.left] = "left";
@@ -1516,6 +1550,10 @@ coh.BattleScene = function() {
             coh.utils.FilterUtil.applyFilters("battleSceneEntered", this);
         },
         
+        onEnterTransitionDidFinish : function() {
+            coh.utils.FilterUtil.applyFilters("battleSceneReady", this);
+        },
+        
         /**
          * set background image.
          */
@@ -1602,18 +1640,8 @@ coh.BattleScene = function() {
         locateUnit : function(){},
         focusUnit : function(){},
         
-        generate : function(isDefender) {
-            var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin: 2});
-            
-            // attacker for default.
-            isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
-            player[isDefender]();
-            
-            this.placePlayer(player);
-        },
-        
-        placePlayer : function(player) {
-            
+        generatePlayerMatrix : function(player) {
+             
             var unitConfig = {},
                 units = player.getUnitConfig(),
                 _coh = coh;
@@ -1628,7 +1656,12 @@ coh.BattleScene = function() {
             
             var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
             
-            for (var i = 0, row; row = recharge.succeed[i]; ++i) {
+            return recharge;
+        }, 
+        
+        renderPlayer : function(player, matrix) {
+            
+            for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                 }
@@ -1643,37 +1676,62 @@ coh.BattleScene = function() {
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
                 _buf = buf,
+                scale = this.battleMap.scale,
                 unit = player.getUnplacedUnit(status),
                 // color is the UI based property. So let's just keep it in Scene.
                 unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
-                tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
-            
-            _coh.utils.FilterUtil.applyFilters("unitSpriteCreated", unitSprite);
-            
-            unitSprite.attr({
-                x : tile.x,
-                y : tile.y,
-                scale : _coh.LocalConfig.SPRITE_SCALE[unit.getType()],
-                //~ scale : 1,
-                anchorX: 0,
-                anchorY: 1
-            });
-            this.battleMap.addChild(unitSprite, tilePosition.y);
+                tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition),
+                
+                tileSprite = cc.DrawNode.create(),
+                shadow = cc.Sprite.create(_coh.res.imgs.shadow);
             
             // set buffer
             // mind types that's not having 1 tile.
             var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
-                for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
-                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y + rowCount] = {
+                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = {
                         unit : unit,
+                        tileSprite : tileSprite,
                         unitSprite : unitSprite
                     };
                 }
             }
+            
+            tileSprite.attr({
+                x : tile.x,
+                y : tile.y,
+                //~ width: tile.width * typeConfig[1],
+                //~ height: tile.height * typeConfig[0]
+                width: tile.width,
+                height: tile.height
+            });
+            
+            shadow.attr({
+                x : 0,
+                y : 0,
+                anchorX: -0.05,
+                anchorY: 0.3,
+                scaleX : typeConfig[1] * 0.8,
+                scaleY : 0.75,
+                opacity:164
+            });
+            
+            tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
+            
+            unitSprite.attr({
+                x : 0,
+                y : 0,
+                scale : _coh.LocalConfig.SPRITE_SCALE[unit.getType()],
+                anchorX: 0,
+                anchorY: 0
+            });
+            unitSprite.addChild(shadow, 0);
+            tileSprite.addChild(unitSprite, 1);
+            this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
@@ -1747,7 +1805,9 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocationInView(),
-                    unitSprite = battleScene.getUnitSprite(location.x, location.y).sprite;
+                    unitSprite = battleScene.getUnitData(location.x, location.y);
+                
+                unitSprite && (unitSprite = unitSprite.unitSprite);
                 
                 if (unitSprite) {
                     lastUnitSrite && lastUnitSrite.setOpacity(1000);
@@ -1759,6 +1819,8 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
                 }
             }
         }, battleScene);
+        
+        return battleScene;
     });
     
 })();

@@ -44,12 +44,36 @@ coh.MapLayer = cc.Layer.extend({
                     cc.TransitionFadeDown.create(1.2, _coh.scene["battle"])
                 );
                 // Run battle logic here, place the player.
-                setTimeout(function(){
+                
+                // do placcePlayer when entered, to prevent 0 width for map tiles.
+                var attacker, aMatrix, defender, dMatrix;
+                var generatePlayer = function(battleScene) {
                     // attacker
-                    _coh.scene["battle"].generate();
+                    attacker = new _coh.Player("", 1, { archer : 24, knight: 8, paladin: 1});
+                    attacker.setAsAttacker();
+                    aMatrix = battleScene.generatePlayerMatrix(attacker);
                     // defender
-                    _coh.scene["battle"].generate(1);
-                }, 0);
+                    defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
+                    attacker.setAsDefender();
+                    dMatrix = battleScene.generatePlayerMatrix(defender);
+                        
+                    _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
+                    
+                    return battleScene;
+                };
+                
+                var render = function(battleScene) {
+                    
+                    battleScene.renderPlayer(attacker, aMatrix);
+                    battleScene.renderPlayer(defender, dMatrix);
+                    
+                    _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
+                    
+                    return battleScene;
+                };
+                
+                _coh.utils.FilterUtil.addFilter("battleSceneEntered", generatePlayer, 12);
+                _coh.utils.FilterUtil.addFilter("battleSceneReady", render, 12);
             };
         
         keyMap[cc.KEY.left] = "left";

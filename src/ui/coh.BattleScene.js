@@ -66,6 +66,10 @@ coh.BattleScene = function() {
             coh.utils.FilterUtil.applyFilters("battleSceneEntered", this);
         },
         
+        onEnterTransitionDidFinish : function() {
+            coh.utils.FilterUtil.applyFilters("battleSceneReady", this);
+        },
+        
         /**
          * set background image.
          */
@@ -152,18 +156,8 @@ coh.BattleScene = function() {
         locateUnit : function(){},
         focusUnit : function(){},
         
-        generate : function(isDefender) {
-            var player = new coh.Player("", 1, { archer : 24, knight: 4, paladin: 2});
-            
-            // attacker for default.
-            isDefender = isDefender ? "setAsDefender" : "setAsAttacker";
-            player[isDefender]();
-            
-            this.placePlayer(player);
-        },
-        
-        placePlayer : function(player) {
-            
+        generatePlayerMatrix : function(player) {
+             
             var unitConfig = {},
                 units = player.getUnitConfig(),
                 _coh = coh;
@@ -178,7 +172,12 @@ coh.BattleScene = function() {
             
             var recharge = _coh.Battle.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
             
-            for (var i = 0, row; row = recharge.succeed[i]; ++i) {
+            return recharge;
+        }, 
+        
+        renderPlayer : function(player, matrix) {
+            
+            for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                 }
@@ -193,37 +192,62 @@ coh.BattleScene = function() {
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
                 _buf = buf,
+                scale = this.battleMap.scale,
                 unit = player.getUnplacedUnit(status),
                 // color is the UI based property. So let's just keep it in Scene.
                 unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
-                tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition);
-            
-            _coh.utils.FilterUtil.applyFilters("unitSpriteCreated", unitSprite);
-            
-            unitSprite.attr({
-                x : tile.x,
-                y : tile.y,
-                scale : _coh.LocalConfig.SPRITE_SCALE[unit.getType()],
-                //~ scale : 1,
-                anchorX: 0,
-                anchorY: 1
-            });
-            this.battleMap.addChild(unitSprite, tilePosition.y);
+                tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition),
+                
+                tileSprite = cc.DrawNode.create(),
+                shadow = cc.Sprite.create(_coh.res.imgs.shadow);
             
             // set buffer
             // mind types that's not having 1 tile.
             var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
-                for (var columnCount = 0; columnCount< typeConfig[1]; ++columnCount) {
+                for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
-                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y + rowCount] = {
+                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = {
                         unit : unit,
+                        tileSprite : tileSprite,
                         unitSprite : unitSprite
                     };
                 }
             }
+            
+            tileSprite.attr({
+                x : tile.x,
+                y : tile.y,
+                //~ width: tile.width * typeConfig[1],
+                //~ height: tile.height * typeConfig[0]
+                width: tile.width,
+                height: tile.height
+            });
+            
+            shadow.attr({
+                x : 0,
+                y : 0,
+                anchorX: -0.05,
+                anchorY: 0.3,
+                scaleX : typeConfig[1] * 0.8,
+                scaleY : 0.75,
+                opacity:164
+            });
+            
+            tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
+            
+            unitSprite.attr({
+                x : 0,
+                y : 0,
+                scale : _coh.LocalConfig.SPRITE_SCALE[unit.getType()],
+                anchorX: 0,
+                anchorY: 0
+            });
+            unitSprite.addChild(shadow, 0);
+            tileSprite.addChild(unitSprite, 1);
+            this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);

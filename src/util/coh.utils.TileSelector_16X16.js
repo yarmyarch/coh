@@ -12,7 +12,7 @@ coh.utils = coh.utils || {};
             instance = {
                 getTilePosition : function(isAttacker, type, row, column) {
                     var x = 4 + column,
-                        y = isAttacker ? 8 + row : 5 - row;
+                        y = !isAttacker ? 9 + row : 6 - row;
                     
                     return {
                         x : x,
@@ -29,7 +29,7 @@ coh.utils = coh.utils || {};
                     
                     return {
                         x : ~~(posX / rangeX) + 2,
-                        y : ~~(posY / rangeY) - 1
+                        y : ~~(posY / rangeY)
                     }
                 }
             }

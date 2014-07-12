@@ -61,7 +61,7 @@ coh.LocalConfig = {
     
     SPRITE_SCALE : {
         1 : 1.25,
-        2 : 1.1,
+        2 : 1.2,
         3 : 1.25,
         4 : 1.1
     },
