@@ -52,6 +52,9 @@ coh.BattleScene = function() {
         battleLayer : null,
         battleField : null,
         battleMap : null,
+        attacker : null,
+        defender : null,
+        isAttackerTurn : true,
         ctor:function (mapSrc, imgSrc) {
             this._super();
             this.battleLayer = new cc.Layer();
@@ -140,7 +143,7 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitData : function(posX, posY) {
+        getUnitData : function(isAttacker, posX, posY) {
             var scale = this.battleMap.scale,
                 tile = handlerList.tileSelector.getTilePositionFromCoord(
                     this.battleMap.width * scale, 
@@ -149,6 +152,9 @@ coh.BattleScene = function() {
                     posY
                 ),
                 _buf = buf;
+            
+            tile = handlerList.tileSelector.filterTurnedTiles(isAttacker, tile.x, tile.y);
+            
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
@@ -177,11 +183,21 @@ coh.BattleScene = function() {
         
         renderPlayer : function(player, matrix) {
             
+            player.isAttacker() && this.setAttacker(player) || this.setDefender(player);
+            
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                 }
             }
+        },
+        
+        setAttacker : function(attacker) {
+            this.attacker = attacker;
+        },
+        
+        setDefender : function(defender) {
+            this.defender = defender;
         },
         
         /**

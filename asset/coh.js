@@ -478,6 +478,16 @@ coh.utils = coh.utils || {};
                         x : ~~(posX / rangeX) + 2,
                         y : ~~(posY / rangeY)
                     }
+                },
+                
+                /**
+                 * return available tiles for current turn.
+                 * When it's the attacker's turn, those tiles of the defender should be ignored.
+                 */
+                filterTurnedTiles : function(isAttacker, x, y) {
+                    x = Math.min(Math.max(x, 4), 12);
+                    y = !isAttacker ? Math.min(Math.max(y, 1), 7) : Math.min(Math.max(y, 6), 14);
+                    return {x : x, y : y};
                 }
             }
         }
@@ -490,7 +500,8 @@ coh.utils = coh.utils || {};
     }
 
     coh.utils.TileSelector_16X16.getInstance = getInstance;
-})();/**
+})();
+/**
  *@implements TileSelector
  * relay on instance of TileSelector,
  * Decorator of tileSelectors.
@@ -550,7 +561,8 @@ coh.utils = coh.utils || {};
     }
 
     coh.utils.BaseTileTransformer.getInstance = getInstance;
-})();/**
+})();
+/**
  * Usage:
     var handler1 = function(oriValue, param1, param2, param3){
             return oriValue * param1 + param2;
@@ -1536,6 +1548,9 @@ coh.BattleScene = function() {
         battleLayer : null,
         battleField : null,
         battleMap : null,
+        attacker : null,
+        defender : null,
+        isAttackerTurn : true,
         ctor:function (mapSrc, imgSrc) {
             this._super();
             this.battleLayer = new cc.Layer();
@@ -1624,7 +1639,7 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitData : function(posX, posY) {
+        getUnitData : function(isAttacker, posX, posY) {
             var scale = this.battleMap.scale,
                 tile = handlerList.tileSelector.getTilePositionFromCoord(
                     this.battleMap.width * scale, 
@@ -1633,6 +1648,9 @@ coh.BattleScene = function() {
                     posY
                 ),
                 _buf = buf;
+            
+            tile = handlerList.tileSelector.filterTurnedTiles(isAttacker, tile.x, tile.y);
+            
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
@@ -1661,11 +1679,21 @@ coh.BattleScene = function() {
         
         renderPlayer : function(player, matrix) {
             
+            player.isAttacker() && this.setAttacker(player) || this.setDefender(player);
+            
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                 }
             }
+        },
+        
+        setAttacker : function(attacker) {
+            this.attacker = attacker;
+        },
+        
+        setDefender : function(defender) {
+            this.defender = defender;
         },
         
         /**
@@ -1795,7 +1823,11 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
 }
 */
 
-(function() {
+coh.utils.UIController = (function() {
+    
+    var self;
+    
+    var buf;
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
@@ -1804,8 +1836,8 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
-                var location = event.getLocationInView(),
-                    unitSprite = battleScene.getUnitData(location.x, location.y);
+                var location = event.getLocation(),
+                    unitSprite = battleScene.getUnitData(battleScene.isAttackerTurn, location.x, location.y);
                 
                 unitSprite && (unitSprite = unitSprite.unitSprite);
                 
@@ -1823,4 +1855,7 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
         return battleScene;
     });
     
+    return self = {
+        
+    };
 })();

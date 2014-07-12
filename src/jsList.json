@@ -19,7 +19,7 @@
         
         "src/ui/coh.MapScene.js",
         "src/ui/coh.MapLayer.js",
-        "src/ui/coh.BattleScene.js"
+        "src/ui/coh.BattleScene.js",
         "src/ui/coh.UIController.js"
     ]
 }
