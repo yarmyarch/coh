@@ -31,13 +31,30 @@ coh.BattleScene = function() {
             // other row data
         }
          */
-        unitMatrix : {}
+        unitMatrix : {},
+        
+        focusNode : null
     };
 
     var handlerList = {
         // private properties
         // should be injected from outside.
         tileSelector : null
+    };
+    
+    // private functions
+    var util = {
+        getFocusTag = function() {
+            var _buf = buf;
+            // create the node if not exist.
+            if (!_buf.focusNode) {
+                _buf.focusNode = cc.Node.create();
+                _buf.focusNode.background = cc.DrawNode.create();
+                
+            }
+            
+            return _buf.focusNode;
+        }
     };
     
     // Sorry but I really did't mean to make it so ugly...
@@ -100,7 +117,7 @@ coh.BattleScene = function() {
                 this.battleLayer.removeChild(this.battleField);
             }
             
-            this.battleLayer.addChild(_buf.bgList[imgSrc], 0);
+            this.battleLayer.addChild(_buf.bgList[imgSrc], _coh.LocalConfig.Z_INDEX.BACKGROUND);
             this.battleField = _buf.bgList[imgSrc];
         },
         
@@ -132,7 +149,7 @@ coh.BattleScene = function() {
                 this.battleLayer.removeChild(this.battleMap);
             }
             
-            this.battleLayer.addChild(_buf.tmxList[mapSrc], 1);
+            this.battleLayer.addChild(_buf.tmxList[mapSrc], _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap = _buf.tmxList[mapSrc];
         },
         
@@ -261,8 +278,8 @@ coh.BattleScene = function() {
                 anchorX: 0,
                 anchorY: 0
             });
-            unitSprite.addChild(shadow, 0);
-            tileSprite.addChild(unitSprite, 1);
+            unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+            tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];

@@ -66,5 +66,11 @@ coh.LocalConfig = {
         4 : 1.1
     },
     
-    PRE_RAND_ID : "YarRi_"
+    PRE_RAND_ID : "YarRi_",
+    
+    // priority when drawn in the canvas.
+    Z_INDEX : {
+        BACKGROUND : 0,
+        CONTENT : 10,
+    }
 };
