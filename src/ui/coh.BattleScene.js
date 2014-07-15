@@ -44,12 +44,16 @@ coh.BattleScene = function() {
     
     // private functions
     var util = {
-        getFocusTag = function() {
+        getFocusTag : function() {
             var _buf = buf;
             // create the node if not exist.
             if (!_buf.focusNode) {
                 _buf.focusNode = cc.Node.create();
                 _buf.focusNode.background = cc.DrawNode.create();
+                _buf.focusNode.arrawRight = cc.Node.create();
+                _buf.focusNode.arrawLeft = cc.Node.create();
+                _buf.focusNode.arrawDirection = cc.Node.create();
+                
                 
             }
             
@@ -117,7 +121,7 @@ coh.BattleScene = function() {
                 this.battleLayer.removeChild(this.battleField);
             }
             
-            this.battleLayer.addChild(_buf.bgList[imgSrc], _coh.LocalConfig.Z_INDEX.BACKGROUND);
+            this.battleLayer.addChild(_buf.bgList[imgSrc], coh.LocalConfig.Z_INDEX.BACKGROUND);
             this.battleField = _buf.bgList[imgSrc];
         },
         
@@ -149,7 +153,7 @@ coh.BattleScene = function() {
                 this.battleLayer.removeChild(this.battleMap);
             }
             
-            this.battleLayer.addChild(_buf.tmxList[mapSrc], _coh.LocalConfig.Z_INDEX.CONTENT);
+            this.battleLayer.addChild(_buf.tmxList[mapSrc], coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap = _buf.tmxList[mapSrc];
         },
         
@@ -180,7 +184,7 @@ coh.BattleScene = function() {
         focusUnit : function(){},
         
         generatePlayerMatrix : function(player) {
-             
+            
             var unitConfig = {},
                 units = player.getUnitConfig(),
                 _coh = coh;
@@ -250,6 +254,8 @@ coh.BattleScene = function() {
                 }
             }
             
+            console.log("x:" + tile.x + " y:" + tile.y + " Attacker:" + player.isAttacker());
+            
             tileSprite.attr({
                 x : tile.x,
                 y : tile.y,
@@ -284,6 +290,7 @@ coh.BattleScene = function() {
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
+            _coh.unitMatrix = _buf.unitMatrix;
         }
     });
     

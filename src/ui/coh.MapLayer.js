@@ -17,7 +17,7 @@ coh.MapLayer = cc.Layer.extend({
         var MpSize = cc.director.getWinSize(),
             self = this,
             mapPositons = _coh.map.getObjectGroup("positions"),
-            keyMap = {},                                
+            keyMap = {},
             gogogo = function(key) {
                 var nextNode;
                 if ((nextNode = mapPositons.objectNamed(self.sprite.position)) && (nextNode = nextNode[keyMap[key]]) && (nextNode = mapPositons.objectNamed(nextNode))) {

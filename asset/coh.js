@@ -67,7 +67,13 @@ coh.LocalConfig = {
         4 : 1.1
     },
     
-    PRE_RAND_ID : "YarRi_"
+    PRE_RAND_ID : "YarRi_",
+    
+    // priority when drawn in the canvas.
+    Z_INDEX : {
+        BACKGROUND : 0,
+        CONTENT : 10,
+    }
 };var coh = coh || {};
 
 // ui related config exists in resource.js
@@ -457,6 +463,17 @@ coh.utils = coh.utils || {};
     var getInstance = function() {
         if (!instance) {
             instance = {
+                
+                /**
+                 * WARNING!!
+                 * The function cc.TMXMapLayer.getTileAt returns the left top tile for x0/y0.
+                 * For the unit at the left bottom cornor, let's say having the row 6 and column 0, 
+                 * The expected coorp should be x : 4, y : 1,
+                 * While tile position should be x : 4, y : 14 in order to get the correct tile.
+                 *
+                 * This is what this function should do.
+                 * SHHHHHHHHHHHHHHHHHHHIT ignore me. Ignore what's in front.
+                 */
                 getTilePosition : function(isAttacker, type, row, column) {
                     var x = 4 + column,
                         y = !isAttacker ? 9 + row : 6 - row;
@@ -486,7 +503,7 @@ coh.utils = coh.utils || {};
                  */
                 filterTurnedTiles : function(isAttacker, x, y) {
                     x = Math.min(Math.max(x, 4), 12);
-                    y = !isAttacker ? Math.min(Math.max(y, 1), 7) : Math.min(Math.max(y, 6), 14);
+                    y = !isAttacker ? Math.min(Math.max(y, 1), 7) : Math.min(Math.max(y, 7), 14);
                     return {x : x, y : y};
                 }
             }
@@ -1403,7 +1420,7 @@ coh.MapLayer = cc.Layer.extend({
         var MpSize = cc.director.getWinSize(),
             self = this,
             mapPositons = _coh.map.getObjectGroup("positions"),
-            keyMap = {},                                
+            keyMap = {},
             gogogo = function(key) {
                 var nextNode;
                 if ((nextNode = mapPositons.objectNamed(self.sprite.position)) && (nextNode = nextNode[keyMap[key]]) && (nextNode = mapPositons.objectNamed(nextNode))) {
@@ -1527,13 +1544,32 @@ coh.BattleScene = function() {
             // other row data
         }
          */
-        unitMatrix : {}
+        unitMatrix : {},
+        
+        focusNode : null
     };
 
     var handlerList = {
         // private properties
         // should be injected from outside.
         tileSelector : null
+    };
+    
+    // private functions
+    var util = {
+        getFocusTag : function() {
+            var _buf = buf;
+            // create the node if not exist.
+            if (!_buf.focusNode) {
+                _buf.focusNode = cc.Node.create();
+                _buf.focusNode.background = cc.DrawNode.create();
+                _buf.focusNode.arrawRight = cc.Node.create();
+                _buf.focusNode.arrawLeft = cc.Node.create();
+                _buf.focusNode.arrawDirection = cc.Node.create();
+            }
+            
+            return _buf.focusNode;
+        }
     };
     
     // Sorry but I really did't mean to make it so ugly...
@@ -1596,7 +1632,7 @@ coh.BattleScene = function() {
                 this.battleLayer.removeChild(this.battleField);
             }
             
-            this.battleLayer.addChild(_buf.bgList[imgSrc], 0);
+            this.battleLayer.addChild(_buf.bgList[imgSrc], coh.LocalConfig.Z_INDEX.BACKGROUND);
             this.battleField = _buf.bgList[imgSrc];
         },
         
@@ -1628,7 +1664,7 @@ coh.BattleScene = function() {
                 this.battleLayer.removeChild(this.battleMap);
             }
             
-            this.battleLayer.addChild(_buf.tmxList[mapSrc], 1);
+            this.battleLayer.addChild(_buf.tmxList[mapSrc], coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap = _buf.tmxList[mapSrc];
         },
         
@@ -1729,6 +1765,8 @@ coh.BattleScene = function() {
                 }
             }
             
+            console.log("x:" + tile.x + " y:" + tile.y + " Attacker:" + player.isAttacker());
+            
             tileSprite.attr({
                 x : tile.x,
                 y : tile.y,
@@ -1757,12 +1795,13 @@ coh.BattleScene = function() {
                 anchorX: 0,
                 anchorY: 0
             });
-            unitSprite.addChild(shadow, 0);
-            tileSprite.addChild(unitSprite, 1);
+            unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+            tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
+            _coh.unitMatrix = _buf.unitMatrix;
         }
     });
     
@@ -1836,8 +1875,8 @@ coh.utils.UIController = (function() {
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
-                var location = event.getLocation(),
-                    unitSprite = battleScene.getUnitData(battleScene.isAttackerTurn, location.x, location.y);
+                var location = event.getLocationInView(),
+                    unitSprite = battleScene.getUnitData(!battleScene.isAttackerTurn, location.x, location.y);
                 
                 unitSprite && (unitSprite = unitSprite.unitSprite);
                 

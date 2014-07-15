@@ -51,8 +51,8 @@ coh.utils.UIController = (function() {
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
-                var location = event.getLocation(),
-                    unitSprite = battleScene.getUnitData(battleScene.isAttackerTurn, location.x, location.y);
+                var location = event.getLocationInView(),
+                    unitSprite = battleScene.getUnitData(!battleScene.isAttackerTurn, location.x, location.y);
                 
                 unitSprite && (unitSprite = unitSprite.unitSprite);
                 
