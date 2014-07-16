@@ -11,6 +11,8 @@
         "src/util/coh.utils.BaseTileTransformer.js",
         "src/util/coh.utils.FilterUtil.js",
         
+        "src/cpns/coh.cpns.Cursor.js",
+        
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",
         "src/logic/coh.Unit.js",
