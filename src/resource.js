@@ -22,7 +22,9 @@ coh.res = {
     imgs : {
         market : "res/tmxmap/b_market.jpg",
         forest : "res/tmxmap/forest.jpg",
-        shadow : "res/imgs/shadow.png"
+        shadow : "res/imgs/shadow.png",
+        arrow : "res/imgs/arrow.png",
+        cornor : "res/imgs/corner.png"
     },
     sprite : {
         awen : {

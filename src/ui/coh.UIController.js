@@ -38,7 +38,7 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
 }
 */
 
-coh.utils.UIController = (function() {
+coh.UIController = (function() {
     
     var self;
     

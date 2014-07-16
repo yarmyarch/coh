@@ -115,7 +115,9 @@ coh.res = {
     imgs : {
         market : "res/tmxmap/b_market.jpg",
         forest : "res/tmxmap/forest.jpg",
-        shadow : "res/imgs/shadow.png"
+        shadow : "res/imgs/shadow.png",
+        arrow : "res/imgs/arrow.png",
+        cornor : "res/imgs/corner.png"
     },
     sprite : {
         awen : {
@@ -1558,14 +1560,26 @@ coh.BattleScene = function() {
     // private functions
     var util = {
         getFocusTag : function() {
-            var _buf = buf;
+            var _buf = buf,
+                _coh = coh;
             // create the node if not exist.
             if (!_buf.focusNode) {
                 _buf.focusNode = cc.Node.create();
                 _buf.focusNode.background = cc.DrawNode.create();
-                _buf.focusNode.arrawRight = cc.Node.create();
-                _buf.focusNode.arrawLeft = cc.Node.create();
-                _buf.focusNode.arrawDirection = cc.Node.create();
+                _buf.focusNode.arrawRight = cc.Sprite.create(_coh.res.imgs.cornor);
+                _buf.focusNode.arrawLeft = cc.Sprite.create(_coh.res.imgs.cornor);
+                _buf.focusNode.arrawDirection = cc.Sprite.create(_coh.res.imgs.arrow);
+                
+                _buf.focusNode.arrawRight.attr({
+                    anchorX : 1,
+                    anchorY : 1,
+                    width : 36
+                });
+                
+                _buf.focusNode.addChild(_buf.focusNode.background);
+                _buf.focusNode.addChild(_buf.focusNode.arrawRight);
+                _buf.focusNode.addChild(_buf.focusNode.arrawLeft);
+                _buf.focusNode.addChild(_buf.focusNode.arrawDirection);
             }
             
             return _buf.focusNode;
@@ -1695,7 +1709,7 @@ coh.BattleScene = function() {
         focusUnit : function(){},
         
         generatePlayerMatrix : function(player) {
-             
+            
             var unitConfig = {},
                 units = player.getUnitConfig(),
                 _coh = coh;
@@ -1765,8 +1779,6 @@ coh.BattleScene = function() {
                 }
             }
             
-            console.log("x:" + tile.x + " y:" + tile.y + " Attacker:" + player.isAttacker());
-            
             tileSprite.attr({
                 x : tile.x,
                 y : tile.y,
@@ -1802,7 +1814,9 @@ coh.BattleScene = function() {
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
             _coh.unitMatrix = _buf.unitMatrix;
-        }
+        },
+        
+        util : util
     });
     
     return self = eval("new BSClass(" + argList + ")");

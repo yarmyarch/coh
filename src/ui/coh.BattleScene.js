@@ -45,16 +45,12 @@ coh.BattleScene = function() {
     // private functions
     var util = {
         getFocusTag : function() {
-            var _buf = buf;
+            var _buf = buf,
+                _coh = coh;
             // create the node if not exist.
             if (!_buf.focusNode) {
-                _buf.focusNode = cc.Node.create();
-                _buf.focusNode.background = cc.DrawNode.create();
-                _buf.focusNode.arrawRight = cc.Node.create();
-                _buf.focusNode.arrawLeft = cc.Node.create();
-                _buf.focusNode.arrawDirection = cc.Node.create();
-                
-                
+                _buf.focusNode = new coh.cpns.Cursor();
+                self.battleMap.addChild(_buf.focusNode);
             }
             
             return _buf.focusNode;
@@ -76,7 +72,7 @@ coh.BattleScene = function() {
         attacker : null,
         defender : null,
         isAttackerTurn : true,
-        ctor:function (mapSrc, imgSrc) {
+        ctor : function (mapSrc, imgSrc) {
             this._super();
             this.battleLayer = new cc.Layer();
             
@@ -254,8 +250,6 @@ coh.BattleScene = function() {
                 }
             }
             
-            console.log("x:" + tile.x + " y:" + tile.y + " Attacker:" + player.isAttacker());
-            
             tileSprite.attr({
                 x : tile.x,
                 y : tile.y,
@@ -291,7 +285,9 @@ coh.BattleScene = function() {
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
             _coh.unitMatrix = _buf.unitMatrix;
-        }
+        },
+        
+        util : util
     });
     
     return self = eval("new BSClass(" + argList + ")");
