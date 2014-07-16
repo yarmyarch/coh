@@ -53,6 +53,8 @@ coh.BattleScene = function() {
                 self.battleMap.addChild(_buf.focusNode);
             }
             
+            _buf.focusNode.focusTo(_coh.unitList[1]);
+            
             return _buf.focusNode;
         }
     };
@@ -253,10 +255,10 @@ coh.BattleScene = function() {
             tileSprite.attr({
                 x : tile.x,
                 y : tile.y,
-                //~ width: tile.width * typeConfig[1],
-                //~ height: tile.height * typeConfig[0]
-                width: tile.width,
-                height: tile.height
+                width: tile.width * typeConfig[1],
+                height: tile.height * typeConfig[0]
+                //~ width: tile.width,
+                //~ height: tile.height
             });
             
             shadow.attr({
@@ -283,7 +285,7 @@ coh.BattleScene = function() {
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];
-            _coh.unitList.push(unitSprite);
+            _coh.unitList.push(tileSprite);
             _coh.unitMatrix = _buf.unitMatrix;
         },
         
