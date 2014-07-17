@@ -686,6 +686,16 @@ coh.utils.FilterUtil = (function() {
  */
 var coh = coh || {};
 coh.cpns = coh.cpns || {};
+(function() {
+
+// global static properties for the class Cursor.
+var g_lc = {
+    ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
+    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
+    
+    FOCUS_BLINK : cc.RepeatForever.create(cc.FadeTo.create(0.5, 153))
+}
+
 coh.cpns.Cursor = cc.Node.extend({
     bgColor : new cc.Color(128,128,128,64),
     background : null,
@@ -693,6 +703,9 @@ coh.cpns.Cursor = cc.Node.extend({
     arrowLeft : null,
     arrowDirection : null,
     ctor : function(newColor) {
+        
+        var _coh = coh;
+        
         this._super();
         
         this.background = cc.DrawNode.create();        
@@ -706,22 +719,21 @@ coh.cpns.Cursor = cc.Node.extend({
             scale : 0.18
         });
         this.arrowLeft.attr({
-            anchorX : 0,
-            anchorY : 0,
+            anchorX : 1,
+            anchorY : 1,
             scale : 0.18,
             rotation : 180
         });
         this.arrowDirection.attr({
+            anchorY : 1,
             scale : 0.5,
             rotation : 180
         });
         
-        this.addChild(this.background);
-        this.addChild(this.arrowRight);
-        this.addChild(this.arrowLeft);
-        this.addChild(this.arrowDirection);
-        
-        // create animation
+        this.addChild(this.background, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+        this.addChild(this.arrowRight, _coh.LocalConfig.Z_INDEX.CONTENT);
+        this.addChild(this.arrowLeft, _coh.LocalConfig.Z_INDEX.CONTENT);
+        this.addChild(this.arrowDirection, _coh.LocalConfig.Z_INDEX.CONTENT);
         
         this.setBgColor(newColor);
     },
@@ -731,7 +743,7 @@ coh.cpns.Cursor = cc.Node.extend({
      * If you would like this cursor be at the same place as you might have expected,
      * Make sure the node parsed is at the same layer with the cursor.
      */
-    focusTo : function(node) {
+    focusTo : function(node, isAttacker) {
         
         this.x = node.x;
         this.y = node.y;
@@ -742,10 +754,15 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.arrowRight.x = node.width;
         this.arrowRight.y = node.height;
-        this.arrowDirection.y = this.arrowDirection.height - node.y - node.height;
+        
+        this.arrowDirection.x = node.width / 2;
+        this.arrowDirection.y = this.arrowDirection.height - node.y;
         
         this.background.clear();
-        this.background.drawRect(new cc.Point(0,0), new cc.Point(this.width, this.height), new cc.Color(255,255,0,164));
+        this.background.drawRect(new cc.Point(0,0), new cc.Point(this.width, this.height), isAttacker ? g_lc.ATTACKER_FOCUS_COLOR : g_lc.DEFENDER_FOCUS_COLOR);
+        
+        // create animation
+        this.background.runAction(g_lc.FOCUS_BLINK);
     },
     
     setBgColor : function(newColor) {
@@ -753,7 +770,9 @@ coh.cpns.Cursor = cc.Node.extend({
             bgColor = newColor;
         }
     }
-});var coh = coh || {};
+});
+
+})();var coh = coh || {};
 coh.View = (function() {
     
     var self;
@@ -1636,8 +1655,8 @@ coh.BattleScene = function() {
                 _coh = coh;
             // create the node if not exist.
             if (!_buf.focusNode) {
-                _buf.focusNode = new coh.cpns.Cursor();
-                self.battleMap.addChild(_buf.focusNode);
+                _buf.focusNode = new _coh.cpns.Cursor();
+                self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             }
             
             _buf.focusNode.focusTo(_coh.unitList[1]);
@@ -1872,7 +1891,7 @@ coh.BattleScene = function() {
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];
-            _coh.unitList.push(tileSprite);
+            _coh.unitList.push(unitSprite);
             _coh.unitMatrix = _buf.unitMatrix;
         },
         

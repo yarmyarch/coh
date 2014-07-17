@@ -49,8 +49,8 @@ coh.BattleScene = function() {
                 _coh = coh;
             // create the node if not exist.
             if (!_buf.focusNode) {
-                _buf.focusNode = new coh.cpns.Cursor();
-                self.battleMap.addChild(_buf.focusNode);
+                _buf.focusNode = new _coh.cpns.Cursor();
+                self.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             }
             
             _buf.focusNode.focusTo(_coh.unitList[1]);
@@ -285,7 +285,7 @@ coh.BattleScene = function() {
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             _coh.unitList = _coh.unitList || [];
-            _coh.unitList.push(tileSprite);
+            _coh.unitList.push(unitSprite);
             _coh.unitMatrix = _buf.unitMatrix;
         },
         
