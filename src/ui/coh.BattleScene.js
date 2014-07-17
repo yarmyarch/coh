@@ -50,10 +50,8 @@ coh.BattleScene = function() {
             // create the node if not exist.
             if (!_buf.focusNode) {
                 _buf.focusNode = new _coh.cpns.Cursor();
-                self.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+                self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             }
-            
-            _buf.focusNode.focusTo(_coh.unitList[1]);
             
             return _buf.focusNode;
         }
@@ -159,27 +157,50 @@ coh.BattleScene = function() {
             handlerList.tileSelector = selector;
         },
         
+        getTileFromCoord : function(posX, posY) {
+            var scale = this.battleMap.scale;
+            
+            return handlerList.tileSelector.getTileFromCoord(
+                this.battleMap.width * scale, 
+                this.battleMap.height * scale,
+                posX - this.battleMap.x * scale, 
+                posY
+            );
+        },
+        
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitData : function(isAttacker, posX, posY) {
-            var scale = this.battleMap.scale,
-                tile = handlerList.tileSelector.getTilePositionFromCoord(
-                    this.battleMap.width * scale, 
-                    this.battleMap.height * scale,
-                    posX - this.battleMap.x * scale, 
-                    posY
-                ),
+        getUnitDataInGlobal : function(posX, posY) {
+            var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
-            
-            tile = handlerList.tileSelector.filterTurnedTiles(isAttacker, tile.x, tile.y);
             
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
-        // XXXXXX
-        locateUnit : function(){},
-        focusUnit : function(){},
+        /**
+         * get unit sprite via given position in the view.
+         * this will only return ligle units for current player turn, attacker or defender.
+         */
+        getUnitDataInTurn : function(posX, posY) {
+            var tile = this.getTileFromCoord(posX, posY),
+                _buf = buf;
+            
+            tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
+            
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        /**
+         *@param node cc.Node
+         */
+        locateToUnit : function(node){
+            util.getFocusTag().locateTo(node, this.isAttackerTurn);
+        },
+        
+        focusOnUnit : function(node){
+            util.getFocusTag().focusOn(node, this.isAttackerTurn);
+        },
         
         generatePlayerMatrix : function(player) {
             
@@ -271,7 +292,7 @@ coh.BattleScene = function() {
                 opacity:164
             });
             
-            tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
+            //~ tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
             
             unitSprite.attr({
                 x : 0,
@@ -287,9 +308,7 @@ coh.BattleScene = function() {
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
             _coh.unitMatrix = _buf.unitMatrix;
-        },
-        
-        util : util
+        }
     });
     
     return self = eval("new BSClass(" + argList + ")");

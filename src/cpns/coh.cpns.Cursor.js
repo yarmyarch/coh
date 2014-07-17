@@ -60,7 +60,7 @@ coh.cpns.Cursor = cc.Node.extend({
      * If you would like this cursor be at the same place as you might have expected,
      * Make sure the node parsed is at the same layer with the cursor.
      */
-    focusTo : function(node, isAttacker) {
+    locateTo : function(node, isAttacker) {
         
         this.x = node.x;
         this.y = node.y;
@@ -73,13 +73,17 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowRight.y = node.height;
         
         this.arrowDirection.x = node.width / 2;
-        this.arrowDirection.y = this.arrowDirection.height - node.y;
+        this.arrowDirection.y = - node.y;
         
         this.background.clear();
         this.background.drawRect(new cc.Point(0,0), new cc.Point(this.width, this.height), isAttacker ? g_lc.ATTACKER_FOCUS_COLOR : g_lc.DEFENDER_FOCUS_COLOR);
         
         // create animation
         this.background.runAction(g_lc.FOCUS_BLINK);
+    },
+    
+    focusOn : function(node) {
+        // XXXXXX
     },
     
     setBgColor : function(newColor) {

@@ -489,7 +489,7 @@ coh.utils = coh.utils || {};
                 /**
                  * Magic...
                  */
-                getTilePositionFromCoord : function(screenWidth, screenHeight, posX, posY) {
+                getTileFromCoord : function(screenWidth, screenHeight, posX, posY) {
                     var rangeX = screenWidth / 16,
                         rangeY = screenHeight / 16;
                     
@@ -743,7 +743,7 @@ coh.cpns.Cursor = cc.Node.extend({
      * If you would like this cursor be at the same place as you might have expected,
      * Make sure the node parsed is at the same layer with the cursor.
      */
-    focusTo : function(node, isAttacker) {
+    locateTo : function(node, isAttacker) {
         
         this.x = node.x;
         this.y = node.y;
@@ -756,13 +756,17 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowRight.y = node.height;
         
         this.arrowDirection.x = node.width / 2;
-        this.arrowDirection.y = this.arrowDirection.height - node.y;
+        this.arrowDirection.y = - node.y;
         
         this.background.clear();
         this.background.drawRect(new cc.Point(0,0), new cc.Point(this.width, this.height), isAttacker ? g_lc.ATTACKER_FOCUS_COLOR : g_lc.DEFENDER_FOCUS_COLOR);
         
         // create animation
         this.background.runAction(g_lc.FOCUS_BLINK);
+    },
+    
+    focusOn : function(node) {
+        // XXXXXX
     },
     
     setBgColor : function(newColor) {
@@ -1659,8 +1663,6 @@ coh.BattleScene = function() {
                 self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             }
             
-            _buf.focusNode.focusTo(_coh.unitList[1]);
-            
             return _buf.focusNode;
         }
     };
@@ -1765,27 +1767,52 @@ coh.BattleScene = function() {
             handlerList.tileSelector = selector;
         },
         
+        getTileFromCoord : function(posX, posY) {
+            var scale = this.battleMap.scale;
+            
+            return handlerList.tileSelector.getTileFromCoord(
+                this.battleMap.width * scale, 
+                this.battleMap.height * scale,
+                posX - this.battleMap.x * scale, 
+                posY
+            );
+        },
+        
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitData : function(isAttacker, posX, posY) {
-            var scale = this.battleMap.scale,
-                tile = handlerList.tileSelector.getTilePositionFromCoord(
-                    this.battleMap.width * scale, 
-                    this.battleMap.height * scale,
-                    posX - this.battleMap.x * scale, 
-                    posY
-                ),
+        getUnitDataInGlobal : function(posX, posY) {
+            var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
-            
-            tile = handlerList.tileSelector.filterTurnedTiles(isAttacker, tile.x, tile.y);
             
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
-        // XXXXXX
-        locateUnit : function(){},
-        focusUnit : function(){},
+        /**
+         * get unit sprite via given position in the view.
+         * this will only return ligle units for current player turn, attacker or defender.
+         */
+        getUnitDataInTurn : function(posX, posY) {
+            var tile = this.getTileFromCoord(posX, posY),
+                _buf = buf;
+            
+            tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
+            
+            console.log("x: " + tile.x + " y: " + tile.y);
+            
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        /**
+         *@param node cc.Node
+         */
+        locateToUnit : function(node){
+            util.getFocusTag().locateTo(node, this.isAttackerTurn);
+        },
+        
+        focusOnUnit : function(node){
+            util.getFocusTag().focusOn(node, this.isAttackerTurn);
+        },
         
         generatePlayerMatrix : function(player) {
             
@@ -1877,7 +1904,7 @@ coh.BattleScene = function() {
                 opacity:164
             });
             
-            tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
+            //~ tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
             
             unitSprite.attr({
                 x : 0,
@@ -1893,9 +1920,7 @@ coh.BattleScene = function() {
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitSprite);
             _coh.unitMatrix = _buf.unitMatrix;
-        },
-        
-        util : util
+        }
     });
     
     return self = eval("new BSClass(" + argList + ")");
@@ -1963,23 +1988,17 @@ coh.UIController = (function() {
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
-        var lastUnitSrite;
+        var lastUnitData;
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocationInView(),
-                    unitSprite = battleScene.getUnitData(!battleScene.isAttackerTurn, location.x, location.y);
+                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
                 
-                unitSprite && (unitSprite = unitSprite.unitSprite);
-                
-                if (unitSprite) {
-                    lastUnitSrite && lastUnitSrite.setOpacity(1000);
-                    unitSprite.setOpacity(100);
-                    lastUnitSrite = unitSprite;
-                    
-                    // XXXXXX
-                    // Locate To in BattleScene
+                if (unitData) {
+                    battleScene.locateToUnit(unitData.tileSprite);
+                    lastUnitData = unitData;
                 }
             }
         }, battleScene);

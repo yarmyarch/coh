@@ -46,23 +46,17 @@ coh.UIController = (function() {
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
-        var lastUnitSrite;
+        var lastUnitData;
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocationInView(),
-                    unitSprite = battleScene.getUnitData(!battleScene.isAttackerTurn, location.x, location.y);
+                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
                 
-                unitSprite && (unitSprite = unitSprite.unitSprite);
-                
-                if (unitSprite) {
-                    lastUnitSrite && lastUnitSrite.setOpacity(1000);
-                    unitSprite.setOpacity(100);
-                    lastUnitSrite = unitSprite;
-                    
-                    // XXXXXX
-                    // Locate To in BattleScene
+                if (unitData) {
+                    battleScene.locateToUnit(unitData.tileSprite);
+                    lastUnitData = unitData;
                 }
             }
         }, battleScene);

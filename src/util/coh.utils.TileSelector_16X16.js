@@ -34,7 +34,7 @@ coh.utils = coh.utils || {};
                 /**
                  * Magic...
                  */
-                getTilePositionFromCoord : function(screenWidth, screenHeight, posX, posY) {
+                getTileFromCoord : function(screenWidth, screenHeight, posX, posY) {
                     var rangeX = screenWidth / 16,
                         rangeY = screenHeight / 16;
                     
