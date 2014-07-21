@@ -1694,6 +1694,7 @@ coh.BattleScene = function() {
         },
         
         onEnter : function() {
+            this._super();
             coh.utils.FilterUtil.applyFilters("battleSceneEntered", this);
         },
         
