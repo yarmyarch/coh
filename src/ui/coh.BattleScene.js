@@ -186,6 +186,8 @@ coh.BattleScene = function() {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
+            // XXXXXX new rules required, searching for the nearest unit from a given tile;
+            // Focus to the defender;
             tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
             
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];

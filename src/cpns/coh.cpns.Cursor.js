@@ -68,6 +68,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.anchorY = node.anchorY;
         this.width = node.width;
         this.height = node.height;
+        this.zIndex = node.zIndex - 1;
         
         this.arrowRight.x = node.width;
         this.arrowRight.y = node.height;

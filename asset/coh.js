@@ -751,6 +751,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.anchorY = node.anchorY;
         this.width = node.width;
         this.height = node.height;
+        this.zIndex = node.zIndex - 1;
         
         this.arrowRight.x = node.width;
         this.arrowRight.y = node.height;
@@ -1796,9 +1797,9 @@ coh.BattleScene = function() {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
+            // XXXXXX new rules required, searching for the nearest unit from a given tile;
+            // Focus to the defender;
             tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
-            
-            console.log("x: " + tile.x + " y: " + tile.y);
             
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
