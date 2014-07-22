@@ -45,12 +45,33 @@ coh.utils = coh.utils || {};
                 },
                 
                 /**
+                 * return ligle X range that's allowed having an unit, from left to right.
+                 * return [4-12].
+                 */
+                getXRange : function() {
+                    return [4, 5, 6, 7, 8, 9, 10, 11];
+                },
+                
+                /**
+                 * return ligle Y range that's allowed having an unit.
+                 * it depends on the current turn is the attacker turn or not.
+                 * note that as shared rows, the row 7 and 8, would be attached to the attacker/defender dynamicly accroding to the game ruels.
+                 * the order of the returnd array is the searching order.
+                 */
+                getYRange : function(isAttacker) {
+                    if (isAttacker)
+                        return [8, 7, 6, 5, 4, 3, 2, 1];
+                    else return [7, 8, 9, 10, 11, 12, 13, 14];
+                },
+                
+                /**
+                 * !!!!!!!!!!!!! NOT USED ALREADY
                  * return available tiles for current turn.
                  * When it's the attacker's turn, those tiles of the defender should be ignored.
                  */
                 filterTurnedTiles : function(isAttacker, x, y) {
-                    x = Math.min(Math.max(x, 4), 12);
-                    y = !isAttacker ? Math.min(Math.max(y, 1), 7) : Math.min(Math.max(y, 7), 14);
+                    x = Math.min(Math.max(x, 4), 11);
+                    y = !isAttacker ? Math.min(Math.max(y, 1), 8) : Math.min(Math.max(y, 7), 14);
                     return {x : x, y : y};
                 }
             }

@@ -54,16 +54,48 @@ coh.BattleScene = function() {
             }
             
             return _buf.focusNode;
+        },
+        
+        /**
+         * Rules: if it's out of X border, locate to the nearest column that's having an unit;
+         * Otherwise, locate to the poingint column.
+         *
+         */
+        getAvaliableTiles : function(isAttacker, tileX, tileY) {
+            var xRange = handlerList.tileSelector.getXRange(),
+                yRange = handlerList.tileSelector.getYRange(isAttacker),
+                overRight = tileX > xRange[xRange.length - 1],
+                overLeft = tileX < xRange[0],
+            
+                startX = overRight ? xRange[xRange.length - 1] : overLeft ? xRange[0] : tileX,
+                endX = overRight ? xRange[0] : overLeft ? xRange[xRange.length - 1] : tileX,
+                deataX = overRight ? -1 : overLeft ? 1 : 0,
+                
+                /**
+                 *Position Y would be a problem.... for cases like this, while 0 is the position of the given tile.
+                 *
+                ******
+                *****
+               0 **
+                 **
+                */
+                startY = tileY,
+                endY = yRange[yRange.length - 1],
+                deataY = isAttacker ? -1 : 1,
+            
+                _buf = buf,
+                x, y;
+            
+            for (x = startX; x == endX; x += deataX) {
+                for (y = startY; y == endY; y += deataY) {
+                    if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
+                }
+            }
+            
+            // nothing matches found for given tile.
+            return null;
         }
     };
-    
-    // Sorry but I really did't mean to make it so ugly...
-    // Just for private fields.
-    var argList = [];
-    for (var i = 0, arg; arg = arguments[i]; ++i) {
-        argList.push("arguments[" + i + "]");
-    }
-    argList = argList.join(",");
     
     var BSClass = cc.Scene.extend({
         battleLayer : null,
@@ -187,11 +219,12 @@ coh.BattleScene = function() {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
-            // XXXXXX new rules required, searching for the nearest unit from a given tile;
+            // searching for the nearest unit from a given tile;
             // Focus to the defender;
-            tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
+            //~ tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
+            tile = util.getAvaliableTiles(this.isAttackerTurn, tile.x, tile.y);
             
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
         /**
@@ -313,6 +346,14 @@ coh.BattleScene = function() {
             _coh.unitMatrix = _buf.unitMatrix;
         }
     });
+    
+    // Sorry but I really did't mean to make it so ugly...
+    // Just for private fields.
+    var argList = [];
+    for (var i = 0, arg; arg = arguments[i]; ++i) {
+        argList.push("arguments[" + i + "]");
+    }
+    argList = argList.join(",");
     
     return self = eval("new BSClass(" + argList + ")");
     

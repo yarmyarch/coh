@@ -506,12 +506,33 @@ coh.utils = coh.utils || {};
                 },
                 
                 /**
+                 * return ligle X range that's allowed having an unit, from left to right.
+                 * return [4-12].
+                 */
+                getXRange : function() {
+                    return [4, 5, 6, 7, 8, 9, 10, 11];
+                },
+                
+                /**
+                 * return ligle Y range that's allowed having an unit.
+                 * it depends on the current turn is the attacker turn or not.
+                 * note that as shared rows, the row 7 and 8, would be attached to the attacker/defender dynamicly accroding to the game ruels.
+                 * the order of the returnd array is the searching order.
+                 */
+                getYRange : function(isAttacker) {
+                    if (isAttacker)
+                        return [8, 7, 6, 5, 4, 3, 2, 1];
+                    else return [7, 8, 9, 10, 11, 12, 13, 14];
+                },
+                
+                /**
+                 * !!!!!!!!!!!!! NOT USED ALREADY
                  * return available tiles for current turn.
                  * When it's the attacker's turn, those tiles of the defender should be ignored.
                  */
                 filterTurnedTiles : function(isAttacker, x, y) {
-                    x = Math.min(Math.max(x, 4), 12);
-                    y = !isAttacker ? Math.min(Math.max(y, 1), 7) : Math.min(Math.max(y, 7), 14);
+                    x = Math.min(Math.max(x, 4), 11);
+                    y = !isAttacker ? Math.min(Math.max(y, 1), 8) : Math.min(Math.max(y, 7), 14);
                     return {x : x, y : y};
                 }
             }
@@ -783,7 +804,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         if (this.focusedNode == node) return;
         
-        var frameRate = coh.LocalConfig.FRAME_RATE * 10;
+        var frameRate = coh.LocalConfig.FRAME_RATE * 5;
         
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
@@ -1759,16 +1780,48 @@ coh.BattleScene = function() {
             }
             
             return _buf.focusNode;
+        },
+        
+        /**
+         * Rules: if it's out of X border, locate to the nearest column that's having an unit;
+         * Otherwise, locate to the poingint column.
+         *
+         */
+        getAvaliableTiles : function(isAttacker, tileX, tileY) {
+            var xRange = handlerList.tileSelector.getXRange(),
+                yRange = handlerList.tileSelector.getYRange(isAttacker),
+                overRight = tileX > xRange[xRange.length - 1],
+                overLeft = tileX < xRange[0],
+            
+                startX = overRight ? xRange[xRange.length - 1] : overLeft ? xRange[0] : tileX,
+                endX = overRight ? xRange[0] : overLeft ? xRange[xRange.length - 1] : tileX,
+                deataX = overRight ? -1 : overLeft ? 1 : 0,
+                
+                /**
+                 *Position Y would be a problem.... for cases like this, while 0 is the position of the given tile.
+                 *
+                ******
+                *****
+               0 **
+                 **
+                */
+                startY = tileY,
+                endY = yRange[yRange.length - 1],
+                deataY = isAttacker ? -1 : 1,
+            
+                _buf = buf,
+                x, y;
+            
+            for (x = startX; x == endX; x += deataX) {
+                for (y = startY; y == endY; y += deataY) {
+                    if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
+                }
+            }
+            
+            // nothing matches found for given tile.
+            return null;
         }
     };
-    
-    // Sorry but I really did't mean to make it so ugly...
-    // Just for private fields.
-    var argList = [];
-    for (var i = 0, arg; arg = arguments[i]; ++i) {
-        argList.push("arguments[" + i + "]");
-    }
-    argList = argList.join(",");
     
     var BSClass = cc.Scene.extend({
         battleLayer : null,
@@ -1892,11 +1945,12 @@ coh.BattleScene = function() {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
-            // XXXXXX new rules required, searching for the nearest unit from a given tile;
+            // searching for the nearest unit from a given tile;
             // Focus to the defender;
-            tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
+            //~ tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
+            tile = util.getAvaliableTiles(this.isAttackerTurn, tile.x, tile.y);
             
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },
         
         /**
@@ -2018,6 +2072,14 @@ coh.BattleScene = function() {
             _coh.unitMatrix = _buf.unitMatrix;
         }
     });
+    
+    // Sorry but I really did't mean to make it so ugly...
+    // Just for private fields.
+    var argList = [];
+    for (var i = 0, arg; arg = arguments[i]; ++i) {
+        argList.push("arguments[" + i + "]");
+    }
+    argList = argList.join(",");
     
     return self = eval("new BSClass(" + argList + ")");
     

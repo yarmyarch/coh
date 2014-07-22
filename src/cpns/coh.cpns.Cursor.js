@@ -94,7 +94,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         if (this.focusedNode == node) return;
         
-        var frameRate = coh.LocalConfig.FRAME_RATE * 10;
+        var frameRate = coh.LocalConfig.FRAME_RATE * 5;
         
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
