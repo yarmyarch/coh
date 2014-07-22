@@ -24,7 +24,8 @@ coh.res = {
         forest : "res/tmxmap/forest.jpg",
         shadow : "res/imgs/shadow.png",
         arrow : "res/imgs/arrow.png",
-        cornor : "res/imgs/corner.png"
+        cornor : "res/imgs/corner.png",
+        blank : "res/imgs/blank.png",
     },
     sprite : {
         awen : {

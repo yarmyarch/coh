@@ -7,14 +7,38 @@ coh.cpns = coh.cpns || {};
 
 // global static properties for the class Cursor.
 var g_lc = {
-    ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
-    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
-    
-    FOCUS_BLINK : cc.RepeatForever.create(cc.FadeTo.create(0.5, 153))
-}
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(coh.LocalConfig.BLINK_RATE, 64), cc.fadeTo(coh.LocalConfig.BLINK_RATE, 204))),
+    CORNOR_SCALE : 0.18,
+    DIRECT_SCALE : 0.5
+};
+
+var g_buf = {
+    movebyList : {}
+};
+
+var g_util = {
+    getMoveBy : function(width, height, xRate, yRate) {
+        var id = [].join.call(arguments, "_"),
+            moveBy = g_buf.movebyList[id],
+            _coh = coh;
+        
+        if (!moveBy) {
+            
+            moveBy = cc.repeatForever(cc.sequence(
+                cc.moveBy(coh.LocalConfig.BLINK_RATE, cc.p(width * xRate, height * yRate)),
+                cc.moveBy(coh.LocalConfig.BLINK_RATE, cc.p(width * xRate * -1, height * yRate * -1))
+            ));
+            
+            g_buf.movebyList[id] = moveBy;
+        }
+        
+        return moveBy;
+    }
+};
 
 coh.cpns.Cursor = cc.Node.extend({
-    bgColor : new cc.Color(128,128,128,64),
+    bgColor : coh.LocalConfig.ATTACKER_FOCUS_COLOR,
+    focusedNode : null,
     background : null,
     arrowRight : null,
     arrowLeft : null,
@@ -25,7 +49,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this._super();
         
-        this.background = cc.DrawNode.create();        
+        this.background = cc.Sprite.create(_coh.res.imgs.blank);;
         this.arrowRight = cc.Sprite.create(_coh.res.imgs.cornor);
         this.arrowLeft = cc.Sprite.create(_coh.res.imgs.cornor);
         this.arrowDirection = cc.Sprite.create(_coh.res.imgs.arrow);
@@ -33,17 +57,21 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowRight.attr({
             anchorX : 1,
             anchorY : 1,
-            scale : 0.18
+            scale : g_lc.CORNOR_SCALE
         });
         this.arrowLeft.attr({
             anchorX : 1,
             anchorY : 1,
-            scale : 0.18,
+            scale : g_lc.CORNOR_SCALE,
             rotation : 180
+        });
+        this.background.attr({
+            anchorX : 0,
+            anchorY : 0
         });
         this.arrowDirection.attr({
             anchorY : 1,
-            scale : 0.5,
+            scale : g_lc.DIRECT_SCALE,
             rotation : 180
         });
         
@@ -60,7 +88,11 @@ coh.cpns.Cursor = cc.Node.extend({
      * If you would like this cursor be at the same place as you might have expected,
      * Make sure the node parsed is at the same layer with the cursor.
      */
-    locateTo : function(node, isAttacker) {
+    locateTo : function(node, isAttacker, color) {
+        
+        if (this.focusedNode == node) return;
+        
+        this.focusedNode = node;
         
         this.x = node.x;
         this.y = node.y;
@@ -76,11 +108,13 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = - node.y;
         
-        this.background.clear();
-        this.background.drawRect(new cc.Point(0,0), new cc.Point(this.width, this.height), isAttacker ? g_lc.ATTACKER_FOCUS_COLOR : g_lc.DEFENDER_FOCUS_COLOR);
+        this.background.setScaleX(node.width / this.background.width);
+        this.background.setScaleY(node.height / this.background.height);
         
-        // create animation
-        this.background.runAction(g_lc.FOCUS_BLINK);
+        this.background.setColor(color || this.bgColor);
+        
+        // create simple animations
+        this.runFocusAnimat();
     },
     
     focusOn : function(node) {
@@ -89,8 +123,20 @@ coh.cpns.Cursor = cc.Node.extend({
     
     setBgColor : function(newColor) {
         if (newColor instanceof cc.Color) {
-            bgColor = newColor;
+            this.bgColor = newColor;
         }
+    },
+    
+    runFocusAnimat : function() {
+        this.background.stopAllActions();
+        this.arrowRight.stopAllActions();
+        this.arrowLeft.stopAllActions();
+        this.arrowDirection.stopAllActions();
+        
+        this.background.runAction(g_lc.FOCUS_BLINK);
+        this.arrowRight.runAction(g_util.getMoveBy(this.arrowRight.width * g_lc.CORNOR_SCALE, this.arrowRight.height * g_lc.CORNOR_SCALE, 0.382, 0.382));
+        this.arrowLeft.runAction(g_util.getMoveBy(this.arrowLeft.width * g_lc.CORNOR_SCALE, this.arrowLeft.height * g_lc.CORNOR_SCALE, -0.382, -0.382));
+        this.arrowDirection.runAction(g_util.getMoveBy(this.arrowDirection.width * g_lc.DIRECT_SCALE, this.arrowDirection.height * g_lc.DIRECT_SCALE, 0, -0.382));
     }
 });
 

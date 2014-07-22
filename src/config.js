@@ -53,6 +53,8 @@ coh.LocalConfig = {
     ],
     // frame rate for general animations.
     FRAME_RATE : 1/60,
+    
+    BLINK_RATE : 0.618,
     COLOR_CONFIG : {
         elf : ["blue", "white", "gold"]
     },
@@ -72,5 +74,8 @@ coh.LocalConfig = {
     Z_INDEX : {
         BACKGROUND : 0,
         CONTENT : 10,
-    }
+    },
+    
+    ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
+    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204)
 };
