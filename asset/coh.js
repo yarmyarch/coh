@@ -770,6 +770,8 @@ coh.cpns.Cursor = cc.Node.extend({
         this.addChild(this.arrowDirection, _coh.LocalConfig.Z_INDEX.CONTENT);
         
         this.setBgColor(newColor);
+        
+        this.background.runAction(g_lc.FOCUS_BLINK);
     },
     
     /**
@@ -781,21 +783,12 @@ coh.cpns.Cursor = cc.Node.extend({
         
         if (this.focusedNode == node) return;
         
-        this.focusedNode = node;
-        
-        //~ this.x = node.x;
-        //~ this.y = node.y;
+        var frameRate = coh.LocalConfig.FRAME_RATE * 10;
         
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
         this.width = node.width;
         this.height = node.height;
-        this.zIndex = node.zIndex - 1;
-        this.stopAllActions();
-        this.runAction(cc.moveTo(coh.LocalConfig.FRAME_RATE * 10, cc.p(node.x, node.y)));
-        
-        this.arrowRight.x = node.width;
-        this.arrowRight.y = node.height;
         
         this.arrowLeft.x = 0;
         this.arrowLeft.y = 0;
@@ -803,13 +796,35 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = - node.y;
         
-        this.background.setScaleX(node.width / this.background.width);
-        this.background.setScaleY(node.height / this.background.height);
-        
         this.background.setColor(color || this.bgColor);
+        
+        // animation related part.
+        if (!this.focusedNode) {
+            this.x = node.x;
+            this.y = node.y;
+            
+            this.arrowRight.x = node.width;
+            this.arrowRight.y = node.height;
+            
+            this.background.scaleX = node.width / this.background.width;
+            this.background.scaleY = node.height / this.background.height;
+        } else {
+            this.stopAllActions();
+            this.runAction(cc.moveTo(frameRate, node.x, node.y));
+            
+            this.arrowRight.stopAction(this.arrowRight.moveAction);
+            this.arrowRight.runAction(this.arrowRight.moveAction = cc.moveTo(frameRate, node.width, node.height));
+        
+            this.background.stopAction(this.background.scaleAction);
+            this.background.runAction(
+                this.background.scaleAction = cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
+            );
+        }
         
         // create simple animations
         this.runFocusAnimat(isAttacker);
+        
+        this.focusedNode = node;
     },
     
     focusOn : function(node) {
@@ -823,30 +838,36 @@ coh.cpns.Cursor = cc.Node.extend({
     },
     
     runFocusAnimat : function(isAttacker) {
-        this.background.stopAllActions();
-        this.arrowRight.stopAllActions();
-        this.arrowLeft.stopAllActions();
-        this.arrowDirection.stopAllActions();
         
-        this.background.runAction(g_lc.FOCUS_BLINK);
-        this.arrowRight.runAction(g_util.getMoveBy(
-            this.arrowRight.width * g_lc.CORNOR_SCALE, 
-            this.arrowRight.height * g_lc.CORNOR_SCALE, 
-            0.382, 
-            0.382)
-        );
-        this.arrowLeft.runAction(g_util.getMoveBy(
-            this.arrowLeft.width * g_lc.CORNOR_SCALE, 
-            this.arrowLeft.height * g_lc.CORNOR_SCALE, 
-            -0.382, 
-            -0.382
-        ));
-        this.arrowDirection.runAction(g_util.getMoveBy(
-            this.arrowDirection.width * g_lc.DIRECT_SCALE, 
-            this.arrowDirection.height * g_lc.DIRECT_SCALE, 
-            0, 
-            -0.382 * (isAttacker ? 1 : -1)
-        ));
+        var ar = g_util.getMoveBy(
+                this.arrowRight.width * g_lc.CORNOR_SCALE, 
+                this.arrowRight.height * g_lc.CORNOR_SCALE, 
+                0.382, 
+                0.382
+            ),
+            al = g_util.getMoveBy(
+                this.arrowLeft.width * g_lc.CORNOR_SCALE, 
+                this.arrowLeft.height * g_lc.CORNOR_SCALE, 
+                -0.382, 
+                -0.382
+            ),
+            ad = g_util.getMoveBy(
+                this.arrowDirection.width * g_lc.DIRECT_SCALE, 
+                this.arrowDirection.height * g_lc.DIRECT_SCALE, 
+                0, 
+                0.382 * (isAttacker ? 1 : -1)
+            );
+        
+        try {
+        // there would be an error if the action doesn't exist... shit.
+            this.arrowRight.stopAction(ar);
+            this.arrowLeft.stopAction(al);
+            this.arrowDirection.stopAction(ad);
+        } catch(e) {};
+        
+        this.arrowRight.runAction(ar);
+        this.arrowLeft.runAction(al);
+        this.arrowDirection.runAction(ad);
     }
 });
 
