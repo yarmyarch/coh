@@ -94,16 +94,22 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.focusedNode = node;
         
-        this.x = node.x;
-        this.y = node.y;
+        //~ this.x = node.x;
+        //~ this.y = node.y;
+        
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
         this.width = node.width;
         this.height = node.height;
         this.zIndex = node.zIndex - 1;
+        this.stopAllActions();
+        this.runAction(cc.moveTo(coh.LocalConfig.FRAME_RATE * 10, cc.p(node.x, node.y)));
         
         this.arrowRight.x = node.width;
         this.arrowRight.y = node.height;
+        
+        this.arrowLeft.x = 0;
+        this.arrowLeft.y = 0;
         
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = - node.y;
@@ -114,7 +120,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.background.setColor(color || this.bgColor);
         
         // create simple animations
-        this.runFocusAnimat();
+        this.runFocusAnimat(isAttacker);
     },
     
     focusOn : function(node) {
@@ -127,16 +133,31 @@ coh.cpns.Cursor = cc.Node.extend({
         }
     },
     
-    runFocusAnimat : function() {
+    runFocusAnimat : function(isAttacker) {
         this.background.stopAllActions();
         this.arrowRight.stopAllActions();
         this.arrowLeft.stopAllActions();
         this.arrowDirection.stopAllActions();
         
         this.background.runAction(g_lc.FOCUS_BLINK);
-        this.arrowRight.runAction(g_util.getMoveBy(this.arrowRight.width * g_lc.CORNOR_SCALE, this.arrowRight.height * g_lc.CORNOR_SCALE, 0.382, 0.382));
-        this.arrowLeft.runAction(g_util.getMoveBy(this.arrowLeft.width * g_lc.CORNOR_SCALE, this.arrowLeft.height * g_lc.CORNOR_SCALE, -0.382, -0.382));
-        this.arrowDirection.runAction(g_util.getMoveBy(this.arrowDirection.width * g_lc.DIRECT_SCALE, this.arrowDirection.height * g_lc.DIRECT_SCALE, 0, -0.382));
+        this.arrowRight.runAction(g_util.getMoveBy(
+            this.arrowRight.width * g_lc.CORNOR_SCALE, 
+            this.arrowRight.height * g_lc.CORNOR_SCALE, 
+            0.382, 
+            0.382)
+        );
+        this.arrowLeft.runAction(g_util.getMoveBy(
+            this.arrowLeft.width * g_lc.CORNOR_SCALE, 
+            this.arrowLeft.height * g_lc.CORNOR_SCALE, 
+            -0.382, 
+            -0.382
+        ));
+        this.arrowDirection.runAction(g_util.getMoveBy(
+            this.arrowDirection.width * g_lc.DIRECT_SCALE, 
+            this.arrowDirection.height * g_lc.DIRECT_SCALE, 
+            0, 
+            -0.382 * (isAttacker ? 1 : -1)
+        ));
     }
 });
 
