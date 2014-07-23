@@ -71,8 +71,7 @@ coh.cpns.Cursor = cc.Node.extend({
         });
         this.arrowDirection.attr({
             anchorY : 1,
-            scale : g_lc.DIRECT_SCALE,
-            rotation : 180
+            scale : g_lc.DIRECT_SCALE
         });
         
         this.addChild(this.background, _coh.LocalConfig.Z_INDEX.BACKGROUND);
@@ -92,6 +91,7 @@ coh.cpns.Cursor = cc.Node.extend({
      */
     locateTo : function(node, isAttacker, color) {
         
+        this.setVisible(true);
         if (this.focusedNode == node) return;
         
         var frameRate = coh.LocalConfig.FRAME_RATE * 5;
@@ -104,8 +104,10 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowLeft.x = 0;
         this.arrowLeft.y = 0;
         
+        //~ !isAttacker && (this.arrowDirection.rotation = 0);
+        this.arrowDirection.rotation = isAttacker ? 180 : 0;
         this.arrowDirection.x = node.width / 2;
-        this.arrowDirection.y = - node.y;
+        this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
         
         this.background.setColor(color || this.bgColor);
         
@@ -140,6 +142,10 @@ coh.cpns.Cursor = cc.Node.extend({
     
     focusOn : function(node) {
         // XXXXXX
+    },
+    
+    hide : function() {
+        this.setVisible(false);
     },
     
     setBgColor : function(newColor) {

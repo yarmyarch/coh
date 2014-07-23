@@ -64,6 +64,20 @@ coh.UIController = (function() {
         return battleScene;
     });
     
+    coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {
+        var tag = battleScene.getFocusTag();
+        
+        tag.setBgColor(coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+        tag.hide();
+    });
+    
+    coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
+        var tag = battleScene.getFocusTag();
+        
+        tag.setBgColor(coh.LocalConfig.ATTACKER_FOCUS_COLOR);
+        tag.hide();
+    });
+    
     return self = {
         
     };
