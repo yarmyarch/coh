@@ -1,4 +1,7 @@
 var coh = coh || {};
+/**
+ * Logics and utils related to the global view sight.
+ */
 coh.View = (function() {
     
     var self;

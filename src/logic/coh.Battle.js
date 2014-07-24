@@ -1,4 +1,7 @@
 var coh = coh || {};
+/**
+ * Logics related to the battle ground, especially on calculating unit matrixes.
+ */
 coh.Battle = (function(){
     
     var self;

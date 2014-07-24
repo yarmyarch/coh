@@ -42,47 +42,55 @@ coh.UIController = (function() {
     
     var self;
     
-    var buf;
+    var buf = {
+        // mark the last handled unitTile and tile, for click and slide events.
+        lastUnitTile : null, 
+        lastTile : null,
+        
+        // if a unit is checked twice, it would be removed from the scene.
+        checkedUnit : null
+    };
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
-        
-        var lastUnitData, lastTile;
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocationInView(),
-                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
+                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
                 
-                if (unitData) {
-                    battleScene.locateToUnit(unitData.tileSprite);
+                if (unitTile) {
+                    battleScene.locateToUnit(unitTile.tileSprite);
                 }
             },
             
             onMouseDown : function(event) {
                 var location = event.getLocationInView(),
                     tile = battleScene.getTileFromCoord(location.x, location.y),
-                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
-                if (unitData) {
-                    lastUnitData = unitData;
-                    lastTile = tile;
+                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
+                if (unitTile) {
+                    buf.lastUnitTile = unitTile;
+                    buf.lastTile = tile;
                 }
             },
             
             onMouseUp : function(event) {
                 var location = event.getLocationInView(),
                     tile = battleScene.getTileFromCoord(location.x, location.y),
-                    unitData = battleScene.getUnitDataInTurn(location.x, location.y),
-                    clickedUnit = battleScene.getUnitDataInGlobal(location.x, location.y);
-                if (unitData) {
-                    // the same unit clicked: clickedUnit should be the same as the lastUnitData.
-                    if (lastUnitData && unitData == lastUnitData && clickedUnit == unitData) {
-                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitData, tile);
+                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y),
+                    clickedUnit = battleScene.getUnitTileInGlobal(location.x, location.y),
+                    lastUnitTile = buf.lastUnitTile,
+                    lastTile = buf.lastTile;
+                
+                if (unitTile) {
+                    // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
+                    if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
+                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
                         return;
                     }
                     
                     if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitData, tile);
+                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
                         return;
                     }
                 }
@@ -93,11 +101,21 @@ coh.UIController = (function() {
         return battleScene;
     });
     
-    coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitData, tile) {
+    coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitTile, tile, battleScene) {
+        
+        var _buf = buf;
+        
+        if (unitTile.isChecked()) {
+            battleScene.removeUnit(unitTile, tile);
+        } else {
+            unitTile.check();
+            _buf.checkedUnit.unCheck();
+            _buf.checkedUnit = unitTile.
+        }
         console.log(tile);
     });
     
-    coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitData, tile) {
+    coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
         console.log(tile);
     });
     

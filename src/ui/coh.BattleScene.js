@@ -22,10 +22,7 @@ coh.BattleScene = function() {
          * Index by poition x and position y.
         unitMatrix = {
             [positionX] : {
-                [positionY] : {
-                    unit : [unitObject],
-                    unitSprite : [unitSprite],
-                },
+                [positionY] : [UnitTile],
                 ... // other unit groups with the position x;
             },
             // other row data
@@ -317,15 +314,12 @@ coh.BattleScene = function() {
             
             // set buffer
             // mind types that's not having 1 tile.
-            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
+            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()],
+                unitTile = new _coh.UnitTile(unit, tileSprite, unitSprite);
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
-                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = {
-                        unit : unit,
-                        tileSprite : tileSprite,
-                        unitSprite : unitSprite
-                    };
+                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = unitTile;
                 }
             }
             
@@ -361,9 +355,14 @@ coh.BattleScene = function() {
             tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
+            // XXXXXX For debug usage.
             _coh.unitList = _coh.unitList || [];
-            _coh.unitList.push(unitSprite);
+            _coh.unitList.push(unitTile);
             _coh.unitMatrix = _buf.unitMatrix;
+        },
+        
+        removeUnit : function(unitTile, tile) {
+            // XXXXXX
         }
     });
     
