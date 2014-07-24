@@ -197,7 +197,7 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitDataInGlobal : function(posX, posY) {
+        getUnitTileInGlobal : function(posX, posY) {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
@@ -208,7 +208,7 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          * this will only return ligle units for current player turn, attacker or defender.
          */
-        getUnitDataInTurn : function(posX, posY) {
+        getUnitTileInTurn : function(posX, posY) {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             

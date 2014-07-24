@@ -109,8 +109,8 @@ coh.UIController = (function() {
             battleScene.removeUnit(unitTile, tile);
         } else {
             unitTile.check();
-            _buf.checkedUnit.unCheck();
-            _buf.checkedUnit = unitTile.
+            _buf.checkedUnit && _buf.checkedUnit.unCheck();
+            _buf.checkedUnit = unitTile;
         }
         console.log(tile);
     });
