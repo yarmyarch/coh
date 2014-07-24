@@ -60,7 +60,7 @@ coh.UIController = (function() {
                     unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
                 
                 if (unitTile) {
-                    battleScene.locateToUnit(unitTile.tileSprite);
+                    battleScene.locateToUnit(unitTile);
                 }
             },
             
@@ -93,6 +93,9 @@ coh.UIController = (function() {
                         coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
                         return;
                     }
+                    
+                    // cancel focus in other cases.
+                    battleScene.cancelFocus();
                 }
             }
             
@@ -108,7 +111,8 @@ coh.UIController = (function() {
         if (unitTile.isChecked()) {
             battleScene.removeUnit(unitTile, tile);
         } else {
-            unitTile.check();
+            // focusOnUnit including unitTile.check();
+            battleScene.focusOnUnit(unitTile.tileSprite);
             _buf.checkedUnit && _buf.checkedUnit.unCheck();
             _buf.checkedUnit = unitTile;
         }
@@ -120,17 +124,9 @@ coh.UIController = (function() {
     });
     
     coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {
-        var tag = battleScene.getFocusTag();
-        
-        tag.setBgColor(coh.LocalConfig.DEFENDER_FOCUS_COLOR);
-        tag.hide();
     });
     
     coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
-        var tag = battleScene.getFocusTag();
-        
-        tag.setBgColor(coh.LocalConfig.ATTACKER_FOCUS_COLOR);
-        tag.hide();
     });
     
     return self = {

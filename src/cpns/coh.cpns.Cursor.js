@@ -142,11 +142,15 @@ coh.cpns.Cursor = cc.Node.extend({
     },
     
     focusOn : function(node) {
-        // XXXXXX
+        
+        
+        
+        this.focusedNode = node;
     },
     
     hide : function() {
         this.setVisible(false);
+        this.focusedNode = null;
     },
     
     setBgColor : function(newColor) {

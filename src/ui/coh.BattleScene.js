@@ -30,9 +30,13 @@ coh.BattleScene = function() {
          */
         unitMatrix : {},
         
-        focusNode : null,
+        focusTag : null,
             
-        isAttackerTurn : true
+        isAttackerTurn : true,
+        
+        // if the user is focusing on some a unit, the focusnode would be locked.
+        // that means it won't react on any other locate events.
+        focusTagLocked : false
     };
 
     var handlerList = {
@@ -224,28 +228,53 @@ coh.BattleScene = function() {
             var _buf = buf,
                 _coh = coh;
             // create the node if not exist.
-            if (!_buf.focusNode) {
-                _buf.focusNode = new _coh.cpns.Cursor();
-                self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+            if (!_buf.focusTag) {
+                _buf.focusTag = new _coh.cpns.Cursor();
+                self.battleMap.addChild(_buf.focusTag, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             }
             
-            return _buf.focusNode;
+            return _buf.focusTag;
         },
         
         /**
          *@param node cc.Node
          */
-        locateToUnit : function(node){
-            this.getFocusTag().locateTo(node, this.isAttackerTurn());
+        locateToUnit : function(unitTile){
+            // if tag locked - for example focusing on some a unit - do nothing.
+            !buf.focusTagLocked && this.getFocusTag().locateTo(unitTile.tileSprite, this.isAttackerTurn());
         },
         
-        focusOnUnit : function(node){
-            this.getFocusTag().focusOn(node, this.isAttackerTurn());
+        focusOnUnit : function(unitTile){
+            // sprite changes to the tag;
+            this.getFocusTag().focusOn(unitTile.tileSprite, this.isAttackerTurn());
+            
+            // sprite changes to the unit itself
+            unitTile.check();
+            
+            // buffer
+            buf.focusTagLocked = true;
+        },
+        
+        cancelFocus : function() {
+            buf.focusTagLocked = false;
+        },
+        
+        removeUnit : function(unitTile, tile) {
+            this.cancelFocus();
+            this.getFocusTag().hide();
         },
         
         setAttackerTurn : function(isAttacker) {
-            var _coh = coh;
+            
+            if (buf.isAttackerTurn == isAttacker) return;
+            
+            var _coh = coh,
+                tag = this.getFocusTag();
+            
             buf.isAttackerTurn = isAttacker;
+            
+            tag.setBgColor(isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            tag.hide();
             
             isAttacker && _coh.utils.FilterUtil.applyFilters("attackerTurnStarted", this);
             !isAttacker && _coh.utils.FilterUtil.applyFilters("defenderTurnStarted", this);
