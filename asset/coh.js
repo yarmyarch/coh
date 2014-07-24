@@ -57,7 +57,7 @@ coh.LocalConfig = {
     
     BLINK_RATE : 0.618,
     COLOR_CONFIG : {
-        elf : ["blue", "white", "gold"]
+        ELF : ["blue", "white", "gold"]
     },
     
     MAP_BATTLE_LAYER_NAME : "battleField",
@@ -78,7 +78,9 @@ coh.LocalConfig = {
     },
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
-    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204)
+    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
+    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204))),
 };var coh = coh || {};
 
 // ui related config exists in resource.js
@@ -717,7 +719,6 @@ coh.cpns = coh.cpns || {};
 
 // global static properties for the class Cursor.
 var g_lc = {
-    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(coh.LocalConfig.BLINK_RATE, 64), cc.fadeTo(coh.LocalConfig.BLINK_RATE, 204))),
     CORNOR_SCALE : 0.18,
     DIRECT_SCALE : 0.5
 };
@@ -748,6 +749,7 @@ var g_util = {
 
 coh.cpns.Cursor = cc.Node.extend({
     bgColor : coh.LocalConfig.ATTACKER_FOCUS_COLOR,
+    actColor : coh.LocalConfig.UNIT_DELETE_COLOR,
     focusedNode : null,
     background : null,
     arrowRight : null,
@@ -791,7 +793,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.setBgColor(newColor);
         
-        this.background.runAction(g_lc.FOCUS_BLINK);
+        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
     },
     
     /**
@@ -813,12 +815,14 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowLeft.x = 0;
         this.arrowLeft.y = 0;
         
-        //~ !isAttacker && (this.arrowDirection.rotation = 0);
+        this.arrowDirection.setVisible(true);
         this.arrowDirection.rotation = isAttacker ? 180 : 0;
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
         
         this.background.setColor(color || this.bgColor);
+        this.background.stopAction(_coh.LocalConfig.FOCUS_BLINK);
+        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
         
         // animation related part.
         if (!this.focusedNode) {
@@ -851,12 +855,23 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = node;
     },
     
-    focusOn : function(node) {
-        // XXXXXX
+    focusOn : function(node, isAttacker, color) {
+        
+        var _coh = coh;
+        
+        this.background.setColor(color || this.actColor);
+        this.background.stopAction(_coh.LocalConfig.FOCUS_BLINK);
+        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
+        
+        this.stopFocusAnimat(isAttacker);
+        this.arrowDirection.setVisible(false);
+        
+        this.focusedNode = node;
     },
     
     hide : function() {
         this.setVisible(false);
+        this.focusedNode = null;
     },
     
     setBgColor : function(newColor) {
@@ -865,41 +880,61 @@ coh.cpns.Cursor = cc.Node.extend({
         }
     },
     
-    runFocusAnimat : function(isAttacker) {
-        
-        var ar = g_util.getMoveBy(
+    setActColor : function(newColor) {
+        if (newColor instanceof cc.Color) {
+            this.actColor = newColor;
+        }
+    },
+    
+    getFocusAnimate : function(isAttacker) {
+        return {
+            ar : g_util.getMoveBy(
                 this.arrowRight.width * g_lc.CORNOR_SCALE, 
                 this.arrowRight.height * g_lc.CORNOR_SCALE, 
                 0.382, 
                 0.382
             ),
-            al = g_util.getMoveBy(
+            al : g_util.getMoveBy(
                 this.arrowLeft.width * g_lc.CORNOR_SCALE, 
                 this.arrowLeft.height * g_lc.CORNOR_SCALE, 
                 -0.382, 
                 -0.382
             ),
-            ad = g_util.getMoveBy(
+            ad : g_util.getMoveBy(
                 this.arrowDirection.width * g_lc.DIRECT_SCALE, 
                 this.arrowDirection.height * g_lc.DIRECT_SCALE, 
                 0, 
                 0.382 * (isAttacker ? 1 : -1)
-            );
+            )
+        }
+    },
+    
+    runFocusAnimat : function(isAttacker) {
+        var animate = this.stopFocusAnimat(isAttacker);
+        
+        this.arrowRight.runAction(animate.ar);
+        this.arrowLeft.runAction(animate.al);
+        this.arrowDirection.runAction(animate.ad);
+    },
+    
+    stopFocusAnimat : function(isAttacker) {
+        
+        var animate = this.getFocusAnimate(isAttacker);
         
         try {
-        // there would be an error if the action doesn't exist... shit.
-            this.arrowRight.stopAction(ar);
-            this.arrowLeft.stopAction(al);
-            this.arrowDirection.stopAction(ad);
+            // there would be an error if the action doesn't exist... shit.
+            this.arrowRight.stopAction(animate.ar);
+            this.arrowLeft.stopAction(animate.al);
+            this.arrowDirection.stopAction(animate.ad);
         } catch(e) {};
-        
-        this.arrowRight.runAction(ar);
-        this.arrowLeft.runAction(al);
-        this.arrowDirection.runAction(ad);
+        return animate;
     }
 });
 
 })();var coh = coh || {};
+/**
+ * Logics and utils related to the global view sight.
+ */
 coh.View = (function() {
     
     var self;
@@ -1293,6 +1328,9 @@ coh.Player = function(faction, level, unitConfig) {
 };
     
 })();var coh = coh || {};
+/**
+ * Logics related to the battle ground, especially on calculating unit matrixes.
+ */
 coh.Battle = (function(){
     
     var self;
@@ -1609,7 +1647,56 @@ coh.Battle = (function(){
     [0,0,0,0,0, 0, 0,5],
     [0,0,0,0,0, 0, 0,0]
 ]
-*//**
+*/var coh = coh || {};
+
+/**
+ * Unit tile that contains data of a unit and the tile sprite for the unit.
+ */
+(function() {
+
+var g_lc = {
+    CHECK_COLOR : new cc.Color(255, 128, 128, 255),
+    UNCHECK_COLOR : new cc.Color(255, 255, 255, 255)
+}
+    
+coh.UnitTile = function() {
+    
+    var self = this;
+    
+    var buf = {
+        isChecked : false
+    };
+
+    var construct = function(unit, tileSprite, unitSprite) {
+        this.unit = unit;
+        this.tileSprite = tileSprite;
+        this.unitSprite = unitSprite;
+    }
+    
+    self.check = function() {
+        this.unitSprite.setColor(g_lc.CHECK_COLOR);
+        this.unitSprite.runAction(coh.LocalConfig.FOCUS_BLINK);
+        buf.isChecked = true;
+    };
+    
+    self.unCheck = function() {
+        this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
+        // XXXXXX why it won't work here?
+        // Looks like it's triggered dulplicated times.
+        this.unitSprite.stopAction(coh.LocalConfig.FOCUS_BLINK);
+        buf.isChecked = false;
+    };
+    
+    self.isChecked = function() {
+        return buf.isChecked;
+    };
+    
+    construct.apply(self, arguments);
+    
+    return self;
+};
+
+})();/**
  *@version draft
  */
 
@@ -1755,10 +1842,7 @@ coh.BattleScene = function() {
          * Index by poition x and position y.
         unitMatrix = {
             [positionX] : {
-                [positionY] : {
-                    unit : [unitObject],
-                    unitSprite : [unitSprite],
-                },
+                [positionY] : [UnitTile],
                 ... // other unit groups with the position x;
             },
             // other row data
@@ -1766,9 +1850,13 @@ coh.BattleScene = function() {
          */
         unitMatrix : {},
         
-        focusNode : null,
+        focusTag : null,
             
-        isAttackerTurn : true
+        isAttackerTurn : true,
+        
+        // if the user is focusing on some a unit, the focusnode would be locked.
+        // that means it won't react on any other locate events.
+        focusTagLocked : false
     };
 
     var handlerList = {
@@ -1933,7 +2021,7 @@ coh.BattleScene = function() {
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitDataInGlobal : function(posX, posY) {
+        getUnitTileInGlobal : function(posX, posY) {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
@@ -1944,7 +2032,7 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          * this will only return ligle units for current player turn, attacker or defender.
          */
-        getUnitDataInTurn : function(posX, posY) {
+        getUnitTileInTurn : function(posX, posY) {
             var tile = this.getTileFromCoord(posX, posY),
                 _buf = buf;
             
@@ -1960,28 +2048,75 @@ coh.BattleScene = function() {
             var _buf = buf,
                 _coh = coh;
             // create the node if not exist.
-            if (!_buf.focusNode) {
-                _buf.focusNode = new _coh.cpns.Cursor();
-                self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+            if (!_buf.focusTag) {
+                _buf.focusTag = new _coh.cpns.Cursor();
+                self.battleMap.addChild(_buf.focusTag, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             }
             
-            return _buf.focusNode;
+            return _buf.focusTag;
         },
         
         /**
          *@param node cc.Node
          */
-        locateToUnit : function(node){
-            this.getFocusTag().locateTo(node, this.isAttackerTurn());
+        locateToUnit : function(unitTile){
+            // if tag locked - for example focusing on some a unit - do nothing.
+            !buf.focusTagLocked && this.getFocusTag().locateTo(unitTile.tileSprite, this.isAttackerTurn());
         },
         
-        focusOnUnit : function(node){
-            this.getFocusTag().focusOn(node, this.isAttackerTurn());
+        focusOnUnit : function(unitTile){
+            
+            buf.focusTagLocked = false;
+            
+            // sprite changes to the tag;
+            this.locateToUnit(unitTile);
+            this.getFocusTag().focusOn(unitTile.tileSprite, this.isAttackerTurn());
+            
+            // sprite changes to the unit itself
+            unitTile.check();
+            
+            // buffer changes
+            buf.focusTagLocked = true;
+        },
+        
+        cancelFocus : function() {
+            buf.focusTagLocked = false;
+        },
+        
+        removeUnit : function(unitTile, tile) {
+            this.cancelFocus();
+            this.getFocusTag().hide();
+        },
+        
+        isLastUnitInColumn : function(isAttacker, unitTile, tile) {
+            var _buf = buf,
+                range = handlerList.tileSelector.getYRange(isAttacker),
+                start = tile.y,
+                deata = this.isAttackerTurn() ? 1 : -1,
+                end = range[range.length - 1],
+                y = start;
+            
+            while (y != end) {
+                if (_buf.unitMatrix[tile.x][y]) {
+                    return false;
+                }
+                y += deata;
+            };
+            
+            return true;
         },
         
         setAttackerTurn : function(isAttacker) {
-            var _coh = coh;
+            
+            if (buf.isAttackerTurn == isAttacker) return;
+            
+            var _coh = coh,
+                tag = this.getFocusTag();
+            
             buf.isAttackerTurn = isAttacker;
+            
+            tag.setBgColor(isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            tag.hide();
             
             isAttacker && _coh.utils.FilterUtil.applyFilters("attackerTurnStarted", this);
             !isAttacker && _coh.utils.FilterUtil.applyFilters("defenderTurnStarted", this);
@@ -2050,15 +2185,12 @@ coh.BattleScene = function() {
             
             // set buffer
             // mind types that's not having 1 tile.
-            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
+            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()],
+                unitTile = new _coh.UnitTile(unit, tileSprite, unitSprite);
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
-                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = {
-                        unit : unit,
-                        tileSprite : tileSprite,
-                        unitSprite : unitSprite
-                    };
+                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = unitTile;
                 }
             }
             
@@ -2094,9 +2226,14 @@ coh.BattleScene = function() {
             tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
+            // XXXXXX For debug usage.
             _coh.unitList = _coh.unitList || [];
-            _coh.unitList.push(unitSprite);
+            _coh.unitList.push(unitTile);
             _coh.unitMatrix = _buf.unitMatrix;
+        },
+        
+        removeUnit : function(unitTile, tile) {
+            // XXXXXX
         }
     });
     
@@ -2169,49 +2306,69 @@ coh.UIController = (function() {
     
     var self;
     
-    var buf;
+    var buf = {
+        // mark the last handled unitTile and tile, for click and slide events.
+        lastUnitTile : null, 
+        lastTile : null,
+        
+        // if a unit is checked twice, it would be removed from the scene.
+        checkedUnit : null
+    };
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
-        
-        var lastUnitData, lastTile;
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove: function(event){
                 var location = event.getLocationInView(),
-                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
+                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
                 
-                if (unitData) {
-                    battleScene.locateToUnit(unitData.tileSprite);
+                if (unitTile) {
+                    battleScene.locateToUnit(unitTile);
                 }
             },
             
             onMouseDown : function(event) {
                 var location = event.getLocationInView(),
                     tile = battleScene.getTileFromCoord(location.x, location.y),
-                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
-                if (unitData) {
-                    lastUnitData = unitData;
-                    lastTile = tile;
+                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
+                if (unitTile) {
+                    buf.lastUnitTile = unitTile;
+                    buf.lastTile = tile;
                 }
             },
             
             onMouseUp : function(event) {
                 var location = event.getLocationInView(),
                     tile = battleScene.getTileFromCoord(location.x, location.y),
-                    unitData = battleScene.getUnitDataInTurn(location.x, location.y),
-                    clickedUnit = battleScene.getUnitDataInGlobal(location.x, location.y);
-                if (unitData) {
-                    // the same unit clicked: clickedUnit should be the same as the lastUnitData.
-                    if (lastUnitData && unitData == lastUnitData && clickedUnit == unitData) {
-                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitData, tile);
+                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y),
+                    clickedUnit = battleScene.getUnitTileInGlobal(location.x, location.y),
+                    lastUnitTile = buf.lastUnitTile,
+                    lastTile = buf.lastTile;
+                
+                // cancel checked units incase of checked.
+                buf.checkedUnit && buf.checkedUnit.unCheck();
+                if (unitTile) {
+                    
+                    // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
+                    if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
+                        // if the last unit in the column is checked, then we treat it a slide.
+                        if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
+                            coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                        } else {
+                            coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
+                        }
                         return;
                     }
                     
+                    // slide from top to bottom of the battle field, or the last unit in the group clicked.
                     if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitData, tile);
+                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
                         return;
                     }
+                    
+                    // cancel focus in other cases.
+                    battleScene.cancelFocus();
                 }
             }
             
@@ -2220,26 +2377,27 @@ coh.UIController = (function() {
         return battleScene;
     });
     
-    coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitData, tile) {
-        console.log(tile);
+    coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitTile, tile, battleScene) {
+        
+        var _buf = buf;
+        
+        if (unitTile.isChecked()) {
+            battleScene.removeUnit(unitTile, tile);
+        } else {
+            // focusOnUnit including unitTile.check();
+            battleScene.focusOnUnit(unitTile);
+            _buf.checkedUnit = unitTile;
+        }
     });
     
-    coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitData, tile) {
+    coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
         console.log(tile);
     });
     
     coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {
-        var tag = battleScene.getFocusTag();
-        
-        tag.setBgColor(coh.LocalConfig.DEFENDER_FOCUS_COLOR);
-        tag.hide();
     });
     
     coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
-        var tag = battleScene.getFocusTag();
-        
-        tag.setBgColor(coh.LocalConfig.ATTACKER_FOCUS_COLOR);
-        tag.hide();
     });
     
     return self = {

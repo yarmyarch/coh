@@ -122,10 +122,8 @@ coh.UIController = (function() {
         } else {
             // focusOnUnit including unitTile.check();
             battleScene.focusOnUnit(unitTile);
-            _buf.checkedUnit && _buf.checkedUnit.unCheck();
             _buf.checkedUnit = unitTile;
         }
-        console.log(tile);
     });
     
     coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
