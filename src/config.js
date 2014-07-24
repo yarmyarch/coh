@@ -56,7 +56,7 @@ coh.LocalConfig = {
     
     BLINK_RATE : 0.618,
     COLOR_CONFIG : {
-        elf : ["blue", "white", "gold"]
+        ELF : ["blue", "white", "gold"]
     },
     
     MAP_BATTLE_LAYER_NAME : "battleField",
@@ -78,5 +78,6 @@ coh.LocalConfig = {
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
     DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
-    UNIT_DELETE_COLOR : new cc.Color(128, 128, 128, 204)
+    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204))),
 };

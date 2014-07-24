@@ -268,6 +268,24 @@ coh.BattleScene = function() {
             this.getFocusTag().hide();
         },
         
+        isLastUnitInColumn : function(isAttacker, unitTile, tile) {
+            var _buf = buf,
+                range = handlerList.tileSelector.getYRange(isAttacker),
+                start = tile.y,
+                deata = this.isAttackerTurn() ? 1 : -1,
+                end = range[range.length - 1],
+                y = start;
+            
+            while (y != end) {
+                if (_buf.unitMatrix[tile.x][y]) {
+                    return false;
+                }
+                y += deata;
+            };
+            
+            return true;
+        },
+        
         setAttackerTurn : function(isAttacker) {
             
             if (buf.isAttackerTurn == isAttacker) return;

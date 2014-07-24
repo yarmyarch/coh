@@ -82,13 +82,22 @@ coh.UIController = (function() {
                     lastUnitTile = buf.lastUnitTile,
                     lastTile = buf.lastTile;
                 
+                // cancel checked units incase of checked.
+                buf.checkedUnit && buf.checkedUnit.unCheck();
                 if (unitTile) {
+                    
                     // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
                     if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
-                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
+                        // if the last unit in the column is checked, then we treat it a slide.
+                        if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
+                            coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                        } else {
+                            coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
+                        }
                         return;
                     }
                     
+                    // slide from top to bottom of the battle field, or the last unit in the group clicked.
                     if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
                         coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
                         return;

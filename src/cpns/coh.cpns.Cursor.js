@@ -7,7 +7,6 @@ coh.cpns = coh.cpns || {};
 
 // global static properties for the class Cursor.
 var g_lc = {
-    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(coh.LocalConfig.BLINK_RATE, 64), cc.fadeTo(coh.LocalConfig.BLINK_RATE, 204))),
     CORNOR_SCALE : 0.18,
     DIRECT_SCALE : 0.5
 };
@@ -82,7 +81,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.setBgColor(newColor);
         
-        this.background.runAction(g_lc.FOCUS_BLINK);
+        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
     },
     
     /**
@@ -202,16 +201,7 @@ coh.cpns.Cursor = cc.Node.extend({
     
     stopFocusAnimat : function(isAttacker) {
         
-        var node = this.focusedNode,
-            animate = this.getFocusAnimate(isAttacker);
-        
-        if (node) {
-            //~ this.arrowLeft.x = 0;
-            //~ this.arrowLeft.y = 0;
-            
-            //~ this.arrowRight.x = node.width;
-            //~ this.arrowRight.y = node.height;
-        }
+        var animate = this.getFocusAnimate(isAttacker);
         
         try {
             // there would be an error if the action doesn't exist... shit.
