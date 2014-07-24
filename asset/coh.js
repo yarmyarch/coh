@@ -520,7 +520,7 @@ coh.utils = coh.utils || {};
                  * the order of the returnd array is the searching order.
                  */
                 getYRange : function(isAttacker) {
-                    if (isAttacker)
+                    if (!isAttacker)
                         return [8, 7, 6, 5, 4, 3, 2, 1];
                     else return [7, 8, 9, 10, 11, 12, 13, 14];
                 },
@@ -781,8 +781,7 @@ coh.cpns.Cursor = cc.Node.extend({
         });
         this.arrowDirection.attr({
             anchorY : 1,
-            scale : g_lc.DIRECT_SCALE,
-            rotation : 180
+            scale : g_lc.DIRECT_SCALE
         });
         
         this.addChild(this.background, _coh.LocalConfig.Z_INDEX.BACKGROUND);
@@ -814,8 +813,10 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowLeft.x = 0;
         this.arrowLeft.y = 0;
         
+        //~ !isAttacker && (this.arrowDirection.rotation = 0);
+        this.arrowDirection.rotation = isAttacker ? 180 : 0;
         this.arrowDirection.x = node.width / 2;
-        this.arrowDirection.y = - node.y;
+        this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
         
         this.background.setColor(color || this.bgColor);
         
@@ -842,6 +843,8 @@ coh.cpns.Cursor = cc.Node.extend({
             );
         }
         
+        this.setVisible(true);
+        
         // create simple animations
         this.runFocusAnimat(isAttacker);
         
@@ -850,6 +853,10 @@ coh.cpns.Cursor = cc.Node.extend({
     
     focusOn : function(node) {
         // XXXXXX
+    },
+    
+    hide : function() {
+        this.setVisible(false);
     },
     
     setBgColor : function(newColor) {
@@ -1759,7 +1766,9 @@ coh.BattleScene = function() {
          */
         unitMatrix : {},
         
-        focusNode : null
+        focusNode : null,
+            
+        isAttackerTurn : true
     };
 
     var handlerList = {
@@ -1770,18 +1779,6 @@ coh.BattleScene = function() {
     
     // private functions
     var util = {
-        getFocusTag : function() {
-            var _buf = buf,
-                _coh = coh;
-            // create the node if not exist.
-            if (!_buf.focusNode) {
-                _buf.focusNode = new _coh.cpns.Cursor();
-                self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
-            }
-            
-            return _buf.focusNode;
-        },
-        
         /**
          * Rules: if it's out of X border, locate to the nearest column that's having an unit;
          * Otherwise, locate to the poingint column.
@@ -1790,8 +1787,12 @@ coh.BattleScene = function() {
         getAvaliableTiles : function(isAttacker, tileX, tileY) {
             var xRange = handlerList.tileSelector.getXRange(),
                 yRange = handlerList.tileSelector.getYRange(isAttacker),
+            
                 overRight = tileX > xRange[xRange.length - 1],
                 overLeft = tileX < xRange[0],
+            
+                overTop = isAttacker ? tileY < yRange[2] : tileY > yRange[2],
+                overBottom = isAttacker ? tileY > yRange[yRange.length - 1] : tileY < yRange[yRange.length - 1],
             
                 startX = overRight ? xRange[xRange.length - 1] : overLeft ? xRange[0] : tileX,
                 endX = overRight ? xRange[0] : overLeft ? xRange[xRange.length - 1] : tileX,
@@ -1805,18 +1806,20 @@ coh.BattleScene = function() {
                0 **
                  **
                 */
-                startY = tileY,
-                endY = yRange[yRange.length - 1],
-                deataY = isAttacker ? -1 : 1,
+                startY = overTop ? yRange[0] : overBottom ? yRange[yRange.length - 1] : tileY,
+                endY = overTop ? yRange[yRange.length - 1] : overBottom ? yRange[0] : tileY,
+                deataY = overTop ? (isAttacker ? 1 : -1) : overBottom ? (isAttacker ? -1 : 1) : 0,
             
                 _buf = buf,
-                x, y;
+                x = startX, y = startY;
             
-            for (x = startX; x == endX; x += deataX) {
-                for (y = startY; y == endY; y += deataY) {
+            do {
+                do {
                     if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
-                }
-            }
+                    y += deataY;
+                } while (y != endY);
+                x += deataX;
+            } while (x != endX);
             
             // nothing matches found for given tile.
             return null;
@@ -1829,7 +1832,6 @@ coh.BattleScene = function() {
         battleMap : null,
         attacker : null,
         defender : null,
-        isAttackerTurn : true,
         ctor : function (mapSrc, imgSrc) {
             this._super();
             this.battleLayer = new cc.Layer();
@@ -1846,6 +1848,7 @@ coh.BattleScene = function() {
         },
         
         onEnterTransitionDidFinish : function() {
+            this._super();
             coh.utils.FilterUtil.applyFilters("battleSceneReady", this);
         },
         
@@ -1948,20 +1951,44 @@ coh.BattleScene = function() {
             // searching for the nearest unit from a given tile;
             // Focus to the defender;
             //~ tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
-            tile = util.getAvaliableTiles(this.isAttackerTurn, tile.x, tile.y);
+            tile = util.getAvaliableTiles(this.isAttackerTurn(), tile.x, tile.y);
             
             return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        getFocusTag : function() {
+            var _buf = buf,
+                _coh = coh;
+            // create the node if not exist.
+            if (!_buf.focusNode) {
+                _buf.focusNode = new _coh.cpns.Cursor();
+                self.battleMap.addChild(_buf.focusNode, _coh.LocalConfig.Z_INDEX.BACKGROUND);
+            }
+            
+            return _buf.focusNode;
         },
         
         /**
          *@param node cc.Node
          */
         locateToUnit : function(node){
-            util.getFocusTag().locateTo(node, this.isAttackerTurn);
+            this.getFocusTag().locateTo(node, this.isAttackerTurn());
         },
         
         focusOnUnit : function(node){
-            util.getFocusTag().focusOn(node, this.isAttackerTurn);
+            this.getFocusTag().focusOn(node, this.isAttackerTurn());
+        },
+        
+        setAttackerTurn : function(isAttacker) {
+            var _coh = coh;
+            buf.isAttackerTurn = isAttacker;
+            
+            isAttacker && _coh.utils.FilterUtil.applyFilters("attackerTurnStarted", this);
+            !isAttacker && _coh.utils.FilterUtil.applyFilters("defenderTurnStarted", this);
+        },
+        
+        isAttackerTurn : function() {
+            return buf.isAttackerTurn;
         },
         
         generatePlayerMatrix : function(player) {
@@ -2146,7 +2173,7 @@ coh.UIController = (function() {
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
-        var lastUnitData;
+        var lastUnitData, lastTile;
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
@@ -2156,12 +2183,63 @@ coh.UIController = (function() {
                 
                 if (unitData) {
                     battleScene.locateToUnit(unitData.tileSprite);
+                }
+            },
+            
+            onMouseDown : function(event) {
+                var location = event.getLocationInView(),
+                    tile = battleScene.getTileFromCoord(location.x, location.y),
+                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
+                if (unitData) {
                     lastUnitData = unitData;
+                    lastTile = tile;
+                }
+            },
+            
+            onMouseUp : function(event) {
+                var location = event.getLocationInView(),
+                    tile = battleScene.getTileFromCoord(location.x, location.y),
+                    unitData = battleScene.getUnitDataInTurn(location.x, location.y),
+                    clickedUnit = battleScene.getUnitDataInGlobal(location.x, location.y);
+                if (unitData) {
+                    // the same unit clicked: clickedUnit should be the same as the lastUnitData.
+                    if (lastUnitData && unitData == lastUnitData && clickedUnit == unitData) {
+                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitData, tile);
+                        return;
+                    }
+                    
+                    if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
+                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitData, tile);
+                        return;
+                    }
                 }
             }
+            
         }, battleScene);
         
         return battleScene;
+    });
+    
+    coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitData, tile) {
+        console.log(tile);
+    });
+    
+    coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitData, tile) {
+        console.log(tile);
+    });
+    
+    coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {
+        var tag = battleScene.getFocusTag();
+        
+        tag.setBgColor(coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+        tag.hide();
+    });
+    
+    coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
+        var tag = battleScene.getFocusTag();
+        
+        tag.setBgColor(coh.LocalConfig.ATTACKER_FOCUS_COLOR);
+        tag.hide();
     });
     
     return self = {

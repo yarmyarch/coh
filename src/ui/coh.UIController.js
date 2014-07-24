@@ -46,7 +46,7 @@ coh.UIController = (function() {
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         
-        var lastUnitData;
+        var lastUnitData, lastTile;
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
@@ -56,12 +56,49 @@ coh.UIController = (function() {
                 
                 if (unitData) {
                     battleScene.locateToUnit(unitData.tileSprite);
+                }
+            },
+            
+            onMouseDown : function(event) {
+                var location = event.getLocationInView(),
+                    tile = battleScene.getTileFromCoord(location.x, location.y),
+                    unitData = battleScene.getUnitDataInTurn(location.x, location.y);
+                if (unitData) {
                     lastUnitData = unitData;
+                    lastTile = tile;
+                }
+            },
+            
+            onMouseUp : function(event) {
+                var location = event.getLocationInView(),
+                    tile = battleScene.getTileFromCoord(location.x, location.y),
+                    unitData = battleScene.getUnitDataInTurn(location.x, location.y),
+                    clickedUnit = battleScene.getUnitDataInGlobal(location.x, location.y);
+                if (unitData) {
+                    // the same unit clicked: clickedUnit should be the same as the lastUnitData.
+                    if (lastUnitData && unitData == lastUnitData && clickedUnit == unitData) {
+                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitData, tile);
+                        return;
+                    }
+                    
+                    if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
+                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitData, tile);
+                        return;
+                    }
                 }
             }
+            
         }, battleScene);
         
         return battleScene;
+    });
+    
+    coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitData, tile) {
+        console.log(tile);
+    });
+    
+    coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitData, tile) {
+        console.log(tile);
     });
     
     coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {

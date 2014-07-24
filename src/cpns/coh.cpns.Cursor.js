@@ -91,7 +91,6 @@ coh.cpns.Cursor = cc.Node.extend({
      */
     locateTo : function(node, isAttacker, color) {
         
-        this.setVisible(true);
         if (this.focusedNode == node) return;
         
         var frameRate = coh.LocalConfig.FRAME_RATE * 5;
@@ -133,6 +132,8 @@ coh.cpns.Cursor = cc.Node.extend({
                 this.background.scaleAction = cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
             );
         }
+        
+        this.setVisible(true);
         
         // create simple animations
         this.runFocusAnimat(isAttacker);
