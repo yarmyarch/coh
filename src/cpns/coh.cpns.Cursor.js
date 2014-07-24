@@ -38,6 +38,7 @@ var g_util = {
 
 coh.cpns.Cursor = cc.Node.extend({
     bgColor : coh.LocalConfig.ATTACKER_FOCUS_COLOR,
+    actColor : coh.LocalConfig.UNIT_DELETE_COLOR,
     focusedNode : null,
     background : null,
     arrowRight : null,
@@ -103,7 +104,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowLeft.x = 0;
         this.arrowLeft.y = 0;
         
-        //~ !isAttacker && (this.arrowDirection.rotation = 0);
+        this.arrowDirection.setVisible(true);
         this.arrowDirection.rotation = isAttacker ? 180 : 0;
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
@@ -141,9 +142,12 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = node;
     },
     
-    focusOn : function(node) {
+    focusOn : function(node, isAttacker, color) {
         
+        this.background.setColor(color || this.actColor);
         
+        this.stopFocusAnimat(isAttacker);
+        this.arrowDirection.setVisible(false);
         
         this.focusedNode = node;
     },
@@ -159,37 +163,63 @@ coh.cpns.Cursor = cc.Node.extend({
         }
     },
     
-    runFocusAnimat : function(isAttacker) {
-        
-        var ar = g_util.getMoveBy(
+    setActColor : function(newColor) {
+        if (newColor instanceof cc.Color) {
+            this.actColor = newColor;
+        }
+    },
+    
+    getFocusAnimate : function(isAttacker) {
+        return {
+            ar : g_util.getMoveBy(
                 this.arrowRight.width * g_lc.CORNOR_SCALE, 
                 this.arrowRight.height * g_lc.CORNOR_SCALE, 
                 0.382, 
                 0.382
             ),
-            al = g_util.getMoveBy(
+            al : g_util.getMoveBy(
                 this.arrowLeft.width * g_lc.CORNOR_SCALE, 
                 this.arrowLeft.height * g_lc.CORNOR_SCALE, 
                 -0.382, 
                 -0.382
             ),
-            ad = g_util.getMoveBy(
+            ad : g_util.getMoveBy(
                 this.arrowDirection.width * g_lc.DIRECT_SCALE, 
                 this.arrowDirection.height * g_lc.DIRECT_SCALE, 
                 0, 
                 0.382 * (isAttacker ? 1 : -1)
-            );
+            )
+        }
+    },
+    
+    runFocusAnimat : function(isAttacker) {
+        var animate = this.stopFocusAnimat(isAttacker);
+        
+        this.arrowRight.runAction(animate.ar);
+        this.arrowLeft.runAction(animate.al);
+        this.arrowDirection.runAction(animate.ad);
+    },
+    
+    stopFocusAnimat : function(isAttacker) {
+        
+        var node = this.focusedNode,
+            animate = this.getFocusAnimate(isAttacker);
+        
+        if (node) {
+            //~ this.arrowLeft.x = 0;
+            //~ this.arrowLeft.y = 0;
+            
+            //~ this.arrowRight.x = node.width;
+            //~ this.arrowRight.y = node.height;
+        }
         
         try {
-        // there would be an error if the action doesn't exist... shit.
-            this.arrowRight.stopAction(ar);
-            this.arrowLeft.stopAction(al);
-            this.arrowDirection.stopAction(ad);
+            // there would be an error if the action doesn't exist... shit.
+            this.arrowRight.stopAction(animate.ar);
+            this.arrowLeft.stopAction(animate.al);
+            this.arrowDirection.stopAction(animate.ad);
         } catch(e) {};
-        
-        this.arrowRight.runAction(ar);
-        this.arrowLeft.runAction(al);
-        this.arrowDirection.runAction(ad);
+        return animate;
     }
 });
 

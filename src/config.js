@@ -77,5 +77,6 @@ coh.LocalConfig = {
     },
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
-    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204)
+    DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
+    UNIT_DELETE_COLOR : new cc.Color(128, 128, 128, 204)
 };

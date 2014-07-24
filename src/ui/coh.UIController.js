@@ -112,7 +112,7 @@ coh.UIController = (function() {
             battleScene.removeUnit(unitTile, tile);
         } else {
             // focusOnUnit including unitTile.check();
-            battleScene.focusOnUnit(unitTile.tileSprite);
+            battleScene.focusOnUnit(unitTile);
             _buf.checkedUnit && _buf.checkedUnit.unCheck();
             _buf.checkedUnit = unitTile;
         }

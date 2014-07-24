@@ -245,13 +245,17 @@ coh.BattleScene = function() {
         },
         
         focusOnUnit : function(unitTile){
+            
+            buf.focusTagLocked = false;
+            
             // sprite changes to the tag;
+            this.locateToUnit(unitTile);
             this.getFocusTag().focusOn(unitTile.tileSprite, this.isAttackerTurn());
             
             // sprite changes to the unit itself
             unitTile.check();
             
-            // buffer
+            // buffer changes
             buf.focusTagLocked = true;
         },
         
