@@ -33,8 +33,6 @@ coh.UnitTile = function() {
     
     self.unCheck = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
-        // XXXXXX why it won't work here?
-        // Looks like it's triggered dulplicated times.
         this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         buf.isChecked = false;
     };
@@ -50,6 +48,7 @@ coh.UnitTile = function() {
     
     self.unExile = function() {
         this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
     };
     

@@ -43,7 +43,7 @@ coh.UIController = (function() {
     var self;
     
     var buf = {
-        battle = {            
+        battle : {            
             // mark the last handled unitTile and tile, for click and slide events.
             lastUnitTile : null, 
             lastTile : null,
@@ -51,7 +51,7 @@ coh.UIController = (function() {
             // if a unit is checked twice, it would be removed from the scene.
             checkedUnit : null,
             exiledUnit : null
-        }
+        },
         
         // exile/locate/default or other possible kinds of mouse actions in battleScene.
         // locate for the default.
@@ -59,7 +59,7 @@ coh.UIController = (function() {
     };
     
     var handlerList = {
-        doFocus : function(event) {
+        doFocus : function(event, battleScene) {
             
             var location = event.getLocationInView(),
                 unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
@@ -68,7 +68,7 @@ coh.UIController = (function() {
                 battleScene.locateToUnit(unitTile);
             }
         },
-        doCheckOrExile : function(event) {
+        doCheckOrExile : function(event, battleScene) {
             var location = event.getLocationInView(),
                 tile = battleScene.getTileFromCoord(location.x, location.y),
                 unitTile = battleScene.getUnitTileInTurn(location.x, location.y),
@@ -98,48 +98,60 @@ coh.UIController = (function() {
                 coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitTile, tile, battleScene);
             }
         },
-        doExileMove : function(event) {
+        doExileMove : function(event, battleScene) {
             
         },
-        doUnExile : function(event) {
+        doUnExile : function(event, battleScene) {
             
-            buf.battle.exiledUnit = null;
-            buf.mouseAction = "locate";
+            var _buf = buf;
+            
+            battleScene.cancelFocus();
+            _buf.battle.exiledUnit.unExile(); 
+            _buf.battle.exiledUnit = null;
+            _buf.mouseAction = "locate";
         },
-        recordTile : function(event) {
-            
+        recordTile : function(event, battleScene) {            
+            var location = event.getLocationInView(),
+                tile = battleScene.getTileFromCoord(location.x, location.y),
+                unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
+            if (unitTile) {
+                buf.battle.lastUnitTile = unitTile;
+                buf.battle.lastTile = tile;
+            }
         }
     };
     
     // Magic.
     var actionsConfig = {
-        exile : {
-            onMouseMove : handlerList.doExileMove,
-            onMouseUp : handlerList.doUnExile
-        },
-        locate : {
-            onMouseMove : handlerList.doFocus,
-            onMouseUp : handlerList.doCheckOrExile
-        },
-        onDefault : {
-            onMouseDown : handlerList.recordTile
+        battle : {
+            exile : {
+                onMouseMove : handlerList.doExileMove,
+                onMouseUp : handlerList.doUnExile
+            },
+            locate : {
+                onMouseMove : handlerList.doFocus,
+                onMouseUp : handlerList.doCheckOrExile
+            },
+            onDefault : {
+                onMouseDown : handlerList.recordTile
+            }
         }
-    }
+    };
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
             onMouseMove : function(event){
-                (actionsConfig[buf.mouseAction].onMouseMove || actionsConfig.onDefault.onMouseMove)(event);
+                (actionsConfig.battle[buf.mouseAction].onMouseMove || actionsConfig.battle.onDefault.onMouseMove)(event, battleScene);
             },
             
             onMouseDown : function(event) {
-                (actionsConfig[buf.mouseAction].onMouseDown || actionsConfig.onDefault.onMouseDown)(event);
+                (actionsConfig.battle[buf.mouseAction].onMouseDown || actionsConfig.battle.onDefault.onMouseDown)(event, battleScene);
             },
             
             onMouseUp : function(event) {
-                (actionsConfig[buf.mouseAction].onMouseUp || actionsConfig.onDefault.onMouseUp)(event);
+                (actionsConfig.battle[buf.mouseAction].onMouseUp || actionsConfig.battle.onDefault.onMouseUp)(event, battleScene);
             }
             
         }, battleScene);
@@ -154,20 +166,25 @@ coh.UIController = (function() {
         if (unitTile.isChecked()) {
             battleScene.removeUnit(unitTile, tile);
         } else {
-            // focusOnUnit including unitTile.check();
             battleScene.focusOnUnit(unitTile);
+            _buf.battle.checkedUnit && _buf.battle.checkedUnit.unCheck();
             _buf.battle.checkedUnit = unitTile;
         }
     });
     
     coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
-        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile);
+        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile),
+            _buf = buf;
         
-        battleScene.exile(exiledUnit);
+        // unExile would be executed in the doUnExile process.
+        battleScene.exileUnit(exiledUnit);
+        _buf.battle.exiledUnit = exiledUnit;
         
-        buf.battle.exiledUnit = exiledUnit;
+        // cancel checked unit.
+        _buf.battle.checkedUnit && _buf.battle.checkedUnit.unCheck();
+        _buf.battle.checkedUnit = null;
         
-        buf.mouseAction = "exile";
+        _buf.mouseAction = "exile";
     });
     
     coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitTile, tile, battleScene) {

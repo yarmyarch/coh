@@ -294,16 +294,17 @@ coh.BattleScene = function() {
                 start = tile.y,
                 deata = this.isAttackerTurn() ? 1 : -1,
                 end = range[range.length - 1],
-                y = start;
+                y = start,
+                lastUnit;
             
             while (y != end + deata) {
-                if (_buf.unitMatrix[tile.x][y] && _buf.unitMatrix[tile.x][y] != _buf.unitMatrix[tile.x][tile.y]) {
-                    continue;
+                if (_buf.unitMatrix[tile.x][y]) {
+                    lastUnit = _buf.unitMatrix[tile.x][y];
                 }
                 y += deata;
             };
             
-            return _buf.unitMatrix[tile.x][y];
+            return lastUnit;
         },
         
         isLastUnitInColumn : function(isAttacker, unitTile, tile) {
