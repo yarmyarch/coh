@@ -50,6 +50,8 @@ coh.UnitTile = function() {
         this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
+        
+        // XXXXXX the action that moves between different row/columns.
     };
     
     construct.apply(self, arguments);

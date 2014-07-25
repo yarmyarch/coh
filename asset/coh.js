@@ -187,10 +187,7 @@ coh.res = {
 XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
-    But when translate dataGroup into map positions in BattleScene;
-    MVC structure based on filterUtil, see battleScene.js;
     Animations on units initialized;
-    Locate to and Focus on units in battleScene;
   
 ERROR using spriteFrameCache in coh.View.js, line 75.
 

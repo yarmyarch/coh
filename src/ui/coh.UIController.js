@@ -101,6 +101,7 @@ coh.UIController = (function() {
         },
         doExileMove : function(event, battleScene) {
             
+            // XXXXXX here we go!
         },
         doUnExile : function(event, battleScene) {
             
@@ -110,6 +111,9 @@ coh.UIController = (function() {
             _buf.battle.exiledUnit.unExile(); 
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
+            
+            // XXXXXX if it's not the same column slided, here we go to ghe move function in battleScene.
+            //~ battleScene.moveUnit(unitTile, from, to);
         },
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
