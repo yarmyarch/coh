@@ -152,6 +152,15 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = node;
     },
     
+    exile : function(node, isAttacker, color) {
+        
+        this.background.setColor(color || this.bgColor);
+        
+        this.arrowDirection.setVisible(false);
+        
+        this.focusedNode = node;
+    },
+    
     hide : function() {
         this.setVisible(false);
         this.focusedNode = null;

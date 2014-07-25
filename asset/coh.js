@@ -863,6 +863,15 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = node;
     },
     
+    exile : function(node, isAttacker, color) {
+        
+        this.background.setColor(color || this.bgColor);
+        
+        this.arrowDirection.setVisible(false);
+        
+        this.focusedNode = node;
+    },
+    
     hide : function() {
         this.setVisible(false);
         this.focusedNode = null;
@@ -1686,6 +1695,16 @@ coh.UnitTile = function() {
         return buf.isChecked;
     };
     
+    self.exile = function(isAttacker) {
+        this.unitSprite.runAction(g_lc.FOCUS_BLINK);
+        this.unitSprite.y = (isAttacker ? -1 : 1) * this.unitSprite.height;
+    };
+    
+    self.unExile = function() {
+        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        this.unitSprite.y = 0;
+    };
+    
     construct.apply(self, arguments);
     
     return self;
@@ -2054,13 +2073,16 @@ coh.BattleScene = function() {
         },
         
         /**
-         *@param node cc.Node
+         * Highlight the hovered unit.
          */
         locateToUnit : function(unitTile){
             // if tag locked - for example focusing on some a unit - do nothing.
             !buf.focusTagLocked && this.getFocusTag().locateTo(unitTile.tileSprite, this.isAttackerTurn());
         },
         
+        /**
+         * Mark a unit to be deleted.
+         */
         focusOnUnit : function(unitTile){
             
             buf.focusTagLocked = false;
@@ -2076,6 +2098,21 @@ coh.BattleScene = function() {
             buf.focusTagLocked = true;
         },
         
+        exileUnit : function(unitTile) {
+            
+            buf.focusTagLocked = false;
+            
+            // sprite changes to the tag;
+            this.locateToUnit(unitTile);
+            
+            this.getFocusTag().exile(unitTile.tileSprite, this.isAttackerTurn());
+            
+            unitTile.exile(this.isAttackerTurn());
+            
+            // buffer changes
+            buf.focusTagLocked = true;
+        },
+        
         cancelFocus : function() {
             buf.focusTagLocked = false;
         },
@@ -2085,7 +2122,7 @@ coh.BattleScene = function() {
             this.getFocusTag().hide();
         },
         
-        isLastUnitInColumn : function(isAttacker, unitTile, tile) {
+        getLastUnitInColumn : function(isAttacker, unitTile, tile) {
             var _buf = buf,
                 range = handlerList.tileSelector.getYRange(isAttacker),
                 start = tile.y,
@@ -2095,12 +2132,16 @@ coh.BattleScene = function() {
             
             while (y != end + deata) {
                 if (_buf.unitMatrix[tile.x][y] && _buf.unitMatrix[tile.x][y] != _buf.unitMatrix[tile.x][tile.y]) {
-                    return false;
+                    continue;
                 }
                 y += deata;
             };
             
-            return true;
+            return _buf.unitMatrix[tile.x][y];
+        },
+        
+        isLastUnitInColumn : function(isAttacker, unitTile, tile) {
+            return unitTile == this.getLastUnitInColumn(isAttacker, unitTile, tile);
         },
         
         setAttackerTurn : function(isAttacker) {
@@ -2304,69 +2345,103 @@ coh.UIController = (function() {
     var self;
     
     var buf = {
-        // mark the last handled unitTile and tile, for click and slide events.
-        lastUnitTile : null, 
-        lastTile : null,
+        battle = {            
+            // mark the last handled unitTile and tile, for click and slide events.
+            lastUnitTile : null, 
+            lastTile : null,
+            
+            // if a unit is checked twice, it would be removed from the scene.
+            checkedUnit : null,
+            exiledUnit : null
+        }
         
-        // if a unit is checked twice, it would be removed from the scene.
-        checkedUnit : null
+        // exile/locate/default or other possible kinds of mouse actions in battleScene.
+        // locate for the default.
+        mouseAction : "locate"
     };
+    
+    var handlerList = {
+        doFocus : function(event) {
+            
+            var location = event.getLocationInView(),
+                unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
+            
+            if (unitTile) {
+                battleScene.locateToUnit(unitTile);
+            }
+        },
+        doCheckOrExile : function(event) {
+            var location = event.getLocationInView(),
+                tile = battleScene.getTileFromCoord(location.x, location.y),
+                unitTile = battleScene.getUnitTileInTurn(location.x, location.y),
+                clickedUnit = battleScene.getUnitTileInGlobal(location.x, location.y),
+                lastUnitTile = buf.battle.lastUnitTile,
+                lastTile = buf.battle.lastTile;
+            
+            if (unitTile) {
+                
+                // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
+                if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
+                    // if the last unit in the column is checked, then we treat it a slide.
+                    if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
+                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    } else {
+                        coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
+                    }
+                    return;
+                }
+                
+                // slide from top to bottom of the battle field, or the last unit in the group clicked.
+                if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
+                    coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    return;
+                }
+                
+                coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitTile, tile, battleScene);
+            }
+        },
+        doExileMove : function(event) {
+            
+        },
+        doUnExile : function(event) {
+            
+            buf.battle.exiledUnit = null;
+            buf.mouseAction = "locate";
+        },
+        recordTile : function(event) {
+            
+        }
+    };
+    
+    // Magic.
+    var actionsConfig = {
+        exile : {
+            onMouseMove : handlerList.doExileMove,
+            onMouseUp : handlerList.doUnExile
+        },
+        locate : {
+            onMouseMove : handlerList.doFocus,
+            onMouseUp : handlerList.doCheckOrExile
+        },
+        onDefault : {
+            onMouseDown : handlerList.recordTile
+        }
+    }
     
     coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
-            onMouseMove: function(event){
-                var location = event.getLocationInView(),
-                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
-                
-                if (unitTile) {
-                    battleScene.locateToUnit(unitTile);
-                }
+            onMouseMove : function(event){
+                (actionsConfig[buf.mouseAction].onMouseMove || actionsConfig.onDefault.onMouseMove)(event);
             },
             
             onMouseDown : function(event) {
-                var location = event.getLocationInView(),
-                    tile = battleScene.getTileFromCoord(location.x, location.y),
-                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
-                if (unitTile) {
-                    buf.lastUnitTile = unitTile;
-                    buf.lastTile = tile;
-                }
+                (actionsConfig[buf.mouseAction].onMouseDown || actionsConfig.onDefault.onMouseDown)(event);
             },
             
             onMouseUp : function(event) {
-                var location = event.getLocationInView(),
-                    tile = battleScene.getTileFromCoord(location.x, location.y),
-                    unitTile = battleScene.getUnitTileInTurn(location.x, location.y),
-                    clickedUnit = battleScene.getUnitTileInGlobal(location.x, location.y),
-                    lastUnitTile = buf.lastUnitTile,
-                    lastTile = buf.lastTile;
-                
-                // cancel checked units incase of checked.
-                buf.checkedUnit && buf.checkedUnit.unCheck();
-                if (unitTile) {
-                    
-                    // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
-                    if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
-                        // if the last unit in the column is checked, then we treat it a slide.
-                        if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
-                            coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
-                        } else {
-                            coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
-                        }
-                        return;
-                    }
-                    
-                    // slide from top to bottom of the battle field, or the last unit in the group clicked.
-                    if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                        coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
-                        return;
-                    }
-                    
-                    // cancel focus in other cases.
-                    battleScene.cancelFocus();
-                }
+                (actionsConfig[buf.mouseAction].onMouseUp || actionsConfig.onDefault.onMouseUp)(event);
             }
             
         }, battleScene);
@@ -2383,12 +2458,32 @@ coh.UIController = (function() {
         } else {
             // focusOnUnit including unitTile.check();
             battleScene.focusOnUnit(unitTile);
-            _buf.checkedUnit = unitTile;
+            _buf.battle.checkedUnit = unitTile;
         }
     });
     
     coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
-        console.log(tile);
+        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile);
+        
+        battleScene.exile(exiledUnit);
+        
+        buf.battle.exiledUnit = exiledUnit;
+        
+        buf.mouseAction = "exile";
+    });
+    
+    coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitTile, tile, battleScene) {
+        var _buf = buf;
+        
+        // cancel focus in other cases.
+        battleScene.cancelFocus();
+        
+        // cancel checked units incase of checked.
+        _buf.battle.checkedUnit && _buf.battle.checkedUnit.unCheck();
+        _buf.battle.checkedUnit  = null;
+        
+        _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
+        _buf.battle.exiledUnit = null;
     });
     
     coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {

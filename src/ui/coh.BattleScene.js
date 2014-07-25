@@ -239,13 +239,16 @@ coh.BattleScene = function() {
         },
         
         /**
-         *@param node cc.Node
+         * Highlight the hovered unit.
          */
         locateToUnit : function(unitTile){
             // if tag locked - for example focusing on some a unit - do nothing.
             !buf.focusTagLocked && this.getFocusTag().locateTo(unitTile.tileSprite, this.isAttackerTurn());
         },
         
+        /**
+         * Mark a unit to be deleted.
+         */
         focusOnUnit : function(unitTile){
             
             buf.focusTagLocked = false;
@@ -261,6 +264,21 @@ coh.BattleScene = function() {
             buf.focusTagLocked = true;
         },
         
+        exileUnit : function(unitTile) {
+            
+            buf.focusTagLocked = false;
+            
+            // sprite changes to the tag;
+            this.locateToUnit(unitTile);
+            
+            this.getFocusTag().exile(unitTile.tileSprite, this.isAttackerTurn());
+            
+            unitTile.exile(this.isAttackerTurn());
+            
+            // buffer changes
+            buf.focusTagLocked = true;
+        },
+        
         cancelFocus : function() {
             buf.focusTagLocked = false;
         },
@@ -270,7 +288,7 @@ coh.BattleScene = function() {
             this.getFocusTag().hide();
         },
         
-        isLastUnitInColumn : function(isAttacker, unitTile, tile) {
+        getLastUnitInColumn : function(isAttacker, unitTile, tile) {
             var _buf = buf,
                 range = handlerList.tileSelector.getYRange(isAttacker),
                 start = tile.y,
@@ -280,12 +298,16 @@ coh.BattleScene = function() {
             
             while (y != end + deata) {
                 if (_buf.unitMatrix[tile.x][y] && _buf.unitMatrix[tile.x][y] != _buf.unitMatrix[tile.x][tile.y]) {
-                    return false;
+                    continue;
                 }
                 y += deata;
             };
             
-            return true;
+            return _buf.unitMatrix[tile.x][y];
+        },
+        
+        isLastUnitInColumn : function(isAttacker, unitTile, tile) {
+            return unitTile == this.getLastUnitInColumn(isAttacker, unitTile, tile);
         },
         
         setAttackerTurn : function(isAttacker) {

@@ -43,6 +43,16 @@ coh.UnitTile = function() {
         return buf.isChecked;
     };
     
+    self.exile = function(isAttacker) {
+        this.unitSprite.runAction(g_lc.FOCUS_BLINK);
+        this.unitSprite.y = (isAttacker ? -1 : 1) * this.unitSprite.height;
+    };
+    
+    self.unExile = function() {
+        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        this.unitSprite.y = 0;
+    };
+    
     construct.apply(self, arguments);
     
     return self;
