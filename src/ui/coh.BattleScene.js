@@ -31,12 +31,14 @@ coh.BattleScene = function() {
         unitMatrix : {},
         
         focusTag : null,
-            
+        
         isAttackerTurn : true,
         
         // if the user is focusing on some a unit, the focusnode would be locked.
         // that means it won't react on any other locate events.
-        focusTagLocked : false
+        focusTagLocked : false,
+        
+        
     };
 
     var handlerList = {

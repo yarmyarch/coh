@@ -8,7 +8,8 @@ coh.cpns = coh.cpns || {};
 // global static properties for the class Cursor.
 var g_lc = {
     CORNOR_SCALE : 0.18,
-    DIRECT_SCALE : 0.5
+    DIRECT_SCALE : 0.5,
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
 };
 
 var g_buf = {
@@ -81,7 +82,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.setBgColor(newColor);
         
-        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
+        this.background.runAction(g_lc.FOCUS_BLINK);
     },
     
     /**

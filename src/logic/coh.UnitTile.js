@@ -7,7 +7,8 @@ var coh = coh || {};
 
 var g_lc = {
     CHECK_COLOR : new cc.Color(255, 128, 128, 255),
-    UNCHECK_COLOR : new cc.Color(255, 255, 255, 255)
+    UNCHECK_COLOR : new cc.Color(255, 255, 255, 255),
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
 }
     
 coh.UnitTile = function() {
@@ -26,7 +27,7 @@ coh.UnitTile = function() {
     
     self.check = function() {
         this.unitSprite.setColor(g_lc.CHECK_COLOR);
-        this.unitSprite.runAction(coh.LocalConfig.FOCUS_BLINK);
+        this.unitSprite.runAction(g_lc.FOCUS_BLINK);
         buf.isChecked = true;
     };
     
@@ -34,7 +35,7 @@ coh.UnitTile = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
         // XXXXXX why it won't work here?
         // Looks like it's triggered dulplicated times.
-        this.unitSprite.stopAction(coh.LocalConfig.FOCUS_BLINK);
+        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         buf.isChecked = false;
     };
     

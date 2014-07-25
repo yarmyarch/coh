@@ -79,8 +79,7 @@ coh.LocalConfig = {
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
     DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
-    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
-    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204))),
+    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204)
 };var coh = coh || {};
 
 // ui related config exists in resource.js
@@ -720,7 +719,8 @@ coh.cpns = coh.cpns || {};
 // global static properties for the class Cursor.
 var g_lc = {
     CORNOR_SCALE : 0.18,
-    DIRECT_SCALE : 0.5
+    DIRECT_SCALE : 0.5,
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
 };
 
 var g_buf = {
@@ -793,7 +793,7 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.setBgColor(newColor);
         
-        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
+        this.background.runAction(g_lc.FOCUS_BLINK);
     },
     
     /**
@@ -821,8 +821,6 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
         
         this.background.setColor(color || this.bgColor);
-        this.background.stopAction(_coh.LocalConfig.FOCUS_BLINK);
-        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
         
         // animation related part.
         if (!this.focusedNode) {
@@ -857,11 +855,7 @@ coh.cpns.Cursor = cc.Node.extend({
     
     focusOn : function(node, isAttacker, color) {
         
-        var _coh = coh;
-        
         this.background.setColor(color || this.actColor);
-        this.background.stopAction(_coh.LocalConfig.FOCUS_BLINK);
-        this.background.runAction(_coh.LocalConfig.FOCUS_BLINK);
         
         this.stopFocusAnimat(isAttacker);
         this.arrowDirection.setVisible(false);
@@ -1656,7 +1650,8 @@ coh.Battle = (function(){
 
 var g_lc = {
     CHECK_COLOR : new cc.Color(255, 128, 128, 255),
-    UNCHECK_COLOR : new cc.Color(255, 255, 255, 255)
+    UNCHECK_COLOR : new cc.Color(255, 255, 255, 255),
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
 }
     
 coh.UnitTile = function() {
@@ -1675,7 +1670,7 @@ coh.UnitTile = function() {
     
     self.check = function() {
         this.unitSprite.setColor(g_lc.CHECK_COLOR);
-        this.unitSprite.runAction(coh.LocalConfig.FOCUS_BLINK);
+        this.unitSprite.runAction(g_lc.FOCUS_BLINK);
         buf.isChecked = true;
     };
     
@@ -1683,7 +1678,7 @@ coh.UnitTile = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
         // XXXXXX why it won't work here?
         // Looks like it's triggered dulplicated times.
-        this.unitSprite.stopAction(coh.LocalConfig.FOCUS_BLINK);
+        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         buf.isChecked = false;
     };
     
@@ -1851,12 +1846,14 @@ coh.BattleScene = function() {
         unitMatrix : {},
         
         focusTag : null,
-            
+        
         isAttackerTurn : true,
         
         // if the user is focusing on some a unit, the focusnode would be locked.
         // that means it won't react on any other locate events.
-        focusTagLocked : false
+        focusTagLocked : false,
+        
+        
     };
 
     var handlerList = {
