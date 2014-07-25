@@ -278,8 +278,8 @@ coh.BattleScene = function() {
                 end = range[range.length - 1],
                 y = start;
             
-            while (y != end) {
-                if (_buf.unitMatrix[tile.x][y]) {
+            while (y != end + deata) {
+                if (_buf.unitMatrix[tile.x][y] && _buf.unitMatrix[tile.x][y] != _buf.unitMatrix[tile.x][tile.y]) {
                     return false;
                 }
                 y += deata;
