@@ -33,7 +33,7 @@ coh.UnitTile = function() {
     
     self.unCheck = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
-        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        g_lc.FOCUS_BLINK.getOriginalTarget() && this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         buf.isChecked = false;
     };
     
@@ -47,7 +47,7 @@ coh.UnitTile = function() {
     };
     
     self.unExile = function() {
-        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        g_lc.FOCUS_BLINK.getOriginalTarget() && this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
         

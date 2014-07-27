@@ -251,6 +251,7 @@ coh.BattleScene = function() {
          */
         focusOnUnit : function(unitTile){
             
+            if (!unitTile) return;
             buf.focusTagLocked = false;
             
             // sprite changes to the tag;
@@ -266,6 +267,7 @@ coh.BattleScene = function() {
         
         exileUnit : function(unitTile) {
             
+            if (!unitTile) return;
             buf.focusTagLocked = false;
             
             // sprite changes to the tag;
@@ -295,10 +297,10 @@ coh.BattleScene = function() {
                 deata = this.isAttackerTurn() ? 1 : -1,
                 end = range[range.length - 1],
                 y = start,
-                lastUnit;
+                lastUnit = null;
             
             while (y != end + deata) {
-                if (_buf.unitMatrix[tile.x][y]) {
+                if (_buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][y]) {
                     lastUnit = _buf.unitMatrix[tile.x][y];
                 }
                 y += deata;

@@ -188,9 +188,6 @@ XXXXXX
 TODO : 
     set sprite: run/walk in Actor;
     Animations on units initialized;
-  
-ERROR using spriteFrameCache in coh.View.js, line 75.
-
 */var coh = coh || {};
 coh.Util = (function(){
     var self;
@@ -779,7 +776,6 @@ coh.cpns.Cursor = cc.Node.extend({
             anchorY : 0
         });
         this.arrowDirection.attr({
-            anchorY : 1,
             scale : g_lc.DIRECT_SCALE
         });
         
@@ -815,7 +811,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.setVisible(true);
         this.arrowDirection.rotation = isAttacker ? 180 : 0;
         this.arrowDirection.x = node.width / 2;
-        this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
+        this.arrowDirection.y = isAttacker ? 50 - node.y : this.parent.height - node.y - 50;
         
         this.background.setColor(color || this.bgColor);
         
@@ -864,7 +860,8 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.background.setColor(color || this.bgColor);
         
-        this.arrowDirection.setVisible(false);
+        //~ this.arrowDirection.setVisible(false);
+        this.arrowDirection.setRotation(isAttacker ? 0 : 180);
         
         this.focusedNode = node;
     },
@@ -921,12 +918,10 @@ coh.cpns.Cursor = cc.Node.extend({
         
         var animate = this.getFocusAnimate(isAttacker);
         
-        try {
-            // there would be an error if the action doesn't exist... shit.
-            this.arrowRight.stopAction(animate.ar);
-            this.arrowLeft.stopAction(animate.al);
-            this.arrowDirection.stopAction(animate.ad);
-        } catch(e) {};
+        // there would be an error if the action doesn't exist.
+        animate.ar.getOriginalTarget() && this.arrowRight.stopAction(animate.ar);
+        animate.al.getOriginalTarget() && this.arrowLeft.stopAction(animate.al);
+        animate.ad.getOriginalTarget() && this.arrowDirection.stopAction(animate.ad);
         return animate;
     }
 });
@@ -1682,7 +1677,7 @@ coh.UnitTile = function() {
     
     self.unCheck = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
-        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        g_lc.FOCUS_BLINK.getOriginalTarget() && this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         buf.isChecked = false;
     };
     
@@ -1696,9 +1691,11 @@ coh.UnitTile = function() {
     };
     
     self.unExile = function() {
-        this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        g_lc.FOCUS_BLINK.getOriginalTarget() && this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
         this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
+        
+        // XXXXXX the action that moves between different row/columns.
     };
     
     construct.apply(self, arguments);
@@ -2081,6 +2078,7 @@ coh.BattleScene = function() {
          */
         focusOnUnit : function(unitTile){
             
+            if (!unitTile) return;
             buf.focusTagLocked = false;
             
             // sprite changes to the tag;
@@ -2096,6 +2094,7 @@ coh.BattleScene = function() {
         
         exileUnit : function(unitTile) {
             
+            if (!unitTile) return;
             buf.focusTagLocked = false;
             
             // sprite changes to the tag;
@@ -2125,10 +2124,10 @@ coh.BattleScene = function() {
                 deata = this.isAttackerTurn() ? 1 : -1,
                 end = range[range.length - 1],
                 y = start,
-                lastUnit;
+                lastUnit = null;
             
             while (y != end + deata) {
-                if (_buf.unitMatrix[tile.x][y]) {
+                if (_buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][y]) {
                     lastUnit = _buf.unitMatrix[tile.x][y];
                 }
                 y += deata;
@@ -2376,22 +2375,24 @@ coh.UIController = (function() {
                 lastUnitTile = buf.battle.lastUnitTile,
                 lastTile = buf.battle.lastTile;
             
-            if (unitTile) {
+            if (unitTile || battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), lastUnitTile, lastTile)) {
                 
                 // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
                 if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
                     // if the last unit in the column is checked, then we treat it a slide.
-                    if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
-                        _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
-                    } else {
-                        _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
-                    }
+                    // Hmm... it should also be able to delete the last unit in a row...
+                    
+                    //~ if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
+                        //~ _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    //~ } else {
+                    _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
+                    //~ }
                     return;
                 }
                 
                 // slide from top to bottom of the battle field, or the last unit in the group clicked.
                 if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                    _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    _coh.utils.FilterUtil.applyFilters("battleUnitSlided", clickedUnit || lastUnitTile , clickedUnit && tile || lastTile, battleScene);
                     return;
                 }
                 
@@ -2400,15 +2401,19 @@ coh.UIController = (function() {
         },
         doExileMove : function(event, battleScene) {
             
+            // XXXXXX here we go!
         },
         doUnExile : function(event, battleScene) {
             
             var _buf = buf;
             
             battleScene.cancelFocus();
-            _buf.battle.exiledUnit.unExile(); 
+            _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
+            
+            // XXXXXX if it's not the same column slided, here we go to ghe move function in battleScene.
+            //~ battleScene.moveUnit(unitTile, from, to);
         },
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
@@ -2499,7 +2504,7 @@ coh.UIController = (function() {
         // unExile would be executed in the doUnExile process.
         battleScene.exileUnit(exiledUnit);
         
-        _buf.battle.exiledUnit = unitTile;
+        _buf.battle.exiledUnit = exiledUnit;
         
         _buf.mouseAction = "exile";
     });

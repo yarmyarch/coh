@@ -77,22 +77,24 @@ coh.UIController = (function() {
                 lastUnitTile = buf.battle.lastUnitTile,
                 lastTile = buf.battle.lastTile;
             
-            if (unitTile) {
+            if (unitTile || battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), lastUnitTile, lastTile)) {
                 
                 // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
                 if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
                     // if the last unit in the column is checked, then we treat it a slide.
-                    if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
-                        _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
-                    } else {
-                        _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
-                    }
+                    // Hmm... it should also be able to delete the last unit in a row...
+                    
+                    //~ if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
+                        //~ _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    //~ } else {
+                    _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
+                    //~ }
                     return;
                 }
                 
                 // slide from top to bottom of the battle field, or the last unit in the group clicked.
                 if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                    _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    _coh.utils.FilterUtil.applyFilters("battleUnitSlided", clickedUnit || lastUnitTile , clickedUnit && tile || lastTile, battleScene);
                     return;
                 }
                 
@@ -108,7 +110,7 @@ coh.UIController = (function() {
             var _buf = buf;
             
             battleScene.cancelFocus();
-            _buf.battle.exiledUnit.unExile(); 
+            _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
             
@@ -204,7 +206,7 @@ coh.UIController = (function() {
         // unExile would be executed in the doUnExile process.
         battleScene.exileUnit(exiledUnit);
         
-        _buf.battle.exiledUnit = unitTile;
+        _buf.battle.exiledUnit = exiledUnit;
         
         _buf.mouseAction = "exile";
     });

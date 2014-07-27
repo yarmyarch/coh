@@ -71,7 +71,6 @@ coh.cpns.Cursor = cc.Node.extend({
             anchorY : 0
         });
         this.arrowDirection.attr({
-            anchorY : 1,
             scale : g_lc.DIRECT_SCALE
         });
         
@@ -107,7 +106,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.setVisible(true);
         this.arrowDirection.rotation = isAttacker ? 180 : 0;
         this.arrowDirection.x = node.width / 2;
-        this.arrowDirection.y = isAttacker ? -node.y : this.parent.height - node.y;
+        this.arrowDirection.y = isAttacker ? 50 - node.y : this.parent.height - node.y - 50;
         
         this.background.setColor(color || this.bgColor);
         
@@ -156,7 +155,8 @@ coh.cpns.Cursor = cc.Node.extend({
         
         this.background.setColor(color || this.bgColor);
         
-        this.arrowDirection.setVisible(false);
+        //~ this.arrowDirection.setVisible(false);
+        this.arrowDirection.setRotation(isAttacker ? 0 : 180);
         
         this.focusedNode = node;
     },
@@ -213,12 +213,10 @@ coh.cpns.Cursor = cc.Node.extend({
         
         var animate = this.getFocusAnimate(isAttacker);
         
-        try {
-            // there would be an error if the action doesn't exist... shit.
-            this.arrowRight.stopAction(animate.ar);
-            this.arrowLeft.stopAction(animate.al);
-            this.arrowDirection.stopAction(animate.ad);
-        } catch(e) {};
+        // there would be an error if the action doesn't exist.
+        animate.ar.getOriginalTarget() && this.arrowRight.stopAction(animate.ar);
+        animate.al.getOriginalTarget() && this.arrowLeft.stopAction(animate.al);
+        animate.ad.getOriginalTarget() && this.arrowDirection.stopAction(animate.ad);
         return animate;
     }
 });
