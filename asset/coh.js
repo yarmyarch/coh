@@ -1695,14 +1695,13 @@ coh.UnitTile = function() {
     
     self.exile = function(isAttacker) {
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        
-        this.unitSprite.runAction(this.unitSprite.running = cc.moveTo(coh.LocalConfig.BLINK_RATE / 2, this.unitSprite.x, (isAttacker ? -1 : 1) * this.unitSprite.height));
+        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.BLINK_RATE / 5, this.unitSprite.x, (isAttacker ? -1 : 1) * (this.tileSprite.y + this.unitSprite.height / 2)));
     };
     
     self.unExile = function() {
         var _cohView = coh.View;
         _cohView.tryStopAction(this.unitSprite, g_lc.FOCUS_BLINK);
-        _cohView.tryStopAction(this.unitSprite, this.unitSprite.running);
+        _cohView.tryStopAction(this.unitSprite, this.unitSprite.runningAction);
         this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
     };

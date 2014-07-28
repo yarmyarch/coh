@@ -8,7 +8,8 @@ var coh = coh || {};
 var g_lc = {
     CHECK_COLOR : new cc.Color(255, 128, 128, 255),
     UNCHECK_COLOR : new cc.Color(255, 255, 255, 255),
-    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204))),
+    EXILE_RATE : coh.LocalConfig.BLINK_RATE / 5
 }
     
 coh.UnitTile = function() {
@@ -43,14 +44,13 @@ coh.UnitTile = function() {
     
     self.exile = function(isAttacker) {
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        
-        this.unitSprite.runAction(this.unitSprite.running = cc.moveTo(coh.LocalConfig.BLINK_RATE / 2, this.unitSprite.x, (isAttacker ? -1 : 1) * this.unitSprite.height));
+        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(g_lc.EXILE_RATE, this.unitSprite.x, (isAttacker ? -1 : 1) * (this.tileSprite.y + this.unitSprite.height / 2)));
     };
     
     self.unExile = function() {
         var _cohView = coh.View;
         _cohView.tryStopAction(this.unitSprite, g_lc.FOCUS_BLINK);
-        _cohView.tryStopAction(this.unitSprite, this.unitSprite.running);
+        _cohView.tryStopAction(this.unitSprite, this.unitSprite.runningAction);
         this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
     };
