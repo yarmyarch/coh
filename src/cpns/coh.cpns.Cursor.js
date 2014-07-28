@@ -93,7 +93,8 @@ coh.cpns.Cursor = cc.Node.extend({
         
         if (this.focusedNode == node) return;
         
-        var frameRate = coh.LocalConfig.FRAME_RATE * 5;
+        var frameRate = coh.LocalConfig.FRAME_RATE * 5,
+            _cohView = coh.View;
         
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
@@ -124,10 +125,10 @@ coh.cpns.Cursor = cc.Node.extend({
             this.stopAllActions();
             this.runAction(cc.moveTo(frameRate, node.x, node.y));
             
-            this.arrowRight.stopAction(this.arrowRight.moveAction);
+            _cohView.tryStopAction(this.arrowRight, this.arrowRight.moveAction);
             this.arrowRight.runAction(this.arrowRight.moveAction = cc.moveTo(frameRate, node.width, node.height));
         
-            this.background.stopAction(this.background.scaleAction);
+            _cohView.tryStopAction(this.background, this.background.scaleAction);
             this.background.runAction(
                 this.background.scaleAction = cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
             );
@@ -211,12 +212,13 @@ coh.cpns.Cursor = cc.Node.extend({
     
     stopFocusAnimat : function(isAttacker) {
         
-        var animate = this.getFocusAnimate(isAttacker);
+        var animate = this.getFocusAnimate(isAttacker),
+            _cohView = coh.View;
         
         // there would be an error if the action doesn't exist.
-        animate.ar.getOriginalTarget() && this.arrowRight.stopAction(animate.ar);
-        animate.al.getOriginalTarget() && this.arrowLeft.stopAction(animate.al);
-        animate.ad.getOriginalTarget() && this.arrowDirection.stopAction(animate.ad);
+        _cohView.tryStopAction(this.arrowRight, animate.ar);
+        _cohView.tryStopAction(this.arrowLeft, animate.al);
+        _cohView.tryStopAction(this.arrowDirection, animate.ad);
         return animate;
     }
 });

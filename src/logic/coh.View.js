@@ -136,6 +136,12 @@ coh.View = (function() {
             }
             
             return _buf.animFrames[unitName][animationName][textureIndex];
+        },
+        
+        tryStopAction : function(target, action) {
+            if (target && action && action.getOriginalTarget()) {
+                target.stopAction(action);
+            }
         }
     }
     

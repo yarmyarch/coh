@@ -33,7 +33,7 @@ coh.UnitTile = function() {
     
     self.unCheck = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
-        g_lc.FOCUS_BLINK.getOriginalTarget() && this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        coh.View.tryStopAction(this.unitSprite, g_lc.FOCUS_BLINK);
         buf.isChecked = false;
     };
     
@@ -43,15 +43,16 @@ coh.UnitTile = function() {
     
     self.exile = function(isAttacker) {
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        this.unitSprite.y = (isAttacker ? -1 : 1) * this.unitSprite.height;
+        
+        this.unitSprite.runAction(this.unitSprite.running = cc.moveTo(coh.LocalConfig.BLINK_RATE / 2, this.unitSprite.x, (isAttacker ? -1 : 1) * this.unitSprite.height));
     };
     
     self.unExile = function() {
-        g_lc.FOCUS_BLINK.getOriginalTarget() && this.unitSprite.stopAction(g_lc.FOCUS_BLINK);
+        var _cohView = coh.View;
+        _cohView.tryStopAction(this.unitSprite, g_lc.FOCUS_BLINK);
+        _cohView.tryStopAction(this.unitSprite, this.unitSprite.running);
         this.unitSprite.setOpacity(255);
         this.unitSprite.y = 0;
-        
-        // XXXXXX the action that moves between different row/columns.
     };
     
     construct.apply(self, arguments);
