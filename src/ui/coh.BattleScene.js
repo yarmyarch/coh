@@ -282,7 +282,9 @@ coh.BattleScene = function() {
         },
         
         cancelFocus : function() {
-            buf.focusTagLocked = false;
+            var _buf = buf;
+            _buf.focusTagLocked = false;
+            this.getFocusTag().hide();
         },
         
         removeUnit : function(unitTile, tile) {
