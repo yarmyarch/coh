@@ -8,8 +8,7 @@ var coh = coh || {};
 var g_lc = {
     CHECK_COLOR : new cc.Color(255, 128, 128, 255),
     UNCHECK_COLOR : new cc.Color(255, 255, 255, 255),
-    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204))),
-    EXILE_RATE : coh.LocalConfig.BLINK_RATE / 5
+    FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
 }
     
 coh.UnitWrap = function() {
@@ -44,7 +43,7 @@ coh.UnitWrap = function() {
     
     self.exile = function(isAttacker) {
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(g_lc.EXILE_RATE, this.unitSprite.x, (isAttacker ? -1 : 1) * (this.tileSprite.y + this.unitSprite.height / 2)));
+        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, (isAttacker ? -1 : 1) * (this.tileSprite.y + this.unitSprite.height / 2)));
     };
     
     self.unExile = function() {
