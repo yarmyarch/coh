@@ -55,6 +55,11 @@ coh.LocalConfig = {
     // frame rate for general animations.
     FRAME_RATE : 1/60,
     
+    ASSAULT_DEATA : 1 / 6 * 100,
+    ASSAULT_RATE : 1 / 3,
+    EXILE_RATE : 1 / 6,
+    
+    
     BLINK_RATE : 0.618,
     COLOR_CONFIG : {
         ELF : ["blue", "white", "gold"]
@@ -80,8 +85,7 @@ coh.LocalConfig = {
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
     DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
-    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
-    EXILE_RATE : 1 / 6
+    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204)
 };var coh = coh || {};
 
 // ui related config exists in resource.js
@@ -179,7 +183,7 @@ coh.res = {
                 img_2 : "res/sprite/imgs/" + i + "_white.png"
             };
             // XXXXXX TO BE ADDED
-            resObj.sprite[i].move = {
+            resObj.sprite[i].assult = {
                 plist : "res/sprite/" + i + "_idle.plist",
                 img_0 : "res/sprite/imgs/" + i + "_blue.png",
                 img_1 : "res/sprite/imgs/" + i + "_gold.png",
@@ -1180,7 +1184,7 @@ var UnitObject = function(unitName) {
     };
     
     self.setColor = function(newColor) {
-        return (buf.color = _coh.Battle.getColorFromStatus(newColor) || buf.color);
+        return buf.color = newColor;
     };
     
     self.getColor = function() {
@@ -2081,13 +2085,38 @@ coh.BattleScene = function() {
         },
         
         /**
+         * return the last tile that's having a unit occupied.
+         */
+        getLastTileInColumn : function(isAttacker, tile) {
+            
+            if (!buf.unitMatrix[tile.x]) return null;
+            
+            var _buf = buf,
+                range = handlerList.tileSelector.getYRange(isAttacker),
+                start = range[0],
+                deata = this.isAttackerTurn() ? 1 : -1,
+                end = range[range.length - 1],
+                y = start,
+                lastTileY = start;
+            
+            while (y != end + deata) {
+                if (_buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][y]) {
+                    lastTileY = y;
+                }
+                y += deata;
+            };
+            
+            return {x : tile.x, y : lastTileY};
+        },
+        
+        /**
          * get unit sprite via given position in the view.
          */
         getUnitInGlobal : function(posX, posY) {
             var tile = this.getTileInGlobal(posX, posY),
                 _buf = buf;
             
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
         },
         
         /**
@@ -2098,7 +2127,18 @@ coh.BattleScene = function() {
             var tile = this.getTileInTurn(posX, posY),
                 _buf = buf;
             
-            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        getLastUnitInColumn : function(isAttacker, tile) {
+            var tile = this.getLastTileInColumn(isAttacker, tile),
+                _buf = buf;
+            
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        isLastUnitInColumn : function(isAttacker, unitWrap, tile) {
+            return unitWrap == this.getLastUnitInColumn(isAttacker, unitWrap, tile);
         },
         
         getFocusTag : function() {
@@ -2159,35 +2199,14 @@ coh.BattleScene = function() {
         cancelFocus : function() {
             var _buf = buf;
             _buf.focusTagLocked = false;
-            this.getFocusTag().hide();
+            
+            // XXXXXX interestingly I can't hide it here, or the cursor flies.
+            //~ this.getFocusTag().hide();
         },
         
         removeUnit : function(unitWrap, tile) {
             this.cancelFocus();
             this.getFocusTag().hide();
-        },
-        
-        getLastUnitInColumn : function(isAttacker, unitWrap, tile) {
-            var _buf = buf,
-                range = handlerList.tileSelector.getYRange(isAttacker),
-                start = tile.y,
-                deata = this.isAttackerTurn() ? 1 : -1,
-                end = range[range.length - 1],
-                y = start,
-                lastUnit = null;
-            
-            while (y != end + deata) {
-                if (_buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][y]) {
-                    lastUnit = _buf.unitMatrix[tile.x][y];
-                }
-                y += deata;
-            };
-            
-            return lastUnit;
-        },
-        
-        isLastUnitInColumn : function(isAttacker, unitWrap, tile) {
-            return unitWrap == this.getLastUnitInColumn(isAttacker, unitWrap, tile);
         },
         
         setAttackerTurn : function(isAttacker) {
@@ -2221,7 +2240,7 @@ coh.BattleScene = function() {
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
-                    _buf.unitDelay += _coh.LocalConfig.FRAME_RATE * 5;
+                    _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
                 }
             }
         },
@@ -2253,7 +2272,8 @@ coh.BattleScene = function() {
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
-                shadow = cc.Sprite.create(_coh.res.imgs.shadow);
+                shadow = cc.Sprite.create(_coh.res.imgs.shadow),
+                typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
             
             shadow.attr({
                 x : 0,
@@ -2273,12 +2293,17 @@ coh.BattleScene = function() {
                 anchorY: 0
             });
             
+            // show it when set to tile.
+            tileSprite.attr({
+                visible : false
+            });
+            
             unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
-            setTimeOut(function() {
-                this.setUnitToTile(player.isAttacker(), unitWrap, tilePosition);
+            setTimeout(function() {
+                self.setUnitToTile(player.isAttacker(), unitWrap, tilePosition);
             }, _buf.unitDelay);
             
             // XXXXXX For debug usage.
@@ -2311,18 +2336,36 @@ coh.BattleScene = function() {
             }
             
             tileSprite.attr({
+                width: mapTile.width * typeConfig[1],
+                height: mapTile.height * typeConfig[0]
+            });
+            tileSprite.attr({
+                visible : true,
                 x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height,
-                width: tile.width * typeConfig[1],
-                height: tile.height * typeConfig[0]
+                y : !isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
             
             // Animations appended.
-            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "move", srcName)));
-            tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.EXILE_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
+            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
+            tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
             })));
-        }
+        },
+        
+        prepareMoving : function(isAttacker, unitWrap, lastTile) {
+            var targetTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(
+                {x : lastTile.x, y : lastTile.y + self.isAttackerTurn() ? 1 : -1}
+            );
+            
+            unitWrap.unitSprite.attr({
+                x : 0,
+                y : 0
+            });
+            unitWrap.tileSprite.attr({
+                x : targetTile.x,
+                y : targetTile.y
+            });
+        },
         
         removeUnit : function(unitWrap, tile) {
             // XXXXXX
@@ -2449,15 +2492,15 @@ coh.UIController = (function() {
         },
         doExileMove : function(event, battleScene) {
             var location = event.getLocationInView(),
-                turnTile = battleScene.getTileInTurn(location.x, location.y),
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
-                lastTile = buf.lastTile;
+                columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
+                lastTile = buf.battle.lastTile;
             
-            if (lastTile.x == turnTile.x) return;
+            if (!columnTile || lastTile.x == columnTile.x) return;
             
-            battleScene.prepareMoving(buf.exiledUnit, turnTile);
+            battleScene.prepareMoving(battleScene.isAttackerTurn(), buf.battle.exiledUnit, columnTile);
             
-            buf.lastTile = turnTile;
+            buf.battle.lastTile = columnTile;
         },
         doUnExile : function(event, battleScene) {
             
@@ -2552,7 +2595,7 @@ coh.UIController = (function() {
     });
     
     _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
-        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitWrap, tile),
+        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), tile),
             _buf = buf;
         
         util.clearStatus(battleScene);

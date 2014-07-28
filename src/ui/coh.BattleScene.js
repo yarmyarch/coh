@@ -208,13 +208,38 @@ coh.BattleScene = function() {
         },
         
         /**
+         * return the last tile that's having a unit occupied.
+         */
+        getLastTileInColumn : function(isAttacker, tile) {
+            
+            if (!buf.unitMatrix[tile.x]) return null;
+            
+            var _buf = buf,
+                range = handlerList.tileSelector.getYRange(isAttacker),
+                start = range[0],
+                deata = this.isAttackerTurn() ? 1 : -1,
+                end = range[range.length - 1],
+                y = start,
+                lastTileY = start;
+            
+            while (y != end + deata) {
+                if (_buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][y]) {
+                    lastTileY = y;
+                }
+                y += deata;
+            };
+            
+            return {x : tile.x, y : lastTileY};
+        },
+        
+        /**
          * get unit sprite via given position in the view.
          */
         getUnitInGlobal : function(posX, posY) {
             var tile = this.getTileInGlobal(posX, posY),
                 _buf = buf;
             
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
         },
         
         /**
@@ -225,7 +250,18 @@ coh.BattleScene = function() {
             var tile = this.getTileInTurn(posX, posY),
                 _buf = buf;
             
-            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        getLastUnitInColumn : function(isAttacker, tile) {
+            var tile = this.getLastTileInColumn(isAttacker, tile),
+                _buf = buf;
+            
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
+        isLastUnitInColumn : function(isAttacker, unitWrap, tile) {
+            return unitWrap == this.getLastUnitInColumn(isAttacker, unitWrap, tile);
         },
         
         getFocusTag : function() {
@@ -286,35 +322,14 @@ coh.BattleScene = function() {
         cancelFocus : function() {
             var _buf = buf;
             _buf.focusTagLocked = false;
-            this.getFocusTag().hide();
+            
+            // XXXXXX interestingly I can't hide it here, or the cursor flies.
+            //~ this.getFocusTag().hide();
         },
         
         removeUnit : function(unitWrap, tile) {
             this.cancelFocus();
             this.getFocusTag().hide();
-        },
-        
-        getLastUnitInColumn : function(isAttacker, unitWrap, tile) {
-            var _buf = buf,
-                range = handlerList.tileSelector.getYRange(isAttacker),
-                start = tile.y,
-                deata = this.isAttackerTurn() ? 1 : -1,
-                end = range[range.length - 1],
-                y = start,
-                lastUnit = null;
-            
-            while (y != end + deata) {
-                if (_buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][y]) {
-                    lastUnit = _buf.unitMatrix[tile.x][y];
-                }
-                y += deata;
-            };
-            
-            return lastUnit;
-        },
-        
-        isLastUnitInColumn : function(isAttacker, unitWrap, tile) {
-            return unitWrap == this.getLastUnitInColumn(isAttacker, unitWrap, tile);
         },
         
         setAttackerTurn : function(isAttacker) {
@@ -458,6 +473,21 @@ coh.BattleScene = function() {
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
             })));
+        },
+        
+        prepareMoving : function(isAttacker, unitWrap, lastTile) {
+            var targetTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(
+                {x : lastTile.x, y : lastTile.y + self.isAttackerTurn() ? 1 : -1}
+            );
+            
+            unitWrap.unitSprite.attr({
+                x : 0,
+                y : 0
+            });
+            unitWrap.tileSprite.attr({
+                x : targetTile.x,
+                y : targetTile.y
+            });
         },
         
         removeUnit : function(unitWrap, tile) {

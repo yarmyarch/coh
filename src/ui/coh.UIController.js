@@ -93,15 +93,15 @@ coh.UIController = (function() {
         },
         doExileMove : function(event, battleScene) {
             var location = event.getLocationInView(),
-                turnTile = battleScene.getTileInTurn(location.x, location.y),
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
+                columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
                 lastTile = buf.battle.lastTile;
             
-            if (!lastTile || lastTile.x == turnTile.x) return;
+            if (!columnTile || lastTile.x == columnTile.x) return;
             
-            //~ battleScene.prepareMoving(buf.exiledUnit, turnTile);
+            battleScene.prepareMoving(battleScene.isAttackerTurn(), buf.battle.exiledUnit, columnTile);
             
-            buf.battle.lastTile = turnTile;
+            buf.battle.lastTile = columnTile;
         },
         doUnExile : function(event, battleScene) {
             
@@ -196,7 +196,7 @@ coh.UIController = (function() {
     });
     
     _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
-        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitWrap, tile),
+        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), tile),
             _buf = buf;
         
         util.clearStatus(battleScene);
