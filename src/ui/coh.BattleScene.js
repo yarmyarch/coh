@@ -435,7 +435,9 @@ coh.BattleScene = function() {
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 mapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tile),
                 unit = unitWrap.unit,
-                tileSprite = unitWrap.tileSprite;
+                unitSprite = unitWrap.unitSprite,
+                tileSprite = unitWrap.tileSprite,
+                srcName ="img_" + (+unit.getColor() || 0);
             
             // set buffer
             // mind types that's not having 1 tile.
@@ -454,8 +456,9 @@ coh.BattleScene = function() {
                 y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
             
+            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "move", srcName)));
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.EXILE_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
-                unitWrap.unitSprite.runAction();
+                unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
             })));
         }
         

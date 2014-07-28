@@ -70,6 +70,7 @@ coh.Player = function(faction, level, unitConfig) {
             if (_u[i][type]) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
+                unit.setColor(_coh.Battle.getColorFromStatus(status));
                 break;
             }
         }

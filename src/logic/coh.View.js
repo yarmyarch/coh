@@ -79,7 +79,7 @@ coh.View = (function() {
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
-            srcName = "img" + (sc.color === -1 ? "" : "_" + (+sc.color));
+            srcName = "img" + (sc.color === _coh.LocalConfig.NO_COLOR ? "" : "_" + (+sc.color));
             
             action = sc.animMode.create(self.getAnimation(unitName, animationName, srcName, sc.rate));
             

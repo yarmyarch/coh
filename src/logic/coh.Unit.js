@@ -22,6 +22,7 @@ var UnitObject = function(unitName) {
         // generated from level
         defend : 0,
         attack : 0,
+        color : _coh.LocalConfig.NO_COLOR,
         
         // other configurations from LC.
         conf : {}
@@ -66,6 +67,14 @@ var UnitObject = function(unitName) {
     
     self.getAttack = function() {
         return buf.attack;
+    };
+    
+    self.setColor = function(newColor) {
+        return (buf.color = _coh.Battle.getColorFromStatus(newColor) || buf.color);
+    };
+    
+    self.getColor = function() {
+        return buf.color;
     };
     
     construct.apply(self, arguments);

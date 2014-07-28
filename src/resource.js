@@ -77,6 +77,13 @@ coh.res = {
                 img_1 : "res/sprite/imgs/" + i + "_gold.png",
                 img_2 : "res/sprite/imgs/" + i + "_white.png"
             };
+            // XXXXXX TO BE ADDED
+            resObj.sprite[i].move = {
+                plist : "res/sprite/" + i + "_idle.plist",
+                img_0 : "res/sprite/imgs/" + i + "_blue.png",
+                img_1 : "res/sprite/imgs/" + i + "_gold.png",
+                img_2 : "res/sprite/imgs/" + i + "_white.png"
+            };
         }
         return resObj;
     };

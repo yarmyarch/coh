@@ -130,11 +130,11 @@ coh.Battle = (function(){
     return self = {
         
         getTypeFromStatus : function(status) {
-            return ~~(status / LC.COLOR_COUNT);
+            return ~~(+status / LC.COLOR_COUNT);
         },
         
         getColorFromStatus : function(status) {
-            return status % LC.COLOR_COUNT;
+            return +status % LC.COLOR_COUNT;
         },
         
         /**
