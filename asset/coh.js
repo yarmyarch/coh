@@ -2212,11 +2212,16 @@ coh.BattleScene = function() {
         
         renderPlayer : function(player, matrix) {
             
+            var _coh = coh,
+                _buf = buf;
             player.isAttacker() && this.setAttacker(player) || this.setDefender(player);
             
+            // for animate purpose
+            _buf.unitDelay = 0;
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
+                    _buf.unitDelay += _coh.LocalConfig.FRAME_RATE * 5;
                 }
             }
         },
@@ -2239,37 +2244,16 @@ coh.BattleScene = function() {
             var _coh = coh,
                 _buf = buf,
                 scale = this.battleMap.scale,
+                
+                // color would be kept in the unit object.
                 unit = player.getUnplacedUnit(status),
-                // color is the UI based property. So let's just keep it in Scene.
-                unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : status % _coh.LocalConfig.COLOR_COUNT}),
+                unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : _coh.Battle.getColorFromStatus(status)}),
+                tileSprite = cc.DrawNode.create(),
+                unitWrap = new _coh.UnitWrap(unit, tileSprite, unitSprite),
+                
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
-                tile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tilePosition),
-                
-                tileSprite = cc.DrawNode.create(),
                 shadow = cc.Sprite.create(_coh.res.imgs.shadow);
-            
-            // set buffer
-            // mind types that's not having 1 tile.
-            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()],
-                unitWrap = new _coh.UnitWrap(unit, tileSprite, unitSprite);
-            
-            
-            for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
-                for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
-                    _buf.unitMatrix[tilePosition.x + columnCount] = _buf.unitMatrix[tilePosition.x + columnCount] || {};
-                    _buf.unitMatrix[tilePosition.x + columnCount][tilePosition.y - rowCount] = unitWrap;
-                }
-            }
-            
-            tileSprite.attr({
-                x : tile.x,
-                y : tile.y,
-                width: tile.width * typeConfig[1],
-                height: tile.height * typeConfig[0]
-                //~ width: tile.width,
-                //~ height: tile.height
-            });
             
             shadow.attr({
                 x : 0,
@@ -2281,8 +2265,6 @@ coh.BattleScene = function() {
                 opacity:164
             });
             
-            //~ tileSprite.drawRect(new cc.Point(0,0), new cc.Point(tileSprite.width, tileSprite.height), new cc.Color(128,128,128,64), 4, new cc.Color(255,255,255));
-            
             unitSprite.attr({
                 x : 0,
                 y : 0,
@@ -2290,14 +2272,18 @@ coh.BattleScene = function() {
                 anchorX: 0,
                 anchorY: 0
             });
+            
             unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
+            setTimeOut(function() {
+                this.setUnitToTile(player.isAttacker(), unitWrap, tilePosition);
+            }, _buf.unitDelay);
+            
             // XXXXXX For debug usage.
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitWrap);
-            _coh.unitMatrix = _buf.unitMatrix;
         },
         
         setUnitToTile : function(isAttacker, unitWrap, tile) {
@@ -2313,7 +2299,7 @@ coh.BattleScene = function() {
                 srcName ="img_" + (+unit.getColor() || 0);
             
             // set buffer
-            // mind types that's not having 1 tile.
+            // mind types that's not only having 1 tile.
             var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
             
             
@@ -2326,9 +2312,12 @@ coh.BattleScene = function() {
             
             tileSprite.attr({
                 x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
+                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height,
+                width: tile.width * typeConfig[1],
+                height: tile.height * typeConfig[0]
             });
             
+            // Animations appended.
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "move", srcName)));
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.EXILE_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
