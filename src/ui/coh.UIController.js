@@ -45,8 +45,8 @@ coh.UIController = (function() {
     
     var buf = {
         battle : {            
-            // mark the last handled unitTile and tile, for click and slide events.
-            lastUnitTile : null, 
+            // mark the last handled unitWrap and tile, for click and slide events.
+            lastUnitWrap : null, 
             lastTile : null,
             
             // if a unit is checked twice, it would be removed from the scene.
@@ -63,44 +63,38 @@ coh.UIController = (function() {
         doFocus : function(event, battleScene) {
             
             var location = event.getLocationInView(),
-                unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
+                unitWrap = battleScene.getUnitInTurn(location.x, location.y);
             
-            if (unitTile) {
-                battleScene.locateToUnit(unitTile);
+            if (unitWrap) {
+                battleScene.locateToUnit(unitWrap);
             }
         },
         doCheckOrExile : function(event, battleScene) {
             var location = event.getLocationInView(),
-                tile = battleScene.getTileFromCoord(location.x, location.y),
-                unitTile = battleScene.getUnitTileInTurn(location.x, location.y),
-                clickedUnit = battleScene.getUnitTileInGlobal(location.x, location.y),
-                lastUnitTile = buf.battle.lastUnitTile,
+                tile = battleScene.getTileInGlobal(location.x, location.y),
+                unitWrap = battleScene.getUnitInTurn(location.x, location.y),
+                clickedUnit = battleScene.getUnitInGlobal(location.x, location.y),
+                lastUnitWrap = buf.battle.lastUnitWrap,
                 lastTile = buf.battle.lastTile;
             
-            // the same unit clicked: clickedUnit should be the same as the lastUnitTile.
-            if (lastUnitTile && unitTile == lastUnitTile && clickedUnit == unitTile) {
-                // if the last unit in the column is checked, then we treat it a slide.
-                // Hmm... it should also be able to delete the last unit in a row...
-                
-                //~ if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
-                    //~ _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
-                //~ } else {
-                _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
-                //~ }
+            // the same unit clicked: clickedUnit should be the same as the lastUnitWrap.
+            if (lastUnitWrap && unitWrap == lastUnitWrap && clickedUnit == unitWrap) {
+                _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitWrap, tile, battleScene);
                 return;
             }
             
             // slide from top to bottom of the battle field, or the last unit in the group clicked.
             if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitSlided", clickedUnit || lastUnitTile , clickedUnit && tile || lastTile, battleScene);
+                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit || lastUnitWrap , clickedUnit && tile || lastTile, battleScene);
                 return;
             }
             
-            _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitTile, tile, battleScene);
+            _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitWrap, tile, battleScene);
         },
         doExileMove : function(event, battleScene) {
-            
-            // XXXXXX here we go!
+            var location = event.getLocationInView(),
+                turnTile = battleScene.getTileInTurn(location.x, location.y),
+                globalTile = battleScene.getTileInGlobal(location.x, location.y),
         },
         doUnExile : function(event, battleScene) {
             
@@ -112,14 +106,14 @@ coh.UIController = (function() {
             _buf.mouseAction = "locate";
             
             // XXXXXX if it's not the same column slided, here we go to ghe move function in battleScene.
-            //~ battleScene.moveUnit(unitTile, from, to);
+            //~ battleScene.moveUnit(unitWrap, from, to);
         },
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
-                tile = battleScene.getTileFromCoord(location.x, location.y),
-                unitTile = battleScene.getUnitTileInTurn(location.x, location.y);
-            if (unitTile) {
-                buf.battle.lastUnitTile = unitTile;
+                tile = battleScene.getTileInGlobal(location.x, location.y),
+                unitWrap = battleScene.getUnitInTurn(location.x, location.y);
+            if (unitWrap) {
+                buf.battle.lastUnitWrap = unitWrap;
                 buf.battle.lastTile = tile;
             }
         }
@@ -180,22 +174,22 @@ coh.UIController = (function() {
         return battleScene;
     });
     
-    _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitTile, tile, battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitWrap, tile, battleScene) {
         
         var _buf = buf;
         
-        if (unitTile.isChecked()) {
-            battleScene.removeUnit(unitTile, tile);
+        if (unitWrap.isChecked()) {
+            battleScene.removeUnit(unitWrap, tile);
         } else {
             util.clearStatus(battleScene);
-            battleScene.focusOnUnit(unitTile);
+            battleScene.focusOnUnit(unitWrap);
             
-            _buf.battle.checkedUnit = unitTile;
+            _buf.battle.checkedUnit = unitWrap;
         }
     });
     
-    _coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
-        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile),
+    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
+        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitWrap, tile),
             _buf = buf;
         
         util.clearStatus(battleScene);
@@ -208,7 +202,7 @@ coh.UIController = (function() {
         _buf.mouseAction = "exile";
     });
     
-    _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitTile, tile, battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitWrap, tile, battleScene) {
         util.clearStatus(battleScene);
     });
     

@@ -189,7 +189,7 @@ coh.BattleScene = function() {
             handlerList.tileSelector = selector;
         },
         
-        getTileFromCoord : function(posX, posY) {
+        getTileInGlobal : function(posX, posY) {
             var scale = this.battleMap.scale;
             
             return handlerList.tileSelector.getTileFromCoord(
@@ -200,11 +200,18 @@ coh.BattleScene = function() {
             );
         },
         
+        getTileInTurn : function(posX, posY) {
+            var tile = this.getTileInGlobal(posX, posY);
+            
+            // searching for the nearest unit from a given tile;
+            return util.getAvaliableTiles(this.isAttackerTurn(), tile.x, tile.y);
+        },
+        
         /**
          * get unit sprite via given position in the view.
          */
-        getUnitTileInGlobal : function(posX, posY) {
-            var tile = this.getTileFromCoord(posX, posY),
+        getUnitInGlobal : function(posX, posY) {
+            var tile = this.getTileInGlobal(posX, posY),
                 _buf = buf;
             
             return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
@@ -214,14 +221,9 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          * this will only return ligle units for current player turn, attacker or defender.
          */
-        getUnitTileInTurn : function(posX, posY) {
-            var tile = this.getTileFromCoord(posX, posY),
+        getUnitInTurn : function(posX, posY) {
+            var tile = this.getTileInTurn(posX, posY),
                 _buf = buf;
-            
-            // searching for the nearest unit from a given tile;
-            // Focus to the defender;
-            //~ tile = handlerList.tileSelector.filterTurnedTiles(this.isAttackerTurn, tile.x, tile.y);
-            tile = util.getAvaliableTiles(this.isAttackerTurn(), tile.x, tile.y);
             
             return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y] && _buf.unitMatrix[tile.x][tile.y];
         },

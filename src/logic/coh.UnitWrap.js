@@ -12,7 +12,7 @@ var g_lc = {
     EXILE_RATE : coh.LocalConfig.BLINK_RATE / 5
 }
     
-coh.UnitTile = function() {
+coh.UnitWrap = function() {
     
     var self = this;
     
