@@ -256,6 +256,25 @@ coh.Battle = (function(){
                 dataGroup : currentBuf
             }
         },
+    
+        generatePlayerMatrix : function(player) {
+            
+            var unitConfig = {},
+                units = player.getUnitConfig(),
+                _coh = coh;
+            
+            var unitType;
+            for (var unitName in units) {
+                // no interfaces changed.
+                unitType = _coh.Unit.getType(unitName);
+                unitConfig[unitType] || (unitConfig[unitType] = 0);
+                unitConfig[unitType] += units[unitName];
+            }
+            
+            var recharge = this.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+            
+            return recharge;
+        },
         
         /**
          * find all possible convert at the given position for the color,

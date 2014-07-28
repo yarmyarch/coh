@@ -2392,7 +2392,7 @@ coh.UIController = (function() {
                 // Hmm... it should also be able to delete the last unit in a row...
                 
                 //~ if (battleScene.isLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile)) {
-                    //~ _coh.utils.FilterUtil.applyFilters("battleUnitSlided", unitTile, tile, battleScene);
+                    //~ _coh.utils.FilterUtil.applyFilters("battleUnitExiled", unitTile, tile, battleScene);
                 //~ } else {
                 _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitTile, tile, battleScene);
                 //~ }
@@ -2401,7 +2401,7 @@ coh.UIController = (function() {
             
             // slide from top to bottom of the battle field, or the last unit in the group clicked.
             if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitSlided", clickedUnit || lastUnitTile , clickedUnit && tile || lastTile, battleScene);
+                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit || lastUnitTile , clickedUnit && tile || lastTile, battleScene);
                 return;
             }
             
@@ -2503,7 +2503,7 @@ coh.UIController = (function() {
         }
     });
     
-    _coh.utils.FilterUtil.addFilter("battleUnitSlided", function(unitTile, tile, battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitTile, tile, battleScene) {
         var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), unitTile, tile),
             _buf = buf;
         

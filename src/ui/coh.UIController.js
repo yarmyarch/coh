@@ -95,6 +95,9 @@ coh.UIController = (function() {
             var location = event.getLocationInView(),
                 turnTile = battleScene.getTileInTurn(location.x, location.y),
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
+                lastTile = buf.lastTile;
+            
+            
         },
         doUnExile : function(event, battleScene) {
             
