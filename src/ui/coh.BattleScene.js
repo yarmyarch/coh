@@ -348,7 +348,7 @@ coh.BattleScene = function() {
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
-                    _buf.unitDelay += _coh.LocalConfig.FRAME_RATE * 5;
+                    _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
                 }
             }
         },
@@ -380,7 +380,8 @@ coh.BattleScene = function() {
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
-                shadow = cc.Sprite.create(_coh.res.imgs.shadow);
+                shadow = cc.Sprite.create(_coh.res.imgs.shadow),
+                typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
             
             shadow.attr({
                 x : 0,
@@ -400,12 +401,17 @@ coh.BattleScene = function() {
                 anchorY: 0
             });
             
+            // show it when set to tile.
+            tileSprite.attr({
+                visible : false
+            });
+            
             unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
             tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
-            setTimeOut(function() {
-                this.setUnitToTile(player.isAttacker(), unitWrap, tilePosition);
+            setTimeout(function() {
+                self.setUnitToTile(player.isAttacker(), unitWrap, tilePosition);
             }, _buf.unitDelay);
             
             // XXXXXX For debug usage.
@@ -438,18 +444,21 @@ coh.BattleScene = function() {
             }
             
             tileSprite.attr({
+                width: mapTile.width * typeConfig[1],
+                height: mapTile.height * typeConfig[0]
+            });
+            tileSprite.attr({
+                visible : true,
                 x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height,
-                width: tile.width * typeConfig[1],
-                height: tile.height * typeConfig[0]
+                y : !isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
             
             // Animations appended.
-            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "move", srcName)));
-            tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.EXILE_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
+            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
+            tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
             })));
-        }
+        },
         
         removeUnit : function(unitWrap, tile) {
             // XXXXXX

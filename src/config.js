@@ -54,6 +54,11 @@ coh.LocalConfig = {
     // frame rate for general animations.
     FRAME_RATE : 1/60,
     
+    ASSAULT_DEATA : 1 / 6 * 100,
+    ASSAULT_RATE : 1 / 3,
+    EXILE_RATE : 1 / 6,
+    
+    
     BLINK_RATE : 0.618,
     COLOR_CONFIG : {
         ELF : ["blue", "white", "gold"]
@@ -79,6 +84,5 @@ coh.LocalConfig = {
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
     DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
-    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
-    EXILE_RATE : 1 / 6
+    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204)
 };

@@ -70,7 +70,7 @@ var UnitObject = function(unitName) {
     };
     
     self.setColor = function(newColor) {
-        return (buf.color = _coh.Battle.getColorFromStatus(newColor) || buf.color);
+        return buf.color = newColor;
     };
     
     self.getColor = function() {
