@@ -14,19 +14,19 @@ coh.utils = coh.utils || {};
     var handlerList = {
         baseTransformer : {
             2 : function(isAttacker, position) {
-                if (!isAttacker) {
+                if (isAttacker) {
                     position.y += 1;
                 }
                 return position;
             },
             3 : function(isAttacker, position) {
-                if (!isAttacker) {
+                if (isAttacker) {
                     //~ position.x -= 1;
                 }
                 return position;
             },
             4 : function(isAttacker, position) {
-                if (!isAttacker) {
+                if (isAttacker) {
                     position.y += 1;
                 }
                 return position;

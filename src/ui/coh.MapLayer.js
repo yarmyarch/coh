@@ -49,12 +49,12 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 0});
+                    attacker = new _coh.Player("", 1, { archer : 12, knight: 3, paladin: 2});
                     attacker.setAsAttacker();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
-                    attacker.setAsDefender();
+                    defender.setAsDefender();
                     dMatrix = _coh.Battle.generatePlayerMatrix(defender);
                         
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);

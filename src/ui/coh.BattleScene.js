@@ -88,7 +88,6 @@ coh.BattleScene = function() {
                 do {
                     if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
                     y += deataY;
-                    console.log("dy:" + deataY + " y:" + y + " sy:" + startY + " ey:" + endY);
                 } while (y != endY);
                 x += deataX;
             } while (x != endX);
@@ -321,7 +320,7 @@ coh.BattleScene = function() {
             var _buf = buf;
             _buf.focusTagLocked = false;
             
-            // XXXXXX interestingly I can't hide it here, or the cursor flies.
+            // interestingly I can't hide it here, or the cursor flies.
             //~ this.getFocusTag().hide();
         },
         
@@ -432,7 +431,10 @@ coh.BattleScene = function() {
             _coh.unitList.push(unitWrap);
         },
         
-        setUnitToTile : function(isAttacker, unitWrap, tile) {
+        /**
+         * @param callback {Function} would be checked when the moving animate finished.
+         */
+        setUnitToTile : function(isAttacker, unitWrap, tile, callback) {
             
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
@@ -465,12 +467,11 @@ coh.BattleScene = function() {
                 y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
             
-            console.log(isAttacker);
-            
             // Animations appended.
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
+                _coh.Util.isExecutable(callback) && callback();
             })));
         },
         
@@ -528,20 +529,4 @@ coh.BattleScene = function() {
     argList = argList.join(",");
     
     return self = eval("new BSClass(" + argList + ")");
-    
-    /**
-     * XXXXXX
-     * How to locate unit via the position? unitId?
-    1. Event triggered;
-        click
-    2. Handlers in controller captured;
-    3. Find Unit instance in model via position;
-        instance of Player
-    4. Update model if necessary;
-        HP decrease 1;
-    5. Dispatch filter event, filter triggered;
-    6. Handlers in controller captured;
-    7. Do update in View;
-        BattleScene, update HP info for a sprite.
-    */
 };

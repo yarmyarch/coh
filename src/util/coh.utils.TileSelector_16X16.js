@@ -19,11 +19,10 @@ coh.utils = coh.utils || {};
                  * While tile position should be x : 4, y : 14 in order to get the correct tile.
                  *
                  * This is what this function should do.
-                 * SHHHHHHHHHHHHHHHHHHHIT ignore me. Ignore what's in front.
                  */
                 getTilePosition : function(isAttacker, type, row, column) {
                     var x = 4 + column,
-                        y = !isAttacker ? 9 + row : 6 - row;
+                        y = isAttacker ? 9 + row : 6 - row;
                     
                     return {
                         x : x,
@@ -62,17 +61,6 @@ coh.utils = coh.utils || {};
                     if (isAttacker)
                         return [7, 8, 9, 10, 11, 12, 13, 14];
                     else return [8, 7, 6, 5, 4, 3, 2, 1];
-                },
-                
-                /**
-                 * !!!!!!!!!!!!! NOT USED ALREADY
-                 * return available tiles for current turn.
-                 * When it's the attacker's turn, those tiles of the defender should be ignored.
-                 */
-                filterTurnedTiles : function(isAttacker, x, y) {
-                    x = Math.min(Math.max(x, 4), 11);
-                    y = !isAttacker ? Math.min(Math.max(y, 1), 8) : Math.min(Math.max(y, 7), 14);
-                    return {x : x, y : y};
                 }
             }
         }

@@ -116,20 +116,18 @@ coh.UIController = (function() {
             
             var _buf = buf;
             
-            battleScene.cancelFocus();
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             
             if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
-                
-            //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
+                //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
             } else {
-                battleScene.setUnitToTile(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, _buf.battle.exiledTileFrom);
+                battleScene.setUnitToTile(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
+                    battleScene.cancelFocus();
+                });
             }
             
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
-            
-            // XXXXXX if it's not the same column slided, here we go to ghe move function in battleScene.
         },
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),

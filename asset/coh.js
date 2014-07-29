@@ -93,15 +93,15 @@ coh.units = {
     archer : {
         type : 1,
         // lower priority results in a closer position to the front line.
-        priority : 10
+        priority : 8
     },
     knight : {
         type : 2,
-        priority : 10
+        priority : 16
     },
     paladin : {
         type : 4,
-        priority : 10
+        priority : 24
     }
 };var coh = coh || {};
 coh.res = {
@@ -194,14 +194,7 @@ coh.res = {
     };
     
     coh.resources = generateRes(generateUnits(coh.res));
-})();
-
-/**
-XXXXXX
-TODO : 
-    set sprite: run/walk in Actor;
-    Animations on units initialized;
-*/var coh = coh || {};
+})();var coh = coh || {};
 coh.Util = (function(){
     var self;
     
@@ -488,11 +481,10 @@ coh.utils = coh.utils || {};
                  * While tile position should be x : 4, y : 14 in order to get the correct tile.
                  *
                  * This is what this function should do.
-                 * SHHHHHHHHHHHHHHHHHHHIT ignore me. Ignore what's in front.
                  */
                 getTilePosition : function(isAttacker, type, row, column) {
                     var x = 4 + column,
-                        y = !isAttacker ? 9 + row : 6 - row;
+                        y = isAttacker ? 9 + row : 6 - row;
                     
                     return {
                         x : x,
@@ -531,17 +523,6 @@ coh.utils = coh.utils || {};
                     if (isAttacker)
                         return [7, 8, 9, 10, 11, 12, 13, 14];
                     else return [8, 7, 6, 5, 4, 3, 2, 1];
-                },
-                
-                /**
-                 * !!!!!!!!!!!!! NOT USED ALREADY
-                 * return available tiles for current turn.
-                 * When it's the attacker's turn, those tiles of the defender should be ignored.
-                 */
-                filterTurnedTiles : function(isAttacker, x, y) {
-                    x = Math.min(Math.max(x, 4), 11);
-                    y = !isAttacker ? Math.min(Math.max(y, 1), 8) : Math.min(Math.max(y, 7), 14);
-                    return {x : x, y : y};
                 }
             }
         }
@@ -571,19 +552,19 @@ coh.utils = coh.utils || {};
     var handlerList = {
         baseTransformer : {
             2 : function(isAttacker, position) {
-                if (!isAttacker) {
+                if (isAttacker) {
                     position.y += 1;
                 }
                 return position;
             },
             3 : function(isAttacker, position) {
-                if (!isAttacker) {
+                if (isAttacker) {
                     //~ position.x -= 1;
                 }
                 return position;
             },
             4 : function(isAttacker, position) {
-                if (!isAttacker) {
+                if (isAttacker) {
                     position.y += 1;
                 }
                 return position;
@@ -1737,7 +1718,7 @@ coh.UnitWrap = function() {
     
     self.exile = function(isAttacker) {
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, (isAttacker ? -1 : 1) * (this.tileSprite.y + this.unitSprite.height / 2)));
+        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, (this.tileSprite.y + (isAttacker ? -1 : 1) * this.unitSprite.height / 2)));
     };
     
     self.unExile = function() {
@@ -1816,12 +1797,12 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 0});
+                    attacker = new _coh.Player("", 1, { archer : 12, knight: 3, paladin: 2});
                     attacker.setAsAttacker();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
-                    attacker.setAsDefender();
+                    defender.setAsDefender();
                     dMatrix = _coh.Battle.generatePlayerMatrix(defender);
                         
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
@@ -1967,7 +1948,6 @@ coh.BattleScene = function() {
                 do {
                     if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
                     y += deataY;
-                    console.log("dy:" + deataY + " y:" + y + " sy:" + startY + " ey:" + endY);
                 } while (y != endY);
                 x += deataX;
             } while (x != endX);
@@ -2200,7 +2180,7 @@ coh.BattleScene = function() {
             var _buf = buf;
             _buf.focusTagLocked = false;
             
-            // XXXXXX interestingly I can't hide it here, or the cursor flies.
+            // interestingly I can't hide it here, or the cursor flies.
             //~ this.getFocusTag().hide();
         },
         
@@ -2311,7 +2291,10 @@ coh.BattleScene = function() {
             _coh.unitList.push(unitWrap);
         },
         
-        setUnitToTile : function(isAttacker, unitWrap, tile) {
+        /**
+         * @param callback {Function} would be checked when the moving animate finished.
+         */
+        setUnitToTile : function(isAttacker, unitWrap, tile, callback) {
             
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
@@ -2344,12 +2327,11 @@ coh.BattleScene = function() {
                 y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
             
-            console.log(isAttacker);
-            
             // Animations appended.
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
+                _coh.Util.isExecutable(callback) && callback();
             })));
         },
         
@@ -2407,22 +2389,6 @@ coh.BattleScene = function() {
     argList = argList.join(",");
     
     return self = eval("new BSClass(" + argList + ")");
-    
-    /**
-     * XXXXXX
-     * How to locate unit via the position? unitId?
-    1. Event triggered;
-        click
-    2. Handlers in controller captured;
-    3. Find Unit instance in model via position;
-        instance of Player
-    4. Update model if necessary;
-        HP decrease 1;
-    5. Dispatch filter event, filter triggered;
-    6. Handlers in controller captured;
-    7. Do update in View;
-        BattleScene, update HP info for a sprite.
-    */
 };/**
  * Do events and filters binding.
  */
@@ -2541,20 +2507,18 @@ coh.UIController = (function() {
             
             var _buf = buf;
             
-            battleScene.cancelFocus();
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             
             if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
-                
-            //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
+                //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
             } else {
-                battleScene.setUnitToTile(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, _buf.battle.exiledTileFrom);
+                battleScene.setUnitToTile(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
+                    battleScene.cancelFocus();
+                });
             }
             
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
-            
-            // XXXXXX if it's not the same column slided, here we go to ghe move function in battleScene.
         },
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),

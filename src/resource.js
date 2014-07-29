@@ -90,10 +90,3 @@ coh.res = {
     
     coh.resources = generateRes(generateUnits(coh.res));
 })();
-
-/**
-XXXXXX
-TODO : 
-    set sprite: run/walk in Actor;
-    Animations on units initialized;
-*/
