@@ -49,7 +49,7 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 12, knight: 3, paladin: 2});
+                    attacker = new _coh.Player("", 1, { archer : 6, knight: 1, paladin: 1});
                     attacker.setAsAttacker();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender

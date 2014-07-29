@@ -481,10 +481,15 @@ coh.BattleScene = function() {
                 yRange = handlerList.tileSelector.getYRange(isAttacker),
                 targetTile = (
                     _buf.unitMatrix[lastTile.x][lastTile.y] == unitWrap ? 
-                        lastTile : {
-                            x : lastTile.x, 
-                            y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
-                        }
+                        lastTile : 
+                            yRange[0] == lastTile.y ? 
+                            {
+                                x : lastTile.x,
+                                y : yRange[2]
+                            } : {
+                                x : lastTile.x, 
+                                y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
+                            }
                 ),
                 targetMapTile,
                 focusTag = self.getFocusTag();

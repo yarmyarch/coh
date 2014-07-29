@@ -1717,8 +1717,9 @@ coh.UnitWrap = function() {
     };
     
     self.exile = function(isAttacker) {
+        var exiledY = (isAttacker ? -this.tileSprite.y : (this.tileSprite.parent.height - this.tileSprite.y)) - this.tileSprite.height / 2;
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, (this.tileSprite.y + (isAttacker ? -1 : 1) * this.unitSprite.height / 2)));
+        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, exiledY));
     };
     
     self.unExile = function() {
@@ -1797,7 +1798,7 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 12, knight: 3, paladin: 2});
+                    attacker = new _coh.Player("", 1, { archer : 6, knight: 1, paladin: 1});
                     attacker.setAsAttacker();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
@@ -2341,10 +2342,15 @@ coh.BattleScene = function() {
                 yRange = handlerList.tileSelector.getYRange(isAttacker),
                 targetTile = (
                     _buf.unitMatrix[lastTile.x][lastTile.y] == unitWrap ? 
-                        lastTile : {
-                            x : lastTile.x, 
-                            y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
-                        }
+                        lastTile : 
+                            yRange[0] == lastTile.y ? 
+                            {
+                                x : lastTile.x,
+                                y : yRange[2]
+                            } : {
+                                x : lastTile.x, 
+                                y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
+                            }
                 ),
                 targetMapTile,
                 focusTag = self.getFocusTag();
@@ -2489,19 +2495,20 @@ coh.UIController = (function() {
             var location = event.getLocationInView(),
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
                 columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
-                lastTile = buf.battle.lastTile;
+                _buf = buf,
+                lastTile = _buf.battle.lastTile;
             
-            if (!columnTile || lastTile.x == columnTile.x) return;
-            
-            var isSucceed = battleScene.prepareMoving(battleScene.isAttackerTurn(), buf.battle.exiledUnit, columnTile);
-            
-            if (isSucceed) {
-                buf.battle.exiledTileTo = columnTile;
-            } else {
-                buf.battle.exiledTileTo = null;
+            if (!columnTile || !_buf.battle.exiledUnit || lastTile.x == columnTile.x) {
+                return;
             }
             
-            buf.battle.lastTile = columnTile;
+            var isSucceed = battleScene.prepareMoving(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, columnTile);
+            
+            if (isSucceed) {
+                _buf.battle.exiledTileTo = columnTile;
+            }
+            
+            _buf.battle.lastTile = columnTile;
         },
         doUnExile : function(event, battleScene) {
             
@@ -2524,10 +2531,9 @@ coh.UIController = (function() {
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
                 unitWrap = battleScene.getUnitInTurn(location.x, location.y);
-            if (unitWrap) {
-                buf.battle.lastUnitWrap = unitWrap;
-                buf.battle.lastTile = tile;
-            }
+
+            buf.battle.lastUnitWrap = unitWrap;
+            buf.battle.lastTile = tile;
         }
     };
     
@@ -2604,8 +2610,9 @@ coh.UIController = (function() {
         var isAttacker = battleScene.isAttackerTurn(),
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
-            typeConfig = coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
             _buf = buf;
+        
+        if (!exiledUnit) return;
         
         util.clearStatus(battleScene);
         
@@ -2614,6 +2621,7 @@ coh.UIController = (function() {
         
         _buf.battle.exiledUnit = exiledUnit;
         _buf.battle.exiledTileFrom = exiledTileFrom;
+        _buf.battle.exiledTileTo = null;
         
         _buf.mouseAction = "exile";
     });

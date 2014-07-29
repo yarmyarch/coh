@@ -42,8 +42,9 @@ coh.UnitWrap = function() {
     };
     
     self.exile = function(isAttacker) {
+        var exiledY = (isAttacker ? -this.tileSprite.y : (this.tileSprite.parent.height - this.tileSprite.y)) - this.tileSprite.height / 2;
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, (this.tileSprite.y + (isAttacker ? -1 : 1) * this.unitSprite.height / 2)));
+        this.unitSprite.runAction(this.unitSprite.runningAction = cc.moveTo(coh.LocalConfig.EXILE_RATE, this.unitSprite.x, exiledY));
     };
     
     self.unExile = function() {
