@@ -1816,7 +1816,7 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 24, knight: 8, paladin: 1});
+                    attacker = new _coh.Player("", 1, { archer : 0});
                     attacker.setAsAttacker();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
@@ -1835,6 +1835,8 @@ coh.MapLayer = cc.Layer.extend({
                     battleScene.renderPlayer(defender, dMatrix);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
+                    
+                    coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
                     
                     return battleScene;
                 };
@@ -1961,9 +1963,11 @@ coh.BattleScene = function() {
                 x = startX, y = startY;
             
             do {
+                y = startY;
                 do {
                     if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
                     y += deataY;
+                    console.log("dy:" + deataY + " y:" + y + " sy:" + startY + " ey:" + endY);
                 } while (y != endY);
                 x += deataX;
             } while (x != endX);
@@ -2337,8 +2341,10 @@ coh.BattleScene = function() {
             tileSprite.attr({
                 visible : true,
                 x : mapTile.x,
-                y : !isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
+                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
+            
+            console.log(isAttacker);
             
             // Animations appended.
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
@@ -2538,7 +2544,7 @@ coh.UIController = (function() {
             battleScene.cancelFocus();
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             
-            if (_buf.battle.exiledTileTo) {
+            if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
                 
             //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
             } else {
@@ -2595,7 +2601,7 @@ coh.UIController = (function() {
         }
     };
     
-    _coh.utils.FilterUtil.addFilter("battleSceneReady", function(battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleUnitsReady", function(battleScene) {
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
@@ -2643,10 +2649,7 @@ coh.UIController = (function() {
         battleScene.exileUnit(exiledUnit);
         
         _buf.battle.exiledUnit = exiledUnit;
-        _buf.battle.exiledTileFrom = {
-            x : exiledTileFrom.x,
-            y : exiledTileFrom.y + (isAttacker ? 1 : -1) * typeConfig[0],
-        };
+        _buf.battle.exiledTileFrom = exiledTileFrom;
         
         _buf.mouseAction = "exile";
     });

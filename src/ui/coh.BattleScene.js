@@ -84,9 +84,11 @@ coh.BattleScene = function() {
                 x = startX, y = startY;
             
             do {
+                y = startY;
                 do {
                     if (_buf.unitMatrix[x] && _buf.unitMatrix[x][y]) return {x : x, y : y};
                     y += deataY;
+                    console.log("dy:" + deataY + " y:" + y + " sy:" + startY + " ey:" + endY);
                 } while (y != endY);
                 x += deataX;
             } while (x != endX);
@@ -460,8 +462,10 @@ coh.BattleScene = function() {
             tileSprite.attr({
                 visible : true,
                 x : mapTile.x,
-                y : !isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
+                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
             });
+            
+            console.log(isAttacker);
             
             // Animations appended.
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));

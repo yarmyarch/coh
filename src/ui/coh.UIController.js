@@ -119,7 +119,7 @@ coh.UIController = (function() {
             battleScene.cancelFocus();
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             
-            if (_buf.battle.exiledTileTo) {
+            if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
                 
             //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
             } else {
@@ -176,7 +176,7 @@ coh.UIController = (function() {
         }
     };
     
-    _coh.utils.FilterUtil.addFilter("battleSceneReady", function(battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleUnitsReady", function(battleScene) {
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
@@ -224,10 +224,7 @@ coh.UIController = (function() {
         battleScene.exileUnit(exiledUnit);
         
         _buf.battle.exiledUnit = exiledUnit;
-        _buf.battle.exiledTileFrom = {
-            x : exiledTileFrom.x,
-            y : exiledTileFrom.y + (isAttacker ? 1 : -1) * typeConfig[0],
-        };
+        _buf.battle.exiledTileFrom = exiledTileFrom;
         
         _buf.mouseAction = "exile";
     });
