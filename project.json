@@ -9,5 +9,5 @@
 
     "modules" : ["cocos2d", "cocostudio"],
 
-    "jsList" :["asset/coh.js?v=616"]
+    "jsList" :["asset/coh.js?v=617"]
 }
