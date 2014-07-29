@@ -59,9 +59,9 @@ coh.utils = coh.utils || {};
                  * the order of the returnd array is the searching order.
                  */
                 getYRange : function(isAttacker) {
-                    if (!isAttacker)
-                        return [8, 7, 6, 5, 4, 3, 2, 1];
-                    else return [7, 8, 9, 10, 11, 12, 13, 14];
+                    if (isAttacker)
+                        return [7, 8, 9, 10, 11, 12, 13, 14];
+                    else return [8, 7, 6, 5, 4, 3, 2, 1];
                 },
                 
                 /**

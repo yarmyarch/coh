@@ -7,7 +7,7 @@ coh.LocalConfig = {
     },
     LOCATION_TYPE : {
         // 0 - reserved
-        // [row count, column count]
+        // [row count<y>, column count<x>]
         1 : [1,1],
         2 : [2,1],
         3 : [1,2],

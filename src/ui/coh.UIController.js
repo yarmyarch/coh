@@ -51,7 +51,10 @@ coh.UIController = (function() {
             
             // if a unit is checked twice, it would be removed from the scene.
             checkedUnit : null,
-            exiledUnit : null
+            exiledUnit : null,
+            
+            exiledTileFrom : null,
+            exiledTileTo : null
         },
         
         // exile/locate/default or other possible kinds of mouse actions in battleScene.
@@ -99,7 +102,13 @@ coh.UIController = (function() {
             
             if (!columnTile || lastTile.x == columnTile.x) return;
             
-            battleScene.prepareMoving(battleScene.isAttackerTurn(), buf.battle.exiledUnit, columnTile);
+            var isSucceed = battleScene.prepareMoving(battleScene.isAttackerTurn(), buf.battle.exiledUnit, columnTile);
+            
+            if (isSucceed) {
+                buf.battle.exiledTileTo = columnTile;
+            } else {
+                buf.battle.exiledTileTo = null;
+            }
             
             buf.battle.lastTile = columnTile;
         },
@@ -109,11 +118,18 @@ coh.UIController = (function() {
             
             battleScene.cancelFocus();
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
+            
+            if (_buf.battle.exiledTileTo) {
+                
+            //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
+            } else {
+                battleScene.setUnitToTile(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, _buf.battle.exiledTileFrom);
+            }
+            
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
             
             // XXXXXX if it's not the same column slided, here we go to ghe move function in battleScene.
-            //~ battleScene.moveUnit(unitWrap, from, to);
         },
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
@@ -160,7 +176,7 @@ coh.UIController = (function() {
         }
     };
     
-    _coh.utils.FilterUtil.addFilter("battleSceneEntered", function(battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleSceneReady", function(battleScene) {
         if ('mouse' in cc.sys.capabilities)
         cc.eventManager.addListener({
             event: cc.EventListener.MOUSE,
@@ -196,7 +212,10 @@ coh.UIController = (function() {
     });
     
     _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
-        var exiledUnit = battleScene.getLastUnitInColumn(battleScene.isAttackerTurn(), tile),
+        var isAttacker = battleScene.isAttackerTurn(),
+            exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
+            exiledUnit = battleScene.getUnit(exiledTileFrom),
+            typeConfig = coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
             _buf = buf;
         
         util.clearStatus(battleScene);
@@ -205,6 +224,10 @@ coh.UIController = (function() {
         battleScene.exileUnit(exiledUnit);
         
         _buf.battle.exiledUnit = exiledUnit;
+        _buf.battle.exiledTileFrom = {
+            x : exiledTileFrom.x,
+            y : exiledTileFrom.y + (isAttacker ? 1 : -1) * typeConfig[0],
+        };
         
         _buf.mouseAction = "exile";
     });

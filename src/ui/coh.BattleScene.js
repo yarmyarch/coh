@@ -232,14 +232,16 @@ coh.BattleScene = function() {
             return {x : tile.x, y : lastTileY};
         },
         
+        getUnit : function(tile) {
+            var _buf = buf;
+            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+        },
+        
         /**
          * get unit sprite via given position in the view.
          */
         getUnitInGlobal : function(posX, posY) {
-            var tile = this.getTileInGlobal(posX, posY),
-                _buf = buf;
-            
-            return _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+            return this.getUnit(this.getTileInGlobal(posX, posY));
         },
         
         /**
@@ -247,17 +249,11 @@ coh.BattleScene = function() {
          * this will only return ligle units for current player turn, attacker or defender.
          */
         getUnitInTurn : function(posX, posY) {
-            var tile = this.getTileInTurn(posX, posY),
-                _buf = buf;
-            
-            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+            return this.getUnit(this.getTileInTurn(posX, posY));
         },
         
         getLastUnitInColumn : function(isAttacker, tile) {
-            var tile = this.getLastTileInColumn(isAttacker, tile),
-                _buf = buf;
-            
-            return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
+            return this.getUnit(this.getLastTileInColumn(isAttacker, tile));
         },
         
         isLastUnitInColumn : function(isAttacker, unitWrap, tile) {
@@ -450,7 +446,6 @@ coh.BattleScene = function() {
             // mind types that's not only having 1 tile.
             var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
             
-            
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
@@ -476,18 +471,43 @@ coh.BattleScene = function() {
         },
         
         prepareMoving : function(isAttacker, unitWrap, lastTile) {
-            var targetTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(
-                {x : lastTile.x, y : lastTile.y + (self.isAttackerTurn() ? 1 : -1)}
-            );
+            var _buf = buf,
+                typeConfig = _coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
+                yRange = handlerList.tileSelector.getYRange(isAttacker),
+                targetTile = (
+                    _buf.unitMatrix[lastTile.x][lastTile.y] == unitWrap ? 
+                        lastTile : {
+                            x : lastTile.x, 
+                            y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
+                        }
+                ),
+                targetMapTile,
+                focusTag = self.getFocusTag();
+            
+            if (isAttacker && targetTile.y > yRange[yRange.length - 1] || !isAttacker && targetTile.y < yRange[yRange.length - 1]) {
+                focusTag.arrowDirection.setVisible(false);
+                return false;
+            }
+            
+            targetMapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(targetTile);
+            
+            focusTag.arrowDirection.attr({
+                visible : true,
+                rotation : isAttacker ? 0 : 180,
+                x : unitWrap.tileSprite.width / 2 - focusTag.x + targetMapTile.x
+            });
             
             unitWrap.unitSprite.attr({
                 x : 0,
                 y : 0
             });
             unitWrap.tileSprite.attr({
-                x : targetTile.x,
-                y : targetTile.y
+                x : targetMapTile.x,
+                y : targetMapTile.y,
+                zIndex : targetTile.y
             });
+            
+            return true;
         },
         
         removeUnit : function(unitWrap, tile) {
