@@ -477,7 +477,7 @@ coh.BattleScene = function() {
         
         prepareMoving : function(isAttacker, unitWrap, lastTile) {
             var targetTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(
-                {x : lastTile.x, y : lastTile.y + self.isAttackerTurn() ? 1 : -1}
+                {x : lastTile.x, y : lastTile.y + (self.isAttackerTurn() ? 1 : -1)}
             );
             
             unitWrap.unitSprite.attr({
