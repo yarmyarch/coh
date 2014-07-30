@@ -383,35 +383,9 @@ coh.BattleScene = function() {
                 unitWrap = new _coh.UnitWrap(unit, tileSprite, unitSprite),
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum),
-                shadow = cc.Sprite.create(_coh.res.imgs.shadow),
-                typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
+                tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
             
-            shadow.attr({
-                x : 0,
-                y : 0,
-                anchorX: -0.05,
-                anchorY: 0.3,
-                scaleX : typeConfig[1] * 0.8,
-                scaleY : 0.75,
-                opacity:164
-            });
-            
-            unitSprite.attr({
-                x : 0,
-                y : 0,
-                scale : _coh.LocalConfig.SPRITE_SCALE[unit.getType()],
-                anchorX: 0,
-                anchorY: 0
-            });
-            
-            // show it when set to tile.
-            tileSprite.attr({
-                visible : false
-            });
-            
-            unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
-            tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
+            // init unitWrap
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             setTimeout(function() {
@@ -436,12 +410,11 @@ coh.BattleScene = function() {
                 unit = unitWrap.unit,
                 unitSprite = unitWrap.unitSprite,
                 tileSprite = unitWrap.tileSprite,
-                srcName ="img_" + (+unit.getColor() || 0);
+                srcName ="img_" + (+unit.getColor() || 0),
+                typeConfig = unitWrap.getTypeConfig();
             
-            // set buffer
+            // set unit matrix for further usage.
             // mind types that's not only having 1 tile.
-            var typeConfig = _coh.LocalConfig.LOCATION_TYPE[unit.getType()];
-            
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
