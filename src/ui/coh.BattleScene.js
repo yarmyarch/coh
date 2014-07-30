@@ -386,6 +386,7 @@ coh.BattleScene = function() {
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitWrap
+            unitWrap.setPlayer(player);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             setTimeout(function() {
@@ -419,6 +420,9 @@ coh.BattleScene = function() {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
                     _buf.unitMatrix[tile.x + columnCount][tile.y - rowCount] = unitWrap;
+                    // It should be removed/updated when moved or removed.
+                    // That's why I didn't want to do this.
+                    unitWrap.addTileRecord({x : tile.x + columnCount, y : tile.y - rowCount});
                 }
             }
             

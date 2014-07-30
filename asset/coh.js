@@ -1703,7 +1703,10 @@ coh.UnitWrap = function() {
     
     var buf = {
         isChecked : false,
-        player : null
+        player : null,
+        // just for a record, no other purposes.
+        // indexed by x_y
+        tileRecord : {}
     };
 
     var construct = function(unit, tileSprite, unitSprite) {
@@ -1781,6 +1784,25 @@ coh.UnitWrap = function() {
     
     self.getTypeConfig = function() {
         return coh.LocalConfig.LOCATION_TYPE[self.unit.getType()];
+    };
+    
+    self.getTileRecords = function() {
+        return buf.tileRecord;
+    };
+    
+    self.addTileRecord = function(newTile) {
+        buf.tileRecord[newTile.x + "_" + newTile.y] = newTile;
+    };
+    
+    self.removeTileRecord = function(oldTile) {
+        var _buf = buf;
+        _buf.tileRecord[oldTile.x + "_" + oldTile.y] = null;
+        delete _buf.tileRecord[oldTile.x + "_" + oldTile.y];
+    };
+    
+    self.updateTileRecord = function(oldTile, newTile) {
+        self.removeTileRecord(oldTile);
+        self.addTileRecord(newTile);
     };
     
     construct.apply(self, arguments);
@@ -2300,6 +2322,7 @@ coh.BattleScene = function() {
                 tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitWrap
+            unitWrap.setPlayer(player);
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             setTimeout(function() {
@@ -2333,6 +2356,9 @@ coh.BattleScene = function() {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
                     _buf.unitMatrix[tile.x + columnCount][tile.y - rowCount] = unitWrap;
+                    // It should be removed/updated when moved or removed.
+                    // That's why I didn't want to do this.
+                    unitWrap.addTileRecord({x : tile.x + columnCount, y : tile.y - rowCount});
                 }
             }
             
