@@ -361,6 +361,7 @@ coh.BattleScene = function() {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
                     status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                     _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
+                    if (!player.getNumOfUnplacedUnit()) return;
                 }
             }
         },

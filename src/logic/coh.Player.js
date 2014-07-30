@@ -81,6 +81,17 @@ coh.Player = function(faction, level, unitConfig) {
         return unit;
     };
     
+    self.getNumOfUnplacedUnit = function() {
+        var result = 0,
+            _buf = buf;
+        for (var priority in _buf.unitsUnplaced)  {
+            for (var type in _buf.unitsUnplaced[priority]) {
+                result += _buf.unitsUnplaced[priority][type].length;
+            }
+        }
+        return result;
+    };
+    
     self.killUnit = function(unitId) {
         var _buf = buf,
             unit = _buf.units[unitId];
@@ -92,7 +103,7 @@ coh.Player = function(faction, level, unitConfig) {
     };
     
     self.getUnit = function(unitId) {
-        
+        return buf.units[unitId];
     };
     
     self.getDataGroup = function() {
