@@ -56,7 +56,7 @@ coh.MapLayer = cc.Layer.extend({
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
                     defender.setAsDefender();
                     dMatrix = _coh.Battle.generatePlayerMatrix(defender);
-                        
+                    
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
                     
                     return battleScene;

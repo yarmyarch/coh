@@ -138,7 +138,7 @@ coh.BattleScene = function() {
                 sprite.attr({
                     anchorX : 0.5,
                     anchorY : 0.5,
-                    scale : winSize.height / sprite.height,
+                    scale : winSize.width / sprite.width,
                     x : winSize.width / 2,
                     y : winSize.height / 2 
                 });

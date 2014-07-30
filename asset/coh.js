@@ -1816,7 +1816,7 @@ coh.MapLayer = cc.Layer.extend({
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
                     defender.setAsDefender();
                     dMatrix = _coh.Battle.generatePlayerMatrix(defender);
-                        
+                    
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
                     
                     return battleScene;
@@ -2010,7 +2010,7 @@ coh.BattleScene = function() {
                 sprite.attr({
                     anchorX : 0.5,
                     anchorY : 0.5,
-                    scale : winSize.height / sprite.height,
+                    scale : winSize.width / sprite.width,
                     x : winSize.width / 2,
                     y : winSize.height / 2 
                 });
