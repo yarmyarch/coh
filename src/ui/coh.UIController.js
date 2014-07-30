@@ -105,7 +105,7 @@ coh.UIController = (function() {
                 return;
             }
             
-            var isSucceed = battleScene.prepareMoving(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, columnTile);
+            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile);
             
             if (isSucceed) {
                 _buf.battle.exiledTileTo = columnTile;
@@ -122,7 +122,7 @@ coh.UIController = (function() {
             if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
                 //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
             } else {
-                battleScene.setUnitToTile(battleScene.isAttackerTurn(), _buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
+                battleScene.setUnitToTile(_buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
                     battleScene.cancelFocus();
                 });
             }
@@ -210,23 +210,21 @@ coh.UIController = (function() {
     });
     
     _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
-        var isAttacker = battleScene.isAttackerTurn(),
+        var isAttacker = unitWrap.getPlayer().isAttacker(),
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
             _buf = buf;
         
-        if (!exiledUnit) return;
-        
         util.clearStatus(battleScene);
         
         // unExile would be executed in the doUnExile process.
-        battleScene.exileUnit(exiledUnit);
-        
-        _buf.battle.exiledUnit = exiledUnit;
-        _buf.battle.exiledTileFrom = exiledTileFrom;
-        _buf.battle.exiledTileTo = null;
-        
-        _buf.mouseAction = "exile";
+        if (battleScene.exileUnit(exiledUnit)) {            
+            _buf.battle.exiledUnit = exiledUnit;
+            _buf.battle.exiledTileFrom = exiledTileFrom;
+            _buf.battle.exiledTileTo = null;
+            
+            _buf.mouseAction = "exile";
+        }
     });
     
     _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitWrap, tile, battleScene) {

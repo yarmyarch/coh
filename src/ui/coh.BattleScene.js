@@ -269,7 +269,7 @@ coh.BattleScene = function() {
          */
         locateToUnit : function(unitWrap){
             // if tag locked - for example focusing on some a unit - do nothing.
-            !buf.focusTagLocked && this.getFocusTag().locateTo(unitWrap.tileSprite, this.isAttackerTurn());
+            !buf.focusTagLocked && this.getFocusTag().locateTo(unitWrap.tileSprite, unitWrap.getPlayer().isAttacker());
         },
         
         /**
@@ -282,7 +282,7 @@ coh.BattleScene = function() {
             
             // sprite changes to the tag;
             this.locateToUnit(unitWrap);
-            this.getFocusTag().focusOn(unitWrap.tileSprite, this.isAttackerTurn());
+            this.getFocusTag().focusOn(unitWrap.tileSprite, unitWrap.getPlayer().isAttacker());
             
             // sprite changes to the unit itself
             unitWrap.check();
@@ -291,17 +291,34 @@ coh.BattleScene = function() {
             buf.focusTagLocked = true;
         },
         
+        /**
+         *@return if the unit could be exiled for a relocation.
+         *  mainly for types that's occupying 2 columns.
+         */
         exileUnit : function(unitWrap) {
             
-            if (!unitWrap) return;
+            if (!unitWrap) return false;
+            
+            // do validate for types that's having more than 2 columns.
+            var typeConfig = unitWrap.getTypeConfig(),
+                isAttacker = unitWrap.getPlayer().isAttacker();
+            
+            if (typeConfig[1] > 1) {
+                var tiles = unitWrap.getTileRecords();
+                for (var i in tiles) {
+                    
+                }
+                return false;
+            }
+            
             buf.focusTagLocked = false;
             
             // sprite changes to the tag;
             this.locateToUnit(unitWrap);
             
-            this.getFocusTag().exile(unitWrap.tileSprite, this.isAttackerTurn());
+            this.getFocusTag().exile(unitWrap.tileSprite, isAttacker);
             
-            unitWrap.exile(this.isAttackerTurn());
+            unitWrap.exile(isAttacker);
             
             // buffer changes
             buf.focusTagLocked = true;
@@ -390,7 +407,7 @@ coh.BattleScene = function() {
             this.battleMap.addChild(tileSprite, tilePosition.y);
             
             setTimeout(function() {
-                self.setUnitToTile(player.isAttacker(), unitWrap, tilePosition);
+                self.setUnitToTile(unitWrap, tilePosition);
             }, _buf.unitDelay);
             
             // XXXXXX For debug usage.
@@ -401,11 +418,12 @@ coh.BattleScene = function() {
         /**
          * @param callback {Function} would be checked when the moving animate finished.
          */
-        setUnitToTile : function(isAttacker, unitWrap, tile, callback) {
+        setUnitToTile : function(unitWrap, tile, callback) {
             
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
                 _buf = buf,
+                isAttacker = unitWrap.getPlayer().isAttacker(),
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 mapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tile),
                 unit = unitWrap.unit,
@@ -444,8 +462,9 @@ coh.BattleScene = function() {
             })));
         },
         
-        prepareMoving : function(isAttacker, unitWrap, lastTile) {
+        prepareMoving : function(unitWrap, lastTile) {
             var _buf = buf,
+                isAttacker = unitWrap.getPlayer().isAttacker(),
                 typeConfig = _coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
                 yRange = handlerList.tileSelector.getYRange(isAttacker),
                 targetTile = (
