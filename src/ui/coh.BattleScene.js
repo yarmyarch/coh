@@ -304,11 +304,11 @@ coh.BattleScene = function() {
                 isAttacker = unitWrap.getPlayer().isAttacker();
             
             if (typeConfig[1] > 1) {
-                var tiles = unitWrap.getTileRecords();
+                var tiles = unitWrap.getTileRecords(),
+                    lastUnit;
                 for (var i in tiles) {
-                    
+                    if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitWrap) return false;
                 }
-                return false;
             }
             
             buf.focusTagLocked = false;
@@ -322,6 +322,8 @@ coh.BattleScene = function() {
             
             // buffer changes
             buf.focusTagLocked = true;
+            
+            return true;
         },
         
         cancelFocus : function() {
@@ -473,7 +475,7 @@ coh.BattleScene = function() {
                             yRange[0] == lastTile.y ? 
                             {
                                 x : lastTile.x,
-                                y : yRange[2]
+                                y : yRange[2] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
                             } : {
                                 x : lastTile.x, 
                                 y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
