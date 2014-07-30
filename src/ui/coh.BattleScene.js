@@ -51,8 +51,7 @@ coh.BattleScene = function() {
     var util = {
         /**
          * Rules: if it's out of X border, locate to the nearest column that's having an unit;
-         * Otherwise, locate to the poingint column.
-         *
+         * Otherwise, locate to the poingint column, and always try to find a unit that's closer to the front line.
          */
         getAvaliableTiles : function(isAttacker, tileX, tileY) {
             var xRange = handlerList.tileSelector.getXRange(),
@@ -67,18 +66,10 @@ coh.BattleScene = function() {
                 startX = overRight ? xRange[xRange.length - 1] : overLeft ? xRange[0] : tileX,
                 endX = overRight ? xRange[0] : overLeft ? xRange[xRange.length - 1] : tileX,
                 deataX = overRight ? -1 : overLeft ? 1 : 0,
-                
-                /**
-                 *Position Y would be a problem.... for cases like this, while 0 is the position of the given tile.
-                 *
-                ******
-                *****
-               0 **
-                 **
-                */
+            
                 startY = overTop ? yRange[0] : overBottom ? yRange[yRange.length - 1] : tileY,
-                endY = overTop ? yRange[yRange.length - 1] : overBottom ? yRange[0] : tileY,
-                deataY = overTop ? (isAttacker ? 1 : -1) : overBottom ? (isAttacker ? -1 : 1) : 0,
+                endY = overTop ? yRange[yRange.length - 1] : yRange[0],
+                deataY = overTop ? (isAttacker ? 1 : -1) : (isAttacker ? -1 : 1),
             
                 _buf = buf,
                 x = startX, y = startY;
