@@ -523,6 +523,16 @@ coh.utils = coh.utils || {};
                     if (isAttacker)
                         return [7, 8, 9, 10, 11, 12, 13, 14];
                     else return [8, 7, 6, 5, 4, 3, 2, 1];
+                },
+                
+                isTileInGround : function(isAttacker, tile) {
+                    var xRange = instance.getXRange(),
+                        yRange = instance.getYRange(isAttacker);
+                    
+                    return tile.x >= xRange[0] 
+                        && tile.x <= xRange[xRange.length - 1]
+                        && tile.y >= Math.min.apply({}, yRange)
+                        && tile.y <= Math.max.apply({}, yRange);
                 }
             }
         }
@@ -788,12 +798,13 @@ coh.cpns.Cursor = cc.Node.extend({
      * If you would like this cursor be at the same place as you might have expected,
      * Make sure the node parsed is at the same layer with the cursor.
      */
-    locateTo : function(node, isAttacker, color) {
+    locateTo : function(isAttacker, node, color) {
         
         if (this.focusedNode == node) return;
         
         var frameRate = coh.LocalConfig.FRAME_RATE * 5,
-            _cohView = coh.View;
+            _cohView = coh.View,
+            _cc = cc;
         
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
@@ -808,7 +819,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = isAttacker ? 50 - node.y : this.parent.height - node.y - 50;
         
-        this.background.setColor(color || this.bgColor);
+        color && this.setBgColor(color);
         
         // animation related part.
         if (!this.focusedNode) {
@@ -822,14 +833,14 @@ coh.cpns.Cursor = cc.Node.extend({
             this.background.scaleY = node.height / this.background.height;
         } else {
             this.stopAllActions();
-            this.runAction(cc.moveTo(frameRate, node.x, node.y));
+            this.runAction(_cc.moveTo(frameRate, node.x, node.y));
             
             _cohView.tryStopAction(this.arrowRight, this.arrowRight.moveAction);
-            this.arrowRight.runAction(this.arrowRight.moveAction = cc.moveTo(frameRate, node.width, node.height));
+            this.arrowRight.runAction(this.arrowRight.moveAction = _cc.moveTo(frameRate, node.width, node.height));
         
             _cohView.tryStopAction(this.background, this.background.scaleAction);
             this.background.runAction(
-                this.background.scaleAction = cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
+                this.background.scaleAction = _cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
             );
         }
         
@@ -841,9 +852,9 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = node;
     },
     
-    focusOn : function(node, isAttacker, color) {
+    focusOn : function(isAttacker, node, color) {
         
-        this.background.setColor(color || this.actColor);
+        color && this.setActColor(color);
         
         this.stopFocusAnimat(isAttacker);
         this.arrowDirection.setVisible(false);
@@ -853,9 +864,8 @@ coh.cpns.Cursor = cc.Node.extend({
     
     exile : function(node, isAttacker, color) {
         
-        this.background.setColor(color || this.bgColor);
+        color && this.setBgColor(color);
         
-        //~ this.arrowDirection.setVisible(false);
         this.arrowDirection.setRotation(isAttacker ? 0 : 180);
         
         this.focusedNode = node;
@@ -866,15 +876,31 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = null;
     },
     
+    updateColor : function(newColor) {
+        var _coh = coh;
+        
+        _coh.View.tryStopAction(this.arrowDirection, this.arrowDirection.tint);
+        this.background.runAction(
+            this.arrowDirection.tint = cc.tintTo(
+                _coh.LocalConfig.FRAME_RATE * 5, 
+                newColor.r, 
+                newColor.g, 
+                newColor.b
+            )
+        );
+    },
+    
     setBgColor : function(newColor) {
         if (newColor instanceof cc.Color) {
             this.bgColor = newColor;
+            this.updateColor(newColor);
         }
     },
     
     setActColor : function(newColor) {
         if (newColor instanceof cc.Color) {
             this.actColor = newColor;
+            this.updateColor(newColor);
         }
     },
     
@@ -1805,6 +1831,10 @@ coh.UnitWrap = function() {
         self.addTileRecord(newTile);
     };
     
+    self.clearTileRecord = function() {
+        buf.tileRecord = null;
+    };
+    
     construct.apply(self, arguments);
     
     return self;
@@ -1873,7 +1903,7 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 6, knight: 1, paladin: 1});
+                    attacker = new _coh.Player("", 1, { archer : 6, paladin: 1});
                     attacker.setAsAttacker();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
@@ -2021,6 +2051,38 @@ coh.BattleScene = function() {
             
             // nothing matches found for given tile.
             return null;
+        },
+        
+        getRealColumnTile : function(unitWrap, columnTile) {
+            var typeConfig = unitWrap.getTypeConfig(),
+                yRange = handlerList.tileSelector.getYRange(isAttacker),
+                // find the possible tile that can hold the unit.
+                realColTile = columnTile,
+                // target will use the given x and found y(in realColTile) for further calculating.
+                targetTile,
+                isAttacker = unitWrap.getPlayer.isAttacker();
+            
+            // check from left to right, for max to 4(type 4) possible tiles.
+            for (var i = 0; i < typeConfig; ++i) {
+                targetTile = self.getLastTileInColumn(isAttacker, {x : columnTile.x + i, y : columnTile.y});
+                if (targetTile && isAttacker ? (targetTile.y > realColTile.y) : (targetTile.y < realColTile.y)) {
+                    realColTile = targetTile;
+                }
+            }
+            targetTile = {
+                x : columnTile.x,
+                y : realColTile.y
+            };
+            
+            targetTile = yRange[0] == targetTile.y ? {
+                x : targetTile.x,
+                y : yRange[2] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
+            } : {
+                x : targetTile.x, 
+                y : targetTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
+            };
+            
+            return targetTile;
         }
     };
     
@@ -2128,11 +2190,11 @@ coh.BattleScene = function() {
             );
         },
         
-        getTileInTurn : function(posX, posY) {
+        getTileInTurn : function(isAttacker,  posX, posY) {
             var tile = this.getTileInGlobal(posX, posY);
             
             // searching for the nearest unit from a given tile;
-            return util.getAvaliableTiles(this.isAttackerTurn(), tile.x, tile.y);
+            return util.getAvaliableTiles(isAttacker, tile.x, tile.y);
         },
         
         /**
@@ -2160,6 +2222,10 @@ coh.BattleScene = function() {
             return {x : tile.x, y : lastTileY};
         },
         
+        isTileInGround : function(isAttacker, tile) {
+            return handlerList.tileSelector.isTileInGround(isAttacker, tile);
+        },
+        
         getUnit : function(tile) {
             var _buf = buf;
             return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
@@ -2176,8 +2242,8 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          * this will only return ligle units for current player turn, attacker or defender.
          */
-        getUnitInTurn : function(posX, posY) {
-            return this.getUnit(this.getTileInTurn(posX, posY));
+        getUnitInTurn : function(isAttacker, posX, posY) {
+            return this.getUnit(this.getTileInTurn(isAttacker, posX, posY));
         },
         
         getLastUnitInColumn : function(isAttacker, tile) {
@@ -2204,8 +2270,18 @@ coh.BattleScene = function() {
          * Highlight the hovered unit.
          */
         locateToUnit : function(unitWrap){
+            
             // if tag locked - for example focusing on some a unit - do nothing.
-            !buf.focusTagLocked && this.getFocusTag().locateTo(unitWrap.tileSprite, unitWrap.getPlayer().isAttacker());
+            if (buf.focusTagLocked) return;
+            
+            var tag = this.getFocusTag(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                _coh = coh;
+            
+            tag.locateTo(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            if (isAttacker != this.isAttackerTurn()) {
+                tag.arrowDirection.setVisible(false);
+            }
         },
         
         /**
@@ -2216,9 +2292,13 @@ coh.BattleScene = function() {
             if (!unitWrap) return;
             buf.focusTagLocked = false;
             
+            var tag = this.getFocusTag(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                _coh = coh;
+            
             // sprite changes to the tag;
             this.locateToUnit(unitWrap);
-            this.getFocusTag().focusOn(unitWrap.tileSprite, unitWrap.getPlayer().isAttacker());
+            tag.focusOn(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
             
             // sprite changes to the unit itself
             unitWrap.check();
@@ -2237,14 +2317,17 @@ coh.BattleScene = function() {
             
             // do validate for types that's having more than 2 columns.
             var typeConfig = unitWrap.getTypeConfig(),
-                isAttacker = unitWrap.getPlayer().isAttacker();
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                tiles = unitWrap.getTileRecords(),
+                lastUnit,
+                _buf = buf;
             
-            if (typeConfig[1] > 1) {
-                var tiles = unitWrap.getTileRecords(),
-                    lastUnit;
-                for (var i in tiles) {
-                    if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitWrap) return false;
-                }
+            for (var i in tiles) {
+                if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitWrap) return false;
+            }
+            
+            for (var i in tiles) {
+                self.unbindUnitToTile(unitWrap, tiles[i]);
             }
             
             buf.focusTagLocked = false;
@@ -2266,8 +2349,7 @@ coh.BattleScene = function() {
             var _buf = buf;
             _buf.focusTagLocked = false;
             
-            // interestingly I can't hide it here, or the cursor flies.
-            //~ this.getFocusTag().hide();
+            // interestingly I can't hide it here, or the cursor fails.
         },
         
         removeUnit : function(unitWrap, tile) {
@@ -2353,6 +2435,19 @@ coh.BattleScene = function() {
             _coh.unitList.push(unitWrap);
         },
         
+        bindUnitToTile : function(unitWrap, tile) {
+            buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            // It should be removed/updated when moved or removed.
+            // That's why I didn't want to do this.
+            unitWrap.addTileRecord(tile);
+        },
+        
+        unbindUnitToTile : function(unitWrap, tile) {
+            buf.unitMatrix[tile.x][tile.y] = null;
+            delete buf.unitMatrix[tile.x][tile.y];
+            unitWrap.removeTileRecord(tile);
+        },
+        
         /**
          * @param callback {Function} would be checked when the moving animate finished.
          */
@@ -2375,10 +2470,7 @@ coh.BattleScene = function() {
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
-                    _buf.unitMatrix[tile.x + columnCount][tile.y - rowCount] = unitWrap;
-                    // It should be removed/updated when moved or removed.
-                    // That's why I didn't want to do this.
-                    unitWrap.addTileRecord({x : tile.x + columnCount, y : tile.y - rowCount});
+                    self.bindUnitToTile(unitWrap, {x : tile.x + columnCount, y : tile.y - rowCount});
                 }
             }
             
@@ -2389,7 +2481,8 @@ coh.BattleScene = function() {
             tileSprite.attr({
                 visible : true,
                 x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
+                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height,
+                zIndex : tile.y
             });
             
             // Animations appended.
@@ -2400,27 +2493,34 @@ coh.BattleScene = function() {
             })));
         },
         
-        prepareMoving : function(unitWrap, lastTile) {
+        /**
+         * @param columnTile the last tile of the column specificed by columnTile.y;
+         * @param lastTile the tile where the mouse just moved from, it's also a tile that's having the last unit in that column.
+         */
+        prepareMoving : function(unitWrap, columnTile, lastTile) {
             var _buf = buf,
                 isAttacker = unitWrap.getPlayer().isAttacker(),
                 typeConfig = _coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
-                yRange = handlerList.tileSelector.getYRange(isAttacker),
-                targetTile = (
-                    _buf.unitMatrix[lastTile.x][lastTile.y] == unitWrap ? 
-                        lastTile : 
-                            yRange[0] == lastTile.y ? 
-                            {
-                                x : lastTile.x,
-                                y : yRange[2] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
-                            } : {
-                                x : lastTile.x, 
-                                y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
-                            }
-                ),
-                targetMapTile,
-                focusTag = self.getFocusTag();
+                focusTag = self.getFocusTag(),
+                // find the possible tile from direction 1,
+                // while direction 1 is where the last tile comes from.
+                targetTile = util.getRealColumnTile(
+                    unitWrap, {
+                        x : lastTile.x > columnTile.x ? columnTile.x : columnTile.x + 1 - typeConfig[1],
+                        y : columnTile.y
+                    }),
+                targetMapTile;
             
-            if (isAttacker && targetTile.y > yRange[yRange.length - 1] || !isAttacker && targetTile.y < yRange[yRange.length - 1]) {
+            if (!handlerList.tileSelector.isTileInGround(isAttacker, targetTile)) {
+                // try to find it in another direction.
+                targetTile = util.getRealColumnTile(
+                    unitWrap, {
+                        x : lastTile.x < columnTile.x ? columnTile.x : columnTile.x + 1 - typeConfig[1],
+                        y : columnTile.y
+                    });
+            }
+            // faild finding a possible tile, do nothing.
+            if (!handlerList.tileSelector.isTileInGround(isAttacker, targetTile)) {
                 focusTag.arrowDirection.setVisible(false);
                 return false;
             }
@@ -2528,16 +2628,24 @@ coh.UIController = (function() {
         doFocus : function(event, battleScene) {
             
             var location = event.getLocationInView(),
-                unitWrap = battleScene.getUnitInTurn(location.x, location.y);
+                unitGlobal = battleScene.getUnitInGlobal(location.x, location.y),
+                tile = battleScene.getTileInTurn(
+                    unitGlobal ? unitGlobal.getPlayer().isAttacker() : battleScene.isAttackerTurn(), 
+                    location.x, 
+                    location.y
+                ),
+                unitWrap = battleScene.getUnit(tile);
             
             if (unitWrap) {
                 battleScene.locateToUnit(unitWrap);
+                _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitWrap, tile, battleScene);
             }
         },
         doCheckOrExile : function(event, battleScene) {
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
-                unitWrap = battleScene.getUnitInTurn(location.x, location.y),
+                // only units in its side could be clicked or exiled.
+                unitWrap = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y),
                 clickedUnit = battleScene.getUnitInGlobal(location.x, location.y),
                 lastUnitWrap = buf.battle.lastUnitWrap,
                 lastTile = buf.battle.lastTile;
@@ -2550,7 +2658,7 @@ coh.UIController = (function() {
             
             // slide from top to bottom of the battle field, or the last unit in the group clicked.
             if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit || lastUnitWrap , clickedUnit && tile || lastTile, battleScene);
+                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit && tile || lastTile, battleScene);
                 return;
             }
             
@@ -2561,28 +2669,38 @@ coh.UIController = (function() {
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
                 columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
                 _buf = buf,
-                lastTile = _buf.battle.lastTile;
+                lastTile = _buf.battle.exiledTileTo || _buf.battle.lastTile;
             
             if (!columnTile || !_buf.battle.exiledUnit || lastTile.x == columnTile.x) {
                 return;
             }
             
-            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile);
+            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo);
             
             if (isSucceed) {
                 _buf.battle.exiledTileTo = columnTile;
             }
-            
-            _buf.battle.lastTile = columnTile;
         },
         doUnExile : function(event, battleScene) {
             
-            var _buf = buf;
+            var _buf = buf,
+                location = event.getLocationInView(),
+                globalTile = battleScene.getTileInGlobal(location.x, location.y);
             
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             
-            if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
+            // There should be a target tile found, 
+            // further more, the target tile should be within the battle field,
+            // to make sure the user could cancel the exile with a slide out of the ground.
+            
+            // Check the range of 
+            if (
+                _buf.battle.exiledTileTo 
+                && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x 
+                && battleScene.isTileInGround(battleScene.isAttackerTurn(), globalTile))
+            {
                 //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
+                battleScene.cancelFocus();
             } else {
                 battleScene.setUnitToTile(_buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
                     battleScene.cancelFocus();
@@ -2595,7 +2713,7 @@ coh.UIController = (function() {
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
-                unitWrap = battleScene.getUnitInTurn(location.x, location.y);
+                unitWrap = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y);
 
             buf.battle.lastUnitWrap = unitWrap;
             buf.battle.lastTile = tile;
@@ -2607,7 +2725,11 @@ coh.UIController = (function() {
         battle : {
             exile : {
                 onMouseMove : handlerList.doExileMove,
-                onMouseUp : handlerList.doUnExile
+                onMouseUp : handlerList.doUnExile,
+                onMouseDown : function(event, battleScene) {
+                    handlerList.recordTile(event, battleScene);
+                    handlerList.doExileMove(event, battleScene);
+                }
             },
             locate : {
                 onMouseMove : handlerList.doFocus,
@@ -2671,8 +2793,8 @@ coh.UIController = (function() {
         }
     });
     
-    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
-        var isAttacker = unitWrap.getPlayer().isAttacker(),
+    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(tile, battleScene) {
+        var isAttacker = battleScene.isAttackerTurn(),
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
             _buf = buf;

@@ -85,6 +85,38 @@ coh.BattleScene = function() {
             
             // nothing matches found for given tile.
             return null;
+        },
+        
+        getRealColumnTile : function(unitWrap, columnTile) {
+            var typeConfig = unitWrap.getTypeConfig(),
+                yRange = handlerList.tileSelector.getYRange(isAttacker),
+                // find the possible tile that can hold the unit.
+                realColTile = columnTile,
+                // target will use the given x and found y(in realColTile) for further calculating.
+                targetTile,
+                isAttacker = unitWrap.getPlayer.isAttacker();
+            
+            // check from left to right, for max to 4(type 4) possible tiles.
+            for (var i = 0; i < typeConfig; ++i) {
+                targetTile = self.getLastTileInColumn(isAttacker, {x : columnTile.x + i, y : columnTile.y});
+                if (targetTile && isAttacker ? (targetTile.y > realColTile.y) : (targetTile.y < realColTile.y)) {
+                    realColTile = targetTile;
+                }
+            }
+            targetTile = {
+                x : columnTile.x,
+                y : realColTile.y
+            };
+            
+            targetTile = yRange[0] == targetTile.y ? {
+                x : targetTile.x,
+                y : yRange[2] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
+            } : {
+                x : targetTile.x, 
+                y : targetTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
+            };
+            
+            return targetTile;
         }
     };
     
@@ -192,11 +224,11 @@ coh.BattleScene = function() {
             );
         },
         
-        getTileInTurn : function(posX, posY) {
+        getTileInTurn : function(isAttacker,  posX, posY) {
             var tile = this.getTileInGlobal(posX, posY);
             
             // searching for the nearest unit from a given tile;
-            return util.getAvaliableTiles(this.isAttackerTurn(), tile.x, tile.y);
+            return util.getAvaliableTiles(isAttacker, tile.x, tile.y);
         },
         
         /**
@@ -224,6 +256,10 @@ coh.BattleScene = function() {
             return {x : tile.x, y : lastTileY};
         },
         
+        isTileInGround : function(isAttacker, tile) {
+            return handlerList.tileSelector.isTileInGround(isAttacker, tile);
+        },
+        
         getUnit : function(tile) {
             var _buf = buf;
             return tile && _buf.unitMatrix[tile.x] && _buf.unitMatrix[tile.x][tile.y];
@@ -240,8 +276,8 @@ coh.BattleScene = function() {
          * get unit sprite via given position in the view.
          * this will only return ligle units for current player turn, attacker or defender.
          */
-        getUnitInTurn : function(posX, posY) {
-            return this.getUnit(this.getTileInTurn(posX, posY));
+        getUnitInTurn : function(isAttacker, posX, posY) {
+            return this.getUnit(this.getTileInTurn(isAttacker, posX, posY));
         },
         
         getLastUnitInColumn : function(isAttacker, tile) {
@@ -268,8 +304,18 @@ coh.BattleScene = function() {
          * Highlight the hovered unit.
          */
         locateToUnit : function(unitWrap){
+            
             // if tag locked - for example focusing on some a unit - do nothing.
-            !buf.focusTagLocked && this.getFocusTag().locateTo(unitWrap.tileSprite, unitWrap.getPlayer().isAttacker());
+            if (buf.focusTagLocked) return;
+            
+            var tag = this.getFocusTag(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                _coh = coh;
+            
+            tag.locateTo(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            if (isAttacker != this.isAttackerTurn()) {
+                tag.arrowDirection.setVisible(false);
+            }
         },
         
         /**
@@ -280,9 +326,13 @@ coh.BattleScene = function() {
             if (!unitWrap) return;
             buf.focusTagLocked = false;
             
+            var tag = this.getFocusTag(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                _coh = coh;
+            
             // sprite changes to the tag;
             this.locateToUnit(unitWrap);
-            this.getFocusTag().focusOn(unitWrap.tileSprite, unitWrap.getPlayer().isAttacker());
+            tag.focusOn(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
             
             // sprite changes to the unit itself
             unitWrap.check();
@@ -301,14 +351,17 @@ coh.BattleScene = function() {
             
             // do validate for types that's having more than 2 columns.
             var typeConfig = unitWrap.getTypeConfig(),
-                isAttacker = unitWrap.getPlayer().isAttacker();
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                tiles = unitWrap.getTileRecords(),
+                lastUnit,
+                _buf = buf;
             
-            if (typeConfig[1] > 1) {
-                var tiles = unitWrap.getTileRecords(),
-                    lastUnit;
-                for (var i in tiles) {
-                    if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitWrap) return false;
-                }
+            for (var i in tiles) {
+                if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitWrap) return false;
+            }
+            
+            for (var i in tiles) {
+                self.unbindUnitToTile(unitWrap, tiles[i]);
             }
             
             buf.focusTagLocked = false;
@@ -330,8 +383,7 @@ coh.BattleScene = function() {
             var _buf = buf;
             _buf.focusTagLocked = false;
             
-            // interestingly I can't hide it here, or the cursor flies.
-            //~ this.getFocusTag().hide();
+            // interestingly I can't hide it here, or the cursor fails.
         },
         
         removeUnit : function(unitWrap, tile) {
@@ -417,6 +469,19 @@ coh.BattleScene = function() {
             _coh.unitList.push(unitWrap);
         },
         
+        bindUnitToTile : function(unitWrap, tile) {
+            buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            // It should be removed/updated when moved or removed.
+            // That's why I didn't want to do this.
+            unitWrap.addTileRecord(tile);
+        },
+        
+        unbindUnitToTile : function(unitWrap, tile) {
+            buf.unitMatrix[tile.x][tile.y] = null;
+            delete buf.unitMatrix[tile.x][tile.y];
+            unitWrap.removeTileRecord(tile);
+        },
+        
         /**
          * @param callback {Function} would be checked when the moving animate finished.
          */
@@ -439,10 +504,7 @@ coh.BattleScene = function() {
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
-                    _buf.unitMatrix[tile.x + columnCount][tile.y - rowCount] = unitWrap;
-                    // It should be removed/updated when moved or removed.
-                    // That's why I didn't want to do this.
-                    unitWrap.addTileRecord({x : tile.x + columnCount, y : tile.y - rowCount});
+                    self.bindUnitToTile(unitWrap, {x : tile.x + columnCount, y : tile.y - rowCount});
                 }
             }
             
@@ -453,7 +515,8 @@ coh.BattleScene = function() {
             tileSprite.attr({
                 visible : true,
                 x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height
+                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height,
+                zIndex : tile.y
             });
             
             // Animations appended.
@@ -464,27 +527,34 @@ coh.BattleScene = function() {
             })));
         },
         
-        prepareMoving : function(unitWrap, lastTile) {
+        /**
+         * @param columnTile the last tile of the column specificed by columnTile.y;
+         * @param lastTile the tile where the mouse just moved from, it's also a tile that's having the last unit in that column.
+         */
+        prepareMoving : function(unitWrap, columnTile, lastTile) {
             var _buf = buf,
                 isAttacker = unitWrap.getPlayer().isAttacker(),
                 typeConfig = _coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
-                yRange = handlerList.tileSelector.getYRange(isAttacker),
-                targetTile = (
-                    _buf.unitMatrix[lastTile.x][lastTile.y] == unitWrap ? 
-                        lastTile : 
-                            yRange[0] == lastTile.y ? 
-                            {
-                                x : lastTile.x,
-                                y : yRange[2] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
-                            } : {
-                                x : lastTile.x, 
-                                y : lastTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
-                            }
-                ),
-                targetMapTile,
-                focusTag = self.getFocusTag();
+                focusTag = self.getFocusTag(),
+                // find the possible tile from direction 1,
+                // while direction 1 is where the last tile comes from.
+                targetTile = util.getRealColumnTile(
+                    unitWrap, {
+                        x : lastTile.x > columnTile.x ? columnTile.x : columnTile.x + 1 - typeConfig[1],
+                        y : columnTile.y
+                    }),
+                targetMapTile;
             
-            if (isAttacker && targetTile.y > yRange[yRange.length - 1] || !isAttacker && targetTile.y < yRange[yRange.length - 1]) {
+            if (!handlerList.tileSelector.isTileInGround(isAttacker, targetTile)) {
+                // try to find it in another direction.
+                targetTile = util.getRealColumnTile(
+                    unitWrap, {
+                        x : lastTile.x < columnTile.x ? columnTile.x : columnTile.x + 1 - typeConfig[1],
+                        y : columnTile.y
+                    });
+            }
+            // faild finding a possible tile, do nothing.
+            if (!handlerList.tileSelector.isTileInGround(isAttacker, targetTile)) {
                 focusTag.arrowDirection.setVisible(false);
                 return false;
             }

@@ -61,6 +61,16 @@ coh.utils = coh.utils || {};
                     if (isAttacker)
                         return [7, 8, 9, 10, 11, 12, 13, 14];
                     else return [8, 7, 6, 5, 4, 3, 2, 1];
+                },
+                
+                isTileInGround : function(isAttacker, tile) {
+                    var xRange = instance.getXRange(),
+                        yRange = instance.getYRange(isAttacker);
+                    
+                    return tile.x >= xRange[0] 
+                        && tile.x <= xRange[xRange.length - 1]
+                        && tile.y >= Math.min.apply({}, yRange)
+                        && tile.y <= Math.max.apply({}, yRange);
                 }
             }
         }

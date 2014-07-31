@@ -119,6 +119,10 @@ coh.UnitWrap = function() {
         self.addTileRecord(newTile);
     };
     
+    self.clearTileRecord = function() {
+        buf.tileRecord = null;
+    };
+    
     construct.apply(self, arguments);
     
     return self;

@@ -89,12 +89,13 @@ coh.cpns.Cursor = cc.Node.extend({
      * If you would like this cursor be at the same place as you might have expected,
      * Make sure the node parsed is at the same layer with the cursor.
      */
-    locateTo : function(node, isAttacker, color) {
+    locateTo : function(isAttacker, node, color) {
         
         if (this.focusedNode == node) return;
         
         var frameRate = coh.LocalConfig.FRAME_RATE * 5,
-            _cohView = coh.View;
+            _cohView = coh.View,
+            _cc = cc;
         
         this.anchorX = node.anchorX;
         this.anchorY = node.anchorY;
@@ -109,7 +110,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = isAttacker ? 50 - node.y : this.parent.height - node.y - 50;
         
-        this.background.setColor(color || this.bgColor);
+        color && this.setBgColor(color);
         
         // animation related part.
         if (!this.focusedNode) {
@@ -123,14 +124,14 @@ coh.cpns.Cursor = cc.Node.extend({
             this.background.scaleY = node.height / this.background.height;
         } else {
             this.stopAllActions();
-            this.runAction(cc.moveTo(frameRate, node.x, node.y));
+            this.runAction(_cc.moveTo(frameRate, node.x, node.y));
             
             _cohView.tryStopAction(this.arrowRight, this.arrowRight.moveAction);
-            this.arrowRight.runAction(this.arrowRight.moveAction = cc.moveTo(frameRate, node.width, node.height));
+            this.arrowRight.runAction(this.arrowRight.moveAction = _cc.moveTo(frameRate, node.width, node.height));
         
             _cohView.tryStopAction(this.background, this.background.scaleAction);
             this.background.runAction(
-                this.background.scaleAction = cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
+                this.background.scaleAction = _cc.scaleTo(frameRate, node.width / this.background.width, node.height / this.background.height)
             );
         }
         
@@ -142,9 +143,9 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = node;
     },
     
-    focusOn : function(node, isAttacker, color) {
+    focusOn : function(isAttacker, node, color) {
         
-        this.background.setColor(color || this.actColor);
+        color && this.setActColor(color);
         
         this.stopFocusAnimat(isAttacker);
         this.arrowDirection.setVisible(false);
@@ -154,9 +155,8 @@ coh.cpns.Cursor = cc.Node.extend({
     
     exile : function(node, isAttacker, color) {
         
-        this.background.setColor(color || this.bgColor);
+        color && this.setBgColor(color);
         
-        //~ this.arrowDirection.setVisible(false);
         this.arrowDirection.setRotation(isAttacker ? 0 : 180);
         
         this.focusedNode = node;
@@ -167,15 +167,31 @@ coh.cpns.Cursor = cc.Node.extend({
         this.focusedNode = null;
     },
     
+    updateColor : function(newColor) {
+        var _coh = coh;
+        
+        _coh.View.tryStopAction(this.arrowDirection, this.arrowDirection.tint);
+        this.background.runAction(
+            this.arrowDirection.tint = cc.tintTo(
+                _coh.LocalConfig.FRAME_RATE * 5, 
+                newColor.r, 
+                newColor.g, 
+                newColor.b
+            )
+        );
+    },
+    
     setBgColor : function(newColor) {
         if (newColor instanceof cc.Color) {
             this.bgColor = newColor;
+            this.updateColor(newColor);
         }
     },
     
     setActColor : function(newColor) {
         if (newColor instanceof cc.Color) {
             this.actColor = newColor;
+            this.updateColor(newColor);
         }
     },
     

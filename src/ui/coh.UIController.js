@@ -66,16 +66,24 @@ coh.UIController = (function() {
         doFocus : function(event, battleScene) {
             
             var location = event.getLocationInView(),
-                unitWrap = battleScene.getUnitInTurn(location.x, location.y);
+                unitGlobal = battleScene.getUnitInGlobal(location.x, location.y),
+                tile = battleScene.getTileInTurn(
+                    unitGlobal ? unitGlobal.getPlayer().isAttacker() : battleScene.isAttackerTurn(), 
+                    location.x, 
+                    location.y
+                ),
+                unitWrap = battleScene.getUnit(tile);
             
             if (unitWrap) {
                 battleScene.locateToUnit(unitWrap);
+                _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitWrap, tile, battleScene);
             }
         },
         doCheckOrExile : function(event, battleScene) {
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
-                unitWrap = battleScene.getUnitInTurn(location.x, location.y),
+                // only units in its side could be clicked or exiled.
+                unitWrap = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y),
                 clickedUnit = battleScene.getUnitInGlobal(location.x, location.y),
                 lastUnitWrap = buf.battle.lastUnitWrap,
                 lastTile = buf.battle.lastTile;
@@ -88,7 +96,7 @@ coh.UIController = (function() {
             
             // slide from top to bottom of the battle field, or the last unit in the group clicked.
             if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit || lastUnitWrap , clickedUnit && tile || lastTile, battleScene);
+                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit && tile || lastTile, battleScene);
                 return;
             }
             
@@ -99,28 +107,38 @@ coh.UIController = (function() {
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
                 columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
                 _buf = buf,
-                lastTile = _buf.battle.lastTile;
+                lastTile = _buf.battle.exiledTileTo || _buf.battle.lastTile;
             
             if (!columnTile || !_buf.battle.exiledUnit || lastTile.x == columnTile.x) {
                 return;
             }
             
-            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile);
+            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo);
             
             if (isSucceed) {
                 _buf.battle.exiledTileTo = columnTile;
             }
-            
-            _buf.battle.lastTile = columnTile;
         },
         doUnExile : function(event, battleScene) {
             
-            var _buf = buf;
+            var _buf = buf,
+                location = event.getLocationInView(),
+                globalTile = battleScene.getTileInGlobal(location.x, location.y);
             
             _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
             
-            if (_buf.battle.exiledTileTo && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x) {
+            // There should be a target tile found, 
+            // further more, the target tile should be within the battle field,
+            // to make sure the user could cancel the exile with a slide out of the ground.
+            
+            // Check the range of 
+            if (
+                _buf.battle.exiledTileTo 
+                && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x 
+                && battleScene.isTileInGround(battleScene.isAttackerTurn(), globalTile))
+            {
                 //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
+                battleScene.cancelFocus();
             } else {
                 battleScene.setUnitToTile(_buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
                     battleScene.cancelFocus();
@@ -133,7 +151,7 @@ coh.UIController = (function() {
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
-                unitWrap = battleScene.getUnitInTurn(location.x, location.y);
+                unitWrap = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y);
 
             buf.battle.lastUnitWrap = unitWrap;
             buf.battle.lastTile = tile;
@@ -145,7 +163,11 @@ coh.UIController = (function() {
         battle : {
             exile : {
                 onMouseMove : handlerList.doExileMove,
-                onMouseUp : handlerList.doUnExile
+                onMouseUp : handlerList.doUnExile,
+                onMouseDown : function(event, battleScene) {
+                    handlerList.recordTile(event, battleScene);
+                    handlerList.doExileMove(event, battleScene);
+                }
             },
             locate : {
                 onMouseMove : handlerList.doFocus,
@@ -209,8 +231,8 @@ coh.UIController = (function() {
         }
     });
     
-    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(unitWrap, tile, battleScene) {
-        var isAttacker = unitWrap.getPlayer().isAttacker(),
+    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(tile, battleScene) {
+        var isAttacker = battleScene.isAttackerTurn(),
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
             _buf = buf;
