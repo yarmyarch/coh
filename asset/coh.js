@@ -819,7 +819,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = isAttacker ? 50 - node.y : this.parent.height - node.y - 50;
         
-        color && this.setBgColor(color);
+        this.setBgColor(color || this.bgColor);
         
         // animation related part.
         if (!this.focusedNode) {
@@ -854,7 +854,7 @@ coh.cpns.Cursor = cc.Node.extend({
     
     focusOn : function(isAttacker, node, color) {
         
-        color && this.setActColor(color);
+        this.setActColor(color || this.actColor);
         
         this.stopFocusAnimat(isAttacker);
         this.arrowDirection.setVisible(false);
@@ -2055,15 +2055,15 @@ coh.BattleScene = function() {
         
         getRealColumnTile : function(unitWrap, columnTile) {
             var typeConfig = unitWrap.getTypeConfig(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
                 yRange = handlerList.tileSelector.getYRange(isAttacker),
                 // find the possible tile that can hold the unit.
                 realColTile = columnTile,
                 // target will use the given x and found y(in realColTile) for further calculating.
-                targetTile,
-                isAttacker = unitWrap.getPlayer.isAttacker();
+                targetTile;
             
             // check from left to right, for max to 4(type 4) possible tiles.
-            for (var i = 0; i < typeConfig; ++i) {
+            for (var i = 0; i < typeConfig[1]; ++i) {
                 targetTile = self.getLastTileInColumn(isAttacker, {x : columnTile.x + i, y : columnTile.y});
                 if (targetTile && isAttacker ? (targetTile.y > realColTile.y) : (targetTile.y < realColTile.y)) {
                     realColTile = targetTile;
@@ -2298,7 +2298,7 @@ coh.BattleScene = function() {
             
             // sprite changes to the tag;
             this.locateToUnit(unitWrap);
-            tag.focusOn(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            tag.focusOn(isAttacker, unitWrap.tileSprite);
             
             // sprite changes to the unit itself
             unitWrap.check();
@@ -2524,6 +2524,7 @@ coh.BattleScene = function() {
                 focusTag.arrowDirection.setVisible(false);
                 return false;
             }
+            console.log(targetTile);
             
             targetMapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(targetTile);
             
@@ -2675,7 +2676,7 @@ coh.UIController = (function() {
                 return;
             }
             
-            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo);
+            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom    );
             
             if (isSucceed) {
                 _buf.battle.exiledTileTo = columnTile;

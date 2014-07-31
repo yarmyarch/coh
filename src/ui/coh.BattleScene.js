@@ -89,15 +89,15 @@ coh.BattleScene = function() {
         
         getRealColumnTile : function(unitWrap, columnTile) {
             var typeConfig = unitWrap.getTypeConfig(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
                 yRange = handlerList.tileSelector.getYRange(isAttacker),
                 // find the possible tile that can hold the unit.
                 realColTile = columnTile,
                 // target will use the given x and found y(in realColTile) for further calculating.
-                targetTile,
-                isAttacker = unitWrap.getPlayer.isAttacker();
+                targetTile;
             
             // check from left to right, for max to 4(type 4) possible tiles.
-            for (var i = 0; i < typeConfig; ++i) {
+            for (var i = 0; i < typeConfig[1]; ++i) {
                 targetTile = self.getLastTileInColumn(isAttacker, {x : columnTile.x + i, y : columnTile.y});
                 if (targetTile && isAttacker ? (targetTile.y > realColTile.y) : (targetTile.y < realColTile.y)) {
                     realColTile = targetTile;
@@ -332,7 +332,7 @@ coh.BattleScene = function() {
             
             // sprite changes to the tag;
             this.locateToUnit(unitWrap);
-            tag.focusOn(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            tag.focusOn(isAttacker, unitWrap.tileSprite);
             
             // sprite changes to the unit itself
             unitWrap.check();

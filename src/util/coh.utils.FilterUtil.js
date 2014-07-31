@@ -83,7 +83,7 @@ coh.utils.FilterUtil = (function() {
                 for (j = 0, lenj = filterList.length; j < lenj; ++j) {
                     // rebuild arguments for next filter. 
                     // first param is currend calculated value, additional arguments can be parsed via the input.
-                    arg = [value].concat([].slice.call(arguments, 2));
+                    arg = value == undefined ? arg : [value].concat([].slice.call(arguments, 2));
                     (filterList[j] instanceof Function) && (value = filterList[j].apply({}, arg));
                 }
             }

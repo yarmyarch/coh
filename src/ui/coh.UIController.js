@@ -113,7 +113,7 @@ coh.UIController = (function() {
                 return;
             }
             
-            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo);
+            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom    );
             
             if (isSucceed) {
                 _buf.battle.exiledTileTo = columnTile;
@@ -213,8 +213,6 @@ coh.UIController = (function() {
             }
             
         }, battleScene);
-        
-        return battleScene;
     });
     
     _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitWrap, tile, battleScene) {

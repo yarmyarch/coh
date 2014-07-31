@@ -110,7 +110,7 @@ coh.cpns.Cursor = cc.Node.extend({
         this.arrowDirection.x = node.width / 2;
         this.arrowDirection.y = isAttacker ? 50 - node.y : this.parent.height - node.y - 50;
         
-        color && this.setBgColor(color);
+        this.setBgColor(color || this.bgColor);
         
         // animation related part.
         if (!this.focusedNode) {
@@ -145,7 +145,7 @@ coh.cpns.Cursor = cc.Node.extend({
     
     focusOn : function(isAttacker, node, color) {
         
-        color && this.setActColor(color);
+        this.setActColor(color || this.actColor);
         
         this.stopFocusAnimat(isAttacker);
         this.arrowDirection.setVisible(false);
