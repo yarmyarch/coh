@@ -219,15 +219,13 @@ coh.UIController = (function() {
         
         var _buf = buf;
         
+        util.clearStatus(battleScene);
         if (unitWrap.isChecked()) {
             battleScene.removeUnit(unitWrap, tile);
         } else {
-            util.clearStatus(battleScene);
             battleScene.focusOnUnit(unitWrap);
             
             _buf.battle.checkedUnit = unitWrap;
-            
-            console.log(unitWrap.getTileRecords());
         }
     });
     
@@ -236,14 +234,14 @@ coh.UIController = (function() {
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
             _buf = buf,
-            unitTiles = exiledUnit.getTileRecords();
+            unitTiles = exiledUnit && exiledUnit.getTileRecords();
+        
+        util.clearStatus(battleScene);
         
         // the original tile should be modified for type 4, to prevent the wrong position restored while canceling. Ahhhhhhhhhh.
         for (var i in unitTiles) {
             if (exiledTileFrom.x >= unitTiles[i].x) exiledTileFrom.x = unitTiles[i].x;
         }
-        
-        util.clearStatus(battleScene);
         
         // unExile would be executed in the doUnExile process.
         if (battleScene.exileUnit(exiledUnit)) {            

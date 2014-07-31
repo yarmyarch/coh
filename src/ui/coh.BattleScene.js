@@ -145,6 +145,9 @@ coh.BattleScene = function() {
                 }
             }
             
+            // XXXXXX if there exist tiles in the unitWrap and having the same column number (x), move it directly here.
+            // Mind type 4, whose x was modified while handling exiledTileFrom.
+            
             tileSprite.attr({
                 width: mapTile.width * typeConfig[1],
                 height: mapTile.height * typeConfig[0]
@@ -524,12 +527,22 @@ coh.BattleScene = function() {
             // It should be removed/updated when moved or removed.
             // That's why I didn't want to do this.
             unitWrap.addTileRecord(tile);
+            // XXXXXX Player Matrix motifications required.
         },
         
         unbindUnitToTile : function(unitWrap, tile) {
             buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
             unitWrap.removeTileRecord(tile);
+            // XXXXXX Player Matrix motifications required.
+        },
+        
+        unbindUnit : function(unitWrap) {
+            var tiles = unitWrap.getTileRecords();
+            for (var i in tiles) {
+                self.unbindUnitToTile(unitWrap, tiles[i]);
+            }
+            // XXXXXX Player Matrix motifications required.
         },
         
         /**
@@ -588,7 +601,10 @@ coh.BattleScene = function() {
         },
         
         removeUnit : function(unitWrap, tile) {
-            // XXXXXX
+            self.battleMap.removeChild(unitWrap.tileSprite, true);
+            self.unBindUnit(unitWrap);
+            // XXXXXX do the relocation here.
+            // Play the removing animate in target tile.
         }
     });
     
