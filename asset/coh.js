@@ -692,7 +692,7 @@ coh.utils.FilterUtil = (function() {
                 for (j = 0, lenj = filterList.length; j < lenj; ++j) {
                     // rebuild arguments for next filter. 
                     // first param is currend calculated value, additional arguments can be parsed via the input.
-                    arg = [value].concat([].slice.call(arguments, 2));
+                    arg = value == undefined ? arg : [value].concat([].slice.call(arguments, 2));
                     (filterList[j] instanceof Function) && (value = filterList[j].apply({}, arg));
                 }
             }
@@ -2524,7 +2524,6 @@ coh.BattleScene = function() {
                 focusTag.arrowDirection.setVisible(false);
                 return false;
             }
-            console.log(targetTile);
             
             targetMapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(targetTile);
             
@@ -2776,8 +2775,6 @@ coh.UIController = (function() {
             }
             
         }, battleScene);
-        
-        return battleScene;
     });
     
     _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitWrap, tile, battleScene) {
@@ -2798,7 +2795,13 @@ coh.UIController = (function() {
         var isAttacker = battleScene.isAttackerTurn(),
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
-            _buf = buf;
+            _buf = buf,
+            unitTiles = exiledUnit.getTileRecords();
+        
+        // the original tile should be modified for type 4, to prevent the wrong position restored while canceling. Ahhhhhhhhhh.
+        for (var i in unitTiles) {
+            if (exiledTileFrom.x >= unitTiles[i].x) exiledTileFrom.x = unitTiles[i].x;
+        }
         
         util.clearStatus(battleScene);
         

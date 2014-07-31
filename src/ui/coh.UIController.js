@@ -233,7 +233,13 @@ coh.UIController = (function() {
         var isAttacker = battleScene.isAttackerTurn(),
             exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
             exiledUnit = battleScene.getUnit(exiledTileFrom),
-            _buf = buf;
+            _buf = buf,
+            unitTiles = exiledUnit.getTileRecords();
+        
+        // the original tile should be modified for type 4, to prevent the wrong position restored while canceling. Ahhhhhhhhhh.
+        for (var i in unitTiles) {
+            if (exiledTileFrom.x >= unitTiles[i].x) exiledTileFrom.x = unitTiles[i].x;
+        }
         
         util.clearStatus(battleScene);
         
