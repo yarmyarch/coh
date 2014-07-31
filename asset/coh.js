@@ -589,10 +589,24 @@ coh.utils = coh.utils || {};
             
             for (var i in tileSelector) {
                 instance[i] = tileSelector[i];
-            }
+            };
+            
+            /**
+             * functions modifying results from the tile selectors;
+             */
             instance.getTilePosition = function(isAttacker, type, row, column) {
                 var position = tileSelector.getTilePosition(isAttacker, type, row, column);
                 handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](isAttacker, position));
+                
+                return position;
+            };
+            
+            /**
+             * Extra interfaces used when new units out of the initialling process added.
+             * It's just totally opposite to the original process, in cases for now.
+             */
+            instance.transformUpdate = function(isAttacker, type, position) {
+                handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](!isAttacker, position));
                 
                 return position;
             }
@@ -692,7 +706,7 @@ coh.utils.FilterUtil = (function() {
                 for (j = 0, lenj = filterList.length; j < lenj; ++j) {
                     // rebuild arguments for next filter. 
                     // first param is currend calculated value, additional arguments can be parsed via the input.
-                    arg = value == undefined ? arg : [value].concat([].slice.call(arguments, 2));
+                    arg = value == undefined ? (arg.length && arg || [].slice.call(arguments, 1)) : [value].concat([].slice.call(arguments, 2));
                     (filterList[j] instanceof Function) && (value = filterList[j].apply({}, arg));
                 }
             }
@@ -1904,16 +1918,15 @@ coh.MapLayer = cc.Layer.extend({
                 var generatePlayer = function(battleScene) {
                     // attacker
                     attacker = new _coh.Player("", 1, { archer : 6, paladin: 1});
-                    attacker.setAsAttacker();
+                    attacker.setAsDefender();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
-                    defender.setAsDefender();
+                    defender.setAsAttacker();
                     dMatrix = _coh.Battle.generatePlayerMatrix(defender);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
-                    
-                    return battleScene;
+                    battleScene.setAttackerTurn(false);
                 };
                 
                 var render = function(battleScene) {
@@ -1924,8 +1937,6 @@ coh.MapLayer = cc.Layer.extend({
                     _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
                     
                     coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
-                    
-                    return battleScene;
                 };
                 
                 _coh.utils.FilterUtil.addFilter("battleSceneEntered", generatePlayer, 12);
@@ -2065,7 +2076,7 @@ coh.BattleScene = function() {
             // check from left to right, for max to 4(type 4) possible tiles.
             for (var i = 0; i < typeConfig[1]; ++i) {
                 targetTile = self.getLastTileInColumn(isAttacker, {x : columnTile.x + i, y : columnTile.y});
-                if (targetTile && isAttacker ? (targetTile.y > realColTile.y) : (targetTile.y < realColTile.y)) {
+                if (targetTile && columnTile && (isAttacker ? (targetTile.y > realColTile.y) : (targetTile.y < realColTile.y))) {
                     realColTile = targetTile;
                 }
             }
@@ -2083,6 +2094,51 @@ coh.BattleScene = function() {
             };
             
             return targetTile;
+        },
+        
+        /**
+         * @param callback {Function} would be checked when the moving animate finished.
+         */
+        setUnitToTile : function(unitWrap, tile, callback) {
+            
+            // find correct unit from the player via given status(type defined);
+            var _coh = coh,
+                _buf = buf,
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                // get tile and do the possible translation, for example for a type 2 defender unit.
+                mapTile = self.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tile),
+                unit = unitWrap.unit,
+                unitSprite = unitWrap.unitSprite,
+                tileSprite = unitWrap.tileSprite,
+                srcName ="img_" + (+unit.getColor() || 0),
+                typeConfig = unitWrap.getTypeConfig();
+            
+            // set unit matrix for further usage.
+            // mind types that's not only having 1 tile.
+            for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
+                for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
+                    _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
+                    self.bindUnitToTile(unitWrap, {x : tile.x + columnCount, y : tile.y - rowCount});
+                }
+            }
+            
+            tileSprite.attr({
+                width: mapTile.width * typeConfig[1],
+                height: mapTile.height * typeConfig[0]
+            });
+            tileSprite.attr({
+                visible : true,
+                x : mapTile.x,
+                y : isAttacker ? - tileSprite.height : tileSprite.height + self.battleMap.height,
+                zIndex : tile.y
+            });
+            
+            // Animations appended.
+            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
+            tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
+                unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
+                _coh.Util.isExecutable(callback) && callback();
+            })));
         }
     };
     
@@ -2424,15 +2480,20 @@ coh.BattleScene = function() {
             
             // init unitWrap
             unitWrap.setPlayer(player);
-            this.battleMap.addChild(tileSprite, tilePosition.y);
             
             setTimeout(function() {
-                self.setUnitToTile(unitWrap, tilePosition);
+                self.battleMap.addChild(tileSprite, tilePosition.y);
+                util.setUnitToTile(unitWrap, tilePosition);
             }, _buf.unitDelay);
             
             // XXXXXX For debug usage.
             _coh.unitList = _coh.unitList || [];
             _coh.unitList.push(unitWrap);
+        },
+        
+        setUnitToTile : function(unitWrap, tile, callback) {
+            tile = handlerList.tileSelector.transformUpdate(unitWrap.getPlayer().isAttacker(), unitWrap.unit.getType(), tile);
+            util.setUnitToTile(unitWrap, tile, callback);
         },
         
         bindUnitToTile : function(unitWrap, tile) {
@@ -2446,51 +2507,6 @@ coh.BattleScene = function() {
             buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
             unitWrap.removeTileRecord(tile);
-        },
-        
-        /**
-         * @param callback {Function} would be checked when the moving animate finished.
-         */
-        setUnitToTile : function(unitWrap, tile, callback) {
-            
-            // find correct unit from the player via given status(type defined);
-            var _coh = coh,
-                _buf = buf,
-                isAttacker = unitWrap.getPlayer().isAttacker(),
-                // get tile and do the possible translation, for example for a type 2 defender unit.
-                mapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tile),
-                unit = unitWrap.unit,
-                unitSprite = unitWrap.unitSprite,
-                tileSprite = unitWrap.tileSprite,
-                srcName ="img_" + (+unit.getColor() || 0),
-                typeConfig = unitWrap.getTypeConfig();
-            
-            // set unit matrix for further usage.
-            // mind types that's not only having 1 tile.
-            for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
-                for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
-                    _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
-                    self.bindUnitToTile(unitWrap, {x : tile.x + columnCount, y : tile.y - rowCount});
-                }
-            }
-            
-            tileSprite.attr({
-                width: mapTile.width * typeConfig[1],
-                height: mapTile.height * typeConfig[0]
-            });
-            tileSprite.attr({
-                visible : true,
-                x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + this.battleMap.height,
-                zIndex : tile.y
-            });
-            
-            // Animations appended.
-            unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
-            tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
-                unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
-                _coh.Util.isExecutable(callback) && callback();
-            })));
         },
         
         /**
@@ -2524,6 +2540,8 @@ coh.BattleScene = function() {
                 focusTag.arrowDirection.setVisible(false);
                 return false;
             }
+            
+            targetTile = handlerList.tileSelector.transformUpdate(isAttacker, unitWrap.unit.getType(), targetTile);
             
             targetMapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(targetTile);
             
@@ -2788,6 +2806,8 @@ coh.UIController = (function() {
             battleScene.focusOnUnit(unitWrap);
             
             _buf.battle.checkedUnit = unitWrap;
+            
+            console.log(unitWrap.getTileRecords());
         }
     });
     

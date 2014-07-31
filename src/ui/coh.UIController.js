@@ -226,6 +226,8 @@ coh.UIController = (function() {
             battleScene.focusOnUnit(unitWrap);
             
             _buf.battle.checkedUnit = unitWrap;
+            
+            console.log(unitWrap.getTileRecords());
         }
     });
     

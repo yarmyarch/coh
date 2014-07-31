@@ -41,10 +41,24 @@ coh.utils = coh.utils || {};
             
             for (var i in tileSelector) {
                 instance[i] = tileSelector[i];
-            }
+            };
+            
+            /**
+             * functions modifying results from the tile selectors;
+             */
             instance.getTilePosition = function(isAttacker, type, row, column) {
                 var position = tileSelector.getTilePosition(isAttacker, type, row, column);
                 handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](isAttacker, position));
+                
+                return position;
+            };
+            
+            /**
+             * Extra interfaces used when new units out of the initialling process added.
+             * It's just totally opposite to the original process, in cases for now.
+             */
+            instance.transformUpdate = function(isAttacker, type, position) {
+                handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](!isAttacker, position));
                 
                 return position;
             }

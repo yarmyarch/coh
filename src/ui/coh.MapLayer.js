@@ -50,16 +50,15 @@ coh.MapLayer = cc.Layer.extend({
                 var generatePlayer = function(battleScene) {
                     // attacker
                     attacker = new _coh.Player("", 1, { archer : 6, paladin: 1});
-                    attacker.setAsAttacker();
+                    attacker.setAsDefender();
                     aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
-                    defender.setAsDefender();
+                    defender.setAsAttacker();
                     dMatrix = _coh.Battle.generatePlayerMatrix(defender);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
-                    
-                    return battleScene;
+                    battleScene.setAttackerTurn(false);
                 };
                 
                 var render = function(battleScene) {
@@ -70,8 +69,6 @@ coh.MapLayer = cc.Layer.extend({
                     _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
                     
                     coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
-                    
-                    return battleScene;
                 };
                 
                 _coh.utils.FilterUtil.addFilter("battleSceneEntered", generatePlayer, 12);
