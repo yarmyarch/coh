@@ -1945,10 +1945,12 @@ coh.MapLayer = cc.Layer.extend({
                     attacker = new _coh.Player("", 1, { archer : 6, paladin: 1});
                     attacker.setAsDefender();
                     aMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), attacker);
+                    console.log(aMatrix);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
                     defender.setAsAttacker();
                     dMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), defender);
+                    console.log(dMatrix);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
                     battleScene.setAttackerTurn(false);
@@ -2541,14 +2543,18 @@ coh.BattleScene = function() {
             !_buf.statusMatrix[playerId] && (_buf.statusMatrix[playerId] = []);
             !_buf.statusMatrix[playerId][indexes.row] && (_buf.statusMatrix[playerId][indexes.row] = []);
             _buf.statusMatrix[playerId][indexes.row][indexes.column] = coh.Battle.getStatus(type, unitWrap.unit.getColor());
-            // XXXXXX Player Matrix motifications required.
         },
         
         unbindUnitToTile : function(unitWrap, tile) {
-            buf.unitMatrix[tile.x][tile.y] = null;
+            var _buf = buf,
+                type = unitWrap.unit.getType(),
+                indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+            
+            _buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
             unitWrap.removeTileRecord(tile);
-            // XXXXXX Player Matrix motifications required.
+            
+            _buf.statusMatrix[unitWrap.getPlayer().getId()][indexes.row][indexes.column] = 0;
         },
         
         unbindUnit : function(unitWrap) {
@@ -2556,7 +2562,6 @@ coh.BattleScene = function() {
             for (var i in tiles) {
                 self.unbindUnitToTile(unitWrap, tiles[i]);
             }
-            // XXXXXX Player Matrix motifications required.
         },
         
         /**

@@ -149,6 +149,8 @@ coh.BattleScene = function() {
             
             // XXXXXX if there exist tiles in the unitWrap and having the same column number (x), move it directly here.
             // Mind type 4, whose x was modified while handling exiledTileFrom.
+            var originalY = unitWrap.getTileRecords(),
+                originalY = originalY && originalY[0].y;
             
             tileSprite.attr({
                 width: mapTile.width * typeConfig[1],
@@ -157,7 +159,8 @@ coh.BattleScene = function() {
             tileSprite.attr({
                 visible : true,
                 x : mapTile.x,
-                y : isAttacker ? - tileSprite.height : tileSprite.height + self.battleMap.height,
+                //~ y : isAttacker ? - tileSprite.height : tileSprite.height + self.battleMap.height,
+                y : originalY || (isAttacker ? - tileSprite.height : tileSprite.height + self.battleMap.height),
                 zIndex : tile.y
             });
             
@@ -542,11 +545,14 @@ coh.BattleScene = function() {
         },
         
         unbindUnitToTile : function(unitWrap, tile) {
-            buf.unitMatrix[tile.x][tile.y] = null;
+            var _buf = buf,
+                type = unitWrap.unit.getType(),
+                indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+            
+            _buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
             unitWrap.removeTileRecord(tile);
             
-            var indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
             _buf.statusMatrix[unitWrap.getPlayer().getId()][indexes.row][indexes.column] = 0;
         },
         
@@ -616,10 +622,39 @@ coh.BattleScene = function() {
             this.cancelFocus();
             this.getFocusTag().hide();
             
+            var yRange = handlerList.tileSelector.getYRange(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                typeConfig = unitWrap.getTypeConfig(),
+                tiles = unitWrap.getTileRecords(),
+                columns = {},
+                _buf = buf,
+                startY,
+                movedRangeY = 0,
+                tmpRangeY;
+            
+            for (var i in tiles) {
+                startY = (isAttacker ? Math.max : Math.min)(startY, tiles[i].y);
+                columns[tiles.x] = tiles.x;
+            }
+            startY = startY + typeConfig[1];
+            
             self.battleMap.removeChild(unitWrap.tileSprite, true);
             self.unbindUnit(unitWrap);
-            // XXXXXX do the relocation here.
-            // Play the removing animate in target tile.
+            
+            for (var i in columns) {
+                tmpRangeY = typeConfig[1],
+                movedRangeY = yRange.length;
+                for (var j = startY; isAttacker ? j < yRange[0] : j > yRange[yRange.length - 1]; isAttacker ? ++j : --j) {
+                    if (!_buf.unitMatrix[i][j]) {
+                        ++tmpRangeY;
+                        movedRangeY = Math.min(tmpRangeY, movedRangeY);
+                    } else {
+                        self.setUnitToTile(_buf.unitMatrix[i][j], {x : columns[i], y : j})
+                    }
+                }
+            }
+            
+            // XXXXXX Play the removing animate in target tile.
         },
         
         getStatusMatrix : function() {
