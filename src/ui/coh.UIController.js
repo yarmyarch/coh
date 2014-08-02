@@ -219,10 +219,11 @@ coh.UIController = (function() {
         
         var _buf = buf;
         
-        util.clearStatus(battleScene);
-        if (unitWrap.isChecked()) {
+        if (_buf.battle.checkedUnit == unitWrap) {
+            util.clearStatus(battleScene);
             battleScene.removeUnit(unitWrap, tile);
         } else {
+            util.clearStatus(battleScene);
             battleScene.focusOnUnit(unitWrap);
             
             _buf.battle.checkedUnit = unitWrap;

@@ -1742,7 +1742,6 @@ coh.UnitWrap = function() {
     var self = this;
     
     var buf = {
-        isChecked : false,
         player : null,
         // just for a record, no other purposes.
         // indexed by x_y
@@ -1787,17 +1786,11 @@ coh.UnitWrap = function() {
     self.check = function() {
         this.unitSprite.setColor(g_lc.CHECK_COLOR);
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        buf.isChecked = true;
     };
     
     self.unCheck = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
         coh.View.tryStopAction(this.unitSprite, g_lc.FOCUS_BLINK);
-        buf.isChecked = false;
-    };
-    
-    self.isChecked = function() {
-        return buf.isChecked;
     };
     
     self.exile = function(isAttacker) {
@@ -2411,11 +2404,6 @@ coh.BattleScene = function() {
             // interestingly I can't hide it here, or the cursor fails.
         },
         
-        removeUnit : function(unitWrap, tile) {
-            this.cancelFocus();
-            this.getFocusTag().hide();
-        },
-        
         setAttackerTurn : function(isAttacker) {
             
             if (buf.isAttackerTurn == isAttacker) return;
@@ -2578,8 +2566,11 @@ coh.BattleScene = function() {
         },
         
         removeUnit : function(unitWrap, tile) {
+            this.cancelFocus();
+            this.getFocusTag().hide();
+            
             self.battleMap.removeChild(unitWrap.tileSprite, true);
-            self.unBindUnit(unitWrap);
+            self.unbindUnit(unitWrap);
             // XXXXXX do the relocation here.
             // Play the removing animate in target tile.
         }
@@ -2815,10 +2806,11 @@ coh.UIController = (function() {
         
         var _buf = buf;
         
-        util.clearStatus(battleScene);
-        if (unitWrap.isChecked()) {
+        if (_buf.battle.checkedUnit == unitWrap) {
+            util.clearStatus(battleScene);
             battleScene.removeUnit(unitWrap, tile);
         } else {
+            util.clearStatus(battleScene);
             battleScene.focusOnUnit(unitWrap);
             
             _buf.battle.checkedUnit = unitWrap;

@@ -16,7 +16,6 @@ coh.UnitWrap = function() {
     var self = this;
     
     var buf = {
-        isChecked : false,
         player : null,
         // just for a record, no other purposes.
         // indexed by x_y
@@ -61,17 +60,11 @@ coh.UnitWrap = function() {
     self.check = function() {
         this.unitSprite.setColor(g_lc.CHECK_COLOR);
         this.unitSprite.runAction(g_lc.FOCUS_BLINK);
-        buf.isChecked = true;
     };
     
     self.unCheck = function() {
         this.unitSprite.setColor(g_lc.UNCHECK_COLOR);
         coh.View.tryStopAction(this.unitSprite, g_lc.FOCUS_BLINK);
-        buf.isChecked = false;
-    };
-    
-    self.isChecked = function() {
-        return buf.isChecked;
     };
     
     self.exile = function(isAttacker) {

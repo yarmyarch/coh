@@ -434,11 +434,6 @@ coh.BattleScene = function() {
             // interestingly I can't hide it here, or the cursor fails.
         },
         
-        removeUnit : function(unitWrap, tile) {
-            this.cancelFocus();
-            this.getFocusTag().hide();
-        },
-        
         setAttackerTurn : function(isAttacker) {
             
             if (buf.isAttackerTurn == isAttacker) return;
@@ -601,8 +596,11 @@ coh.BattleScene = function() {
         },
         
         removeUnit : function(unitWrap, tile) {
+            this.cancelFocus();
+            this.getFocusTag().hide();
+            
             self.battleMap.removeChild(unitWrap.tileSprite, true);
-            self.unBindUnit(unitWrap);
+            self.unbindUnit(unitWrap);
             // XXXXXX do the relocation here.
             // Play the removing animate in target tile.
         }
