@@ -18,6 +18,8 @@ coh.Player = function(faction, level, unitConfig) {
     var self = this;
     
     var buf = {
+        
+        id : 0,
         dataGroup : [],
         
         faction : false, 
@@ -46,6 +48,9 @@ coh.Player = function(faction, level, unitConfig) {
             _u = _buf.unitsUnplaced,
             unit;
         
+        // generate random Id for the player.
+        _buf.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
+        
         for (var unitName in unitConfig) {
             unit = _coh.units[unitName];
             if (!unit) continue;
@@ -57,6 +62,10 @@ coh.Player = function(faction, level, unitConfig) {
             }
         }
     };
+    
+    self.getId = function() {
+        return buf.id;
+    },
     
     self.getUnplacedUnit = function(status) {
         var _coh = coh,

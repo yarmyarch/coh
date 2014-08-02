@@ -43,14 +43,6 @@ coh.LocalConfig = {
     STATUS_BLANK : 0,
     STATUS_OCCUPIED : 1,
     COLOR_COUNT : 3,
-    BLANK_DATA_GROUP : [
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0]
-    ],
     // frame rate for general animations.
     FRAME_RATE : 1/60,
     

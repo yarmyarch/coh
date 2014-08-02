@@ -137,6 +137,10 @@ coh.Battle = (function(){
             return +status % LC.COLOR_COUNT;
         },
         
+        getStatus : function(type, color) {
+            return (+type) * LC.COLOR_COUNT + (+color);
+        },
+        
         /**
          * @param attacker [String] attacker faction
          * @param defender [String] defender faction
@@ -257,7 +261,7 @@ coh.Battle = (function(){
             }
         },
     
-        generatePlayerMatrix : function(player) {
+        generatePlayerMatrix : function(blankDataGroup, player) {
             
             var unitConfig = {},
                 units = player.getUnitConfig(),
@@ -271,7 +275,7 @@ coh.Battle = (function(){
                 unitConfig[unitType] += units[unitName];
             }
             
-            var recharge = this.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+            var recharge = this.recharge(blankDataGroup, unitConfig);
             
             return recharge;
         },

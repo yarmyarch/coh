@@ -31,6 +31,18 @@ coh.utils = coh.utils || {};
                 },
                 
                 /**
+                 * opposite to the function getTilePosition.
+                 * return row and columns with tile.
+                 */
+                getArrowIndex : function(isAttacker, type, tileX, tileY) {
+                    
+                    return {
+                        row : isAttacker ? tileY - 9 : 6 - tileY,
+                        column : tileX - 4
+                    }
+                }, 
+                
+                /**
                  * Magic...
                  */
                 getTileFromCoord : function(screenWidth, screenHeight, posX, posY) {
@@ -71,6 +83,21 @@ coh.utils = coh.utils || {};
                         && tile.x <= xRange[xRange.length - 1]
                         && tile.y >= Math.min.apply({}, yRange)
                         && tile.y <= Math.max.apply({}, yRange);
+                },
+                
+                /**
+                 * Get the default blank data group for this map.
+                 * this will be uesd for a single player rendering, the attaker of defender.
+                 */
+                getDefaultDataGroup : function(isAttacker) {
+                    return [
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]
+                    ];
                 }
             }
         }

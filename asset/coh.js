@@ -44,14 +44,6 @@ coh.LocalConfig = {
     STATUS_BLANK : 0,
     STATUS_OCCUPIED : 1,
     COLOR_COUNT : 3,
-    BLANK_DATA_GROUP : [
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0]
-    ],
     // frame rate for general animations.
     FRAME_RATE : 1/60,
     
@@ -493,6 +485,18 @@ coh.utils = coh.utils || {};
                 },
                 
                 /**
+                 * opposite to the function getTilePosition.
+                 * return row and columns with tile.
+                 */
+                getArrowIndex : function(isAttacker, type, tileX, tileY) {
+                    
+                    return {
+                        row : isAttacker ? tileY - 9 : 6 - tileY,
+                        column : tileX - 4
+                    }
+                }, 
+                
+                /**
                  * Magic...
                  */
                 getTileFromCoord : function(screenWidth, screenHeight, posX, posY) {
@@ -533,6 +537,21 @@ coh.utils = coh.utils || {};
                         && tile.x <= xRange[xRange.length - 1]
                         && tile.y >= Math.min.apply({}, yRange)
                         && tile.y <= Math.max.apply({}, yRange);
+                },
+                
+                /**
+                 * Get the default blank data group for this map.
+                 * this will be uesd for a single player rendering, the attaker of defender.
+                 */
+                getDefaultDataGroup : function(isAttacker) {
+                    return [
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0]
+                    ];
                 }
             }
         }
@@ -1259,6 +1278,8 @@ coh.Player = function(faction, level, unitConfig) {
     var self = this;
     
     var buf = {
+        
+        id : 0,
         dataGroup : [],
         
         faction : false, 
@@ -1287,6 +1308,9 @@ coh.Player = function(faction, level, unitConfig) {
             _u = _buf.unitsUnplaced,
             unit;
         
+        // generate random Id for the player.
+        _buf.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
+        
         for (var unitName in unitConfig) {
             unit = _coh.units[unitName];
             if (!unit) continue;
@@ -1298,6 +1322,10 @@ coh.Player = function(faction, level, unitConfig) {
             }
         }
     };
+    
+    self.getId = function() {
+        return buf.id;
+    },
     
     self.getUnplacedUnit = function(status) {
         var _coh = coh,
@@ -1524,6 +1552,10 @@ coh.Battle = (function(){
             return +status % LC.COLOR_COUNT;
         },
         
+        getStatus : function(type, color) {
+            return (+type) * LC.COLOR_COUNT + (+color);
+        },
+        
         /**
          * @param attacker [String] attacker faction
          * @param defender [String] defender faction
@@ -1644,7 +1676,7 @@ coh.Battle = (function(){
             }
         },
     
-        generatePlayerMatrix : function(player) {
+        generatePlayerMatrix : function(blankDataGroup, player) {
             
             var unitConfig = {},
                 units = player.getUnitConfig(),
@@ -1658,7 +1690,7 @@ coh.Battle = (function(){
                 unitConfig[unitType] += units[unitName];
             }
             
-            var recharge = this.recharge(_coh.LocalConfig.BLANK_DATA_GROUP, unitConfig);
+            var recharge = this.recharge(blankDataGroup, unitConfig);
             
             return recharge;
         },
@@ -1912,11 +1944,11 @@ coh.MapLayer = cc.Layer.extend({
                     // attacker
                     attacker = new _coh.Player("", 1, { archer : 6, paladin: 1});
                     attacker.setAsDefender();
-                    aMatrix = _coh.Battle.generatePlayerMatrix(attacker);
+                    aMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), attacker);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
                     defender.setAsAttacker();
-                    dMatrix = _coh.Battle.generatePlayerMatrix(defender);
+                    dMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), defender);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
                     battleScene.setAttackerTurn(false);
@@ -1999,6 +2031,8 @@ coh.BattleScene = function() {
         }
          */
         unitMatrix : {},
+        // used for the battle util, records the status data group.
+        statusMatrix : {},
         
         focusTag : null,
         
@@ -2441,6 +2475,10 @@ coh.BattleScene = function() {
             }
         },
         
+        getDefaultDataGroup : function(isAttacker) {
+            return handlerList.tileSelector.getDefaultDataGroup(isAttacker);
+        },
+        
         setAttacker : function(attacker) {
             this.attacker = attacker;
         },
@@ -2488,10 +2526,21 @@ coh.BattleScene = function() {
         },
         
         bindUnitToTile : function(unitWrap, tile) {
-            buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            var _buf = buf,
+                type = unitWrap.unit.getType(),
+                playerId = unitWrap.getPlayer().getId(),
+                indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+            
+            _buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            
             // It should be removed/updated when moved or removed.
             // That's why I didn't want to do this.
             unitWrap.addTileRecord(tile);
+            
+            // modify the status matrix for the player
+            !_buf.statusMatrix[playerId] && (_buf.statusMatrix[playerId] = []);
+            !_buf.statusMatrix[playerId][indexes.row] && (_buf.statusMatrix[playerId][indexes.row] = []);
+            _buf.statusMatrix[playerId][indexes.row][indexes.column] = coh.Battle.getStatus(type, unitWrap.unit.getColor());
             // XXXXXX Player Matrix motifications required.
         },
         
@@ -2573,6 +2622,10 @@ coh.BattleScene = function() {
             self.unbindUnit(unitWrap);
             // XXXXXX do the relocation here.
             // Play the removing animate in target tile.
+        },
+        
+        getStatusMatrix : function() {
+            return buf.statusMatrix;
         }
     });
     

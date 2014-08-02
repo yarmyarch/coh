@@ -29,6 +29,8 @@ coh.BattleScene = function() {
         }
          */
         unitMatrix : {},
+        // used for the battle util, records the status data group.
+        statusMatrix : {},
         
         focusTag : null,
         
@@ -471,6 +473,10 @@ coh.BattleScene = function() {
             }
         },
         
+        getDefaultDataGroup : function(isAttacker) {
+            return handlerList.tileSelector.getDefaultDataGroup(isAttacker);
+        },
+        
         setAttacker : function(attacker) {
             this.attacker = attacker;
         },
@@ -518,18 +524,30 @@ coh.BattleScene = function() {
         },
         
         bindUnitToTile : function(unitWrap, tile) {
-            buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            var _buf = buf,
+                type = unitWrap.unit.getType(),
+                playerId = unitWrap.getPlayer().getId(),
+                indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+            
+            _buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            
             // It should be removed/updated when moved or removed.
             // That's why I didn't want to do this.
             unitWrap.addTileRecord(tile);
-            // XXXXXX Player Matrix motifications required.
+            
+            // modify the status matrix for the player
+            !_buf.statusMatrix[playerId] && (_buf.statusMatrix[playerId] = []);
+            !_buf.statusMatrix[playerId][indexes.row] && (_buf.statusMatrix[playerId][indexes.row] = []);
+            _buf.statusMatrix[playerId][indexes.row][indexes.column] = coh.Battle.getStatus(type, unitWrap.unit.getColor());
         },
         
         unbindUnitToTile : function(unitWrap, tile) {
             buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
             unitWrap.removeTileRecord(tile);
-            // XXXXXX Player Matrix motifications required.
+            
+            var indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+            _buf.statusMatrix[unitWrap.getPlayer().getId()][indexes.row][indexes.column] = 0;
         },
         
         unbindUnit : function(unitWrap) {
@@ -537,7 +555,6 @@ coh.BattleScene = function() {
             for (var i in tiles) {
                 self.unbindUnitToTile(unitWrap, tiles[i]);
             }
-            // XXXXXX Player Matrix motifications required.
         },
         
         /**
@@ -603,6 +620,10 @@ coh.BattleScene = function() {
             self.unbindUnit(unitWrap);
             // XXXXXX do the relocation here.
             // Play the removing animate in target tile.
+        },
+        
+        getStatusMatrix : function() {
+            return buf.statusMatrix;
         }
     });
     
