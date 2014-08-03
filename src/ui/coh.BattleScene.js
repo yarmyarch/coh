@@ -177,11 +177,17 @@ coh.BattleScene = function() {
          * This function is used to find the directly affected units behind the given unit.
          */
         getChargingUnits : function(unitWrap) {
-            var tiles = unitWrap.getTileRecords();
+            var tiles = unitWrap.getTileRecords(),
+                columns = {},
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                startY = 0;
             
             for (var i in tiles) {
-                tiles[i].
+                columns[tiles[i].x] = tiles[i].x;
+                startY = startY && (isAttacker ? Math.max : Math.min)(startY, tiles[i].y) || tiles[i].y;
             }
+            
+            
         }
     };
     
