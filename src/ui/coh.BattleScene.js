@@ -170,6 +170,18 @@ coh.BattleScene = function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
                 _coh.Util.isExecutable(callback) && callback();
             })));
+        },
+        
+        /**
+         * When 1 unit removed, all other units behind it should be in charging mode to the front line.
+         * This function is used to find the directly affected units behind the given unit.
+         */
+        getChargingUnits : function(unitWrap) {
+            var tiles = unitWrap.getTileRecords();
+            
+            for (var i in tiles) {
+                tiles[i].
+            }
         }
     };
     
@@ -627,20 +639,19 @@ coh.BattleScene = function() {
                 typeConfig = unitWrap.getTypeConfig(),
                 tiles = unitWrap.getTileRecords(),
                 columns = {},
-                _buf = buf,
-                startY,
-                movedRangeY = 0,
-                tmpRangeY;
+                _buf = buf;
             
-            for (var i in tiles) {
-                startY = (isAttacker ? Math.max : Math.min)(startY, tiles[i].y);
-                columns[tiles.x] = tiles.x;
-            }
-            startY = startY + typeConfig[1];
+            var affectedUnits = [unitWrap];
             
             self.battleMap.removeChild(unitWrap.tileSprite, true);
-            self.unbindUnit(unitWrap);
+            do {
+                affectedUnits = util.getChargingUnits(affectedUnits);
+                for (var i in affectedUnits) {
+                    util.chargeToFrontLine(affectedUnits[i]);
+                }
+            } while (affectedUnits.length);
             
+            /*
             for (var i in columns) {
                 tmpRangeY = typeConfig[1],
                 movedRangeY = yRange.length;
@@ -649,10 +660,10 @@ coh.BattleScene = function() {
                         ++tmpRangeY;
                         movedRangeY = Math.min(tmpRangeY, movedRangeY);
                     } else {
-                        self.setUnitToTile(_buf.unitMatrix[i][j], {x : columns[i], y : j})
+                        self.setUnitToTile(_buf.unitMatrix[i][j], {x : columns[i], y : j - movedRangeY})
                     }
                 }
-            }
+            }*/
             
             // XXXXXX Play the removing animate in target tile.
         },
