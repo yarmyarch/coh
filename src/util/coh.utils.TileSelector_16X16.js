@@ -101,6 +101,10 @@ coh.utils = coh.utils || {};
                 }
             }
         }
+        
+        // public static attributes
+        instance.PUBLIC_ROW_COUNT = 2;
+        
         return instance;
     };
     

@@ -56,13 +56,14 @@ coh.BattleScene = function() {
          * Otherwise, locate to the poingint column, and always try to find a unit that's closer to the front line.
          */
         getAvaliableTiles : function(isAttacker, tileX, tileY) {
-            var xRange = handlerList.tileSelector.getXRange(),
-                yRange = handlerList.tileSelector.getYRange(isAttacker),
+            var _ts = handlerList.tileSelector,
+                xRange = _ts.getXRange(),
+                yRange = _ts.getYRange(isAttacker),
             
                 overRight = tileX > xRange[xRange.length - 1],
                 overLeft = tileX < xRange[0],
             
-                overTop = isAttacker ? tileY < yRange[2] : tileY > yRange[2],
+                overTop = isAttacker ? tileY < yRange[_ts.PUBLIC_ROW_COUNT] : tileY > yRange[_ts.PUBLIC_ROW_COUNT],
                 overBottom = isAttacker ? tileY > yRange[yRange.length - 1] : tileY < yRange[yRange.length - 1],
             
                 startX = overRight ? xRange[xRange.length - 1] : overLeft ? xRange[0] : tileX,
@@ -90,9 +91,10 @@ coh.BattleScene = function() {
         },
         
         getRealColumnTile : function(unitWrap, columnTile) {
-            var typeConfig = unitWrap.getTypeConfig(),
+            var _ts = handlerList.tileSelector,
+                typeConfig = unitWrap.getTypeConfig(),
                 isAttacker = unitWrap.getPlayer().isAttacker(),
-                yRange = handlerList.tileSelector.getYRange(isAttacker),
+                yRange = _ts.getYRange(isAttacker),
                 // find the possible tile that can hold the unit.
                 realColTile = columnTile,
                 // target will use the given x and found y(in realColTile) for further calculating.
@@ -112,7 +114,7 @@ coh.BattleScene = function() {
             
             targetTile = yRange[0] == targetTile.y ? {
                 x : targetTile.x,
-                y : yRange[2] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
+                y : yRange[_ts.PUBLIC_ROW_COUNT] + (isAttacker ? 1 : -1) * (typeConfig[0] - 1)
             } : {
                 x : targetTile.x, 
                 y : targetTile.y + (isAttacker ? 1 : -1) * typeConfig[0]
@@ -136,7 +138,13 @@ coh.BattleScene = function() {
                 unitSprite = unitWrap.unitSprite,
                 tileSprite = unitWrap.tileSprite,
                 srcName ="img_" + (+unit.getColor() || 0),
-                typeConfig = unitWrap.getTypeConfig();
+                typeConfig = unitWrap.getTypeConfig(),
+                // if there exist tiles in the unitWrap and having the same column number (x), move it directly here.
+                // Mind type 4, whose x was modified while handling exiledTileFrom.
+                originalY = unitWrap.getTileRecords();
+            
+            originalY = originalY && originalY[0].y;
+            self.unbindUnit(unitWrap);
             
             // set unit matrix for further usage.
             // mind types that's not only having 1 tile.
@@ -146,11 +154,6 @@ coh.BattleScene = function() {
                     self.bindUnitToTile(unitWrap, {x : tile.x + columnCount, y : tile.y - rowCount});
                 }
             }
-            
-            // XXXXXX if there exist tiles in the unitWrap and having the same column number (x), move it directly here.
-            // Mind type 4, whose x was modified while handling exiledTileFrom.
-            var originalY = unitWrap.getTileRecords(),
-                originalY = originalY && originalY[0].y;
             
             tileSprite.attr({
                 width: mapTile.width * typeConfig[1],
@@ -175,19 +178,74 @@ coh.BattleScene = function() {
         /**
          * When 1 unit removed, all other units behind it should be in charging mode to the front line.
          * This function is used to find the directly affected units behind the given unit.
+         * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getChargingUnits : function(unitWrap) {
-            var tiles = unitWrap.getTileRecords(),
+        getChargingUnits : function(unitWraps, tileRecords) {
+            
+            var _buf = buf,
+                tiles,
+                columns,
+                isAttacker,
+                startY,
+                i, j,
+                tmpUnit,
+                result = [];
+            
+            for (i = 0; unitWraps[i]; ++i) {
+                tiles = unitWrap.getTileRecords() || tileRecords && tileRecords[i],
                 columns = {},
                 isAttacker = unitWrap.getPlayer().isAttacker(),
                 startY = 0;
-            
-            for (var i in tiles) {
-                columns[tiles[i].x] = tiles[i].x;
-                startY = startY && (isAttacker ? Math.max : Math.min)(startY, tiles[i].y) || tiles[i].y;
+                
+                for (j in tiles) {
+                    columns[tiles[j].x] = tiles[j].x;
+                    startY = startY && (isAttacker ? Math.max : Math.min)(startY, tiles[j].y) || tiles[j].y;
+                }
+                for (j in columns) {
+                    tmpUnit = _buf[columns[j]][startY  + (isAttacker ? 1 : -1)];
+                    tmpUnit && result.push(tmpUnit);
+                }
             }
             
+            return result;
+        },
+        
+        chargeToFrontLine : function(unitWrap) {
+            var _ts = handlerList.tileSelector,
+                _buf = buf,
+                tiles = unitWrap.getTileRecords(),
+                isAttacker = unitWrap.getPlayer().isAttacker(),
+                yRange = _ts.getYRange(),
+                startY,
+                deataY = isAttacker ? -1 : 1,
+                endY = yRange[_ts.PUBLIC_ROW_COUNT],
+                columns = {},
+                minX = Number.MAX_VALUE,
+                y, i, distance;
             
+            for (i in tiles) {
+                columns[tiles[i].x] = tiles[i].x;
+                minX = Math.min(tiles[i].x, minX);
+                startY = startY && (isAttacker ? Math.min : Math.max)(startY, tiles[i].y) || tiles[i].y;
+            }
+            
+            if (isAttacker ? startY <= endY : startY >= endY) return 0;
+            
+            y = startY + deataY;
+            while (y != endY) {
+                for (i in columns) {
+                    if (_buf[columns[i]][y]) break;
+                }
+                y += deataY;
+            }
+            distance = startY - y - deataY;
+            
+            if (distance) {
+                self.setUnitToTile(unitWrap, {x : minX, y : startY - distance});
+            }
+            
+            // return moved distance.
+            return distance;
         }
     };
     
@@ -636,42 +694,28 @@ coh.BattleScene = function() {
             return true;
         },
         
-        removeUnit : function(unitWrap, tile) {
+        removeUnit : function(unitWrap) {
             this.cancelFocus();
             this.getFocusTag().hide();
             
-            var yRange = handlerList.tileSelector.getYRange(),
-                isAttacker = unitWrap.getPlayer().isAttacker(),
-                typeConfig = unitWrap.getTypeConfig(),
-                tiles = unitWrap.getTileRecords(),
-                columns = {},
-                _buf = buf;
-            
-            var affectedUnits = [unitWrap];
-            
-            self.battleMap.removeChild(unitWrap.tileSprite, true);
-            do {
-                affectedUnits = util.getChargingUnits(affectedUnits);
-                for (var i in affectedUnits) {
-                    util.chargeToFrontLine(affectedUnits[i]);
-                }
-            } while (affectedUnits.length);
-            
-            /*
-            for (var i in columns) {
-                tmpRangeY = typeConfig[1],
-                movedRangeY = yRange.length;
-                for (var j = startY; isAttacker ? j < yRange[0] : j > yRange[yRange.length - 1]; isAttacker ? ++j : --j) {
-                    if (!_buf.unitMatrix[i][j]) {
-                        ++tmpRangeY;
-                        movedRangeY = Math.min(tmpRangeY, movedRangeY);
-                    } else {
-                        self.setUnitToTile(_buf.unitMatrix[i][j], {x : columns[i], y : j - movedRangeY})
-                    }
-                }
-            }*/
+            var _util = util,
+                affectedUnits = _util.getChargingUnits([unitWrap], [unitWrap.getTileRecords()]),
+                chargedUnits = affectedUnits;
             
             // XXXXXX Play the removing animate in target tile.
+            self.battleMap.removeChild(unitWrap.tileSprite, true);
+            self.unbindUnit(unitWrap);
+            
+            while (chargedUnits.length) {
+                affectedUnits = util.getChargingUnits(chargedUnits);
+                chargedUnits = [];
+                for (var i in affectedUnits) {
+                    // the unit isn't moved, so it won't have any effect on other units behind it.
+                    if (util.chargeToFrontLine(affectedUnits[i])) {
+                        chargedUnits.push(affectedUnits[i]);
+                    }
+                }
+            };
         },
         
         getStatusMatrix : function() {
