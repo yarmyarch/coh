@@ -1946,15 +1946,13 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 6, paladin: 1});
+                    attacker = new _coh.Player("", 1, { archer : 16, knight: 1, paladin: 1});
                     attacker.setAsDefender();
                     aMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), attacker);
-                    console.log(aMatrix);
                     // defender
                     defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
                     defender.setAsAttacker();
                     dMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), defender);
-                    console.log(dMatrix);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
                     battleScene.setAttackerTurn(false);
@@ -2151,7 +2149,11 @@ coh.BattleScene = function() {
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
                 originalY = unitWrap.getTileRecords();
             
-            originalY = originalY && originalY[0].y;
+            if (originalY[0]) {
+                originalY = originalY && originalY[0].y;
+            } else {
+                originalY = false;
+            }
             self.unbindUnit(unitWrap);
             
             // set unit matrix for further usage.
@@ -2200,9 +2202,9 @@ coh.BattleScene = function() {
                 result = [];
             
             for (i = 0; unitWraps[i]; ++i) {
-                tiles = unitWrap.getTileRecords() || tileRecords && tileRecords[i],
+                tiles = unitWraps[i].getTileRecords() || tileRecords && tileRecords[i],
                 columns = {},
-                isAttacker = unitWrap.getPlayer().isAttacker(),
+                isAttacker = unitWraps[i].getPlayer().isAttacker(),
                 startY = 0;
                 
                 for (j in tiles) {
@@ -2210,7 +2212,7 @@ coh.BattleScene = function() {
                     startY = startY && (isAttacker ? Math.max : Math.min)(startY, tiles[j].y) || tiles[j].y;
                 }
                 for (j in columns) {
-                    tmpUnit = _buf[columns[j]][startY  + (isAttacker ? 1 : -1)];
+                    tmpUnit = _buf.unitMatrix[columns[j]][startY  + (isAttacker ? 1 : -1)];
                     tmpUnit && result.push(tmpUnit);
                 }
             }
@@ -2242,7 +2244,7 @@ coh.BattleScene = function() {
             y = startY + deataY;
             while (y != endY) {
                 for (i in columns) {
-                    if (_buf[columns[i]][y]) break;
+                    if (_buf.unitMatrix[columns[i]][y]) break;
                 }
                 y += deataY;
             }
