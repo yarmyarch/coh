@@ -232,17 +232,20 @@ coh.BattleScene = function() {
                 endY = yRange[_ts.PUBLIC_ROW_COUNT],
                 columns = {},
                 minX = Number.MAX_VALUE,
+                maxY = 0,
                 y, i, distance = 0;
             
             for (i in tiles) {
                 columns[tiles[i].x] = tiles[i].x;
                 minX = Math.min(tiles[i].x, minX);
+                maxY = Math.max(tiles[i].y, maxY);
                 startY = startY && (isAttacker ? Math.min : Math.max)(startY, tiles[i].y) || tiles[i].y;
             }
             
             if (isAttacker ? startY <= endY : startY >= endY) return 0;
             
             y = startY;
+            // Magic again...
             do {
                 y += deataY;
                 for (i in columns) {
@@ -253,10 +256,9 @@ coh.BattleScene = function() {
                     }
                 }
             } while (y != endY);
-            console.log(distance);
             
             if (distance) {
-                self.setUnitToTile(unitWrap, {x : minX, y : startY - distance});
+                self.setUnitToTile(unitWrap, {x : minX, y : maxY - distance});
             }
             
             // return moved distance.
@@ -620,6 +622,9 @@ coh.BattleScene = function() {
             _coh.unitList.push(unitWrap);
         },
         
+        /**
+         * @param tile the bottom left tile of the unit.
+         */
         setUnitToTile : function(unitWrap, tile, callback) {
             tile = handlerList.tileSelector.transformUpdate(unitWrap.getPlayer().isAttacker(), unitWrap.unit.getType(), tile);
             util.setUnitToTile(unitWrap, tile, callback);
@@ -718,6 +723,9 @@ coh.BattleScene = function() {
         },
         
         removeUnit : function(unitWrap) {
+            
+            if (buf.focusTagLocked) return;
+            
             this.cancelFocus();
             this.getFocusTag().hide();
             
