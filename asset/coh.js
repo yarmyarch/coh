@@ -1781,7 +1781,7 @@ coh.UnitWrap = function() {
         player : null,
         // just for a record, no other purposes.
         // indexed by x_y
-        tileRecord : {}
+        tileRecord : null
     };
 
     var construct = function(unit, tileSprite, unitSprite) {
@@ -1855,11 +1855,22 @@ coh.UnitWrap = function() {
         return coh.LocalConfig.LOCATION_TYPE[self.unit.getType()];
     };
     
+    /**
+     * deep copy.
+     */
     self.getTileRecords = function() {
-        return buf.tileRecord;
+        var i, _buf = buf, tmpRecords = null;
+        if (_buf.tileRecord) {
+            tmpRecords = {};
+            for (var i in _buf.tileRecord) {
+                tmpRecords[i] = _buf.tileRecord[i];
+            }
+        }
+        return tmpRecords;
     };
     
     self.addTileRecord = function(newTile) {
+        if (!buf.tileRecord) buf.tileRecord = {};
         buf.tileRecord[newTile.x + "_" + newTile.y] = newTile;
     };
     
@@ -1867,6 +1878,12 @@ coh.UnitWrap = function() {
         var _buf = buf;
         _buf.tileRecord[oldTile.x + "_" + oldTile.y] = null;
         delete _buf.tileRecord[oldTile.x + "_" + oldTile.y];
+        
+        var counter = 0;
+        for (var i in _buf.tileRecord) {
+            ++counter;
+        }
+        if (!counter) _buf.tileRecord = null;
     };
     
     self.updateTileRecord = function(oldTile, newTile) {
@@ -2044,9 +2061,7 @@ coh.BattleScene = function() {
         
         // if the user is focusing on some a unit, the focusnode would be locked.
         // that means it won't react on any other locate events.
-        focusTagLocked : false,
-        
-        
+        focusTagLocked : false
     };
 
     var handlerList = {
@@ -2139,7 +2154,7 @@ coh.BattleScene = function() {
                 _buf = buf,
                 isAttacker = unitWrap.getPlayer().isAttacker(),
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                mapTile = self.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tile),
+                mapTile = self.getMapTile(tile),
                 unit = unitWrap.unit,
                 unitSprite = unitWrap.unitSprite,
                 tileSprite = unitWrap.tileSprite,
@@ -2149,10 +2164,15 @@ coh.BattleScene = function() {
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
                 originalY = unitWrap.getTileRecords();
             
-            if (originalY[0]) {
-                originalY = originalY && originalY[0].y;
-            } else {
-                originalY = false;
+            // prevent focus;
+            _buf.focusTagLocked = true;
+            
+            if (originalY) {
+                for (var i in originalY) {
+                    originalY = originalY[i].y;
+                    originalY = self.getPositionFromTile({x : tile.x, y : originalY}).y;
+                    break;
+                }
             }
             self.unbindUnit(unitWrap);
             
@@ -2181,7 +2201,11 @@ coh.BattleScene = function() {
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
                 unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
+                
                 _coh.Util.isExecutable(callback) && callback();
+                
+                // restore focus tag.
+                _buf.focusTagLocked = false;
             })));
         },
         
@@ -2202,7 +2226,7 @@ coh.BattleScene = function() {
                 result = [];
             
             for (i = 0; unitWraps[i]; ++i) {
-                tiles = unitWraps[i].getTileRecords() || tileRecords && tileRecords[i],
+                tiles = tileRecords[i],
                 columns = {},
                 isAttacker = unitWraps[i].getPlayer().isAttacker(),
                 startY = 0;
@@ -2225,13 +2249,13 @@ coh.BattleScene = function() {
                 _buf = buf,
                 tiles = unitWrap.getTileRecords(),
                 isAttacker = unitWrap.getPlayer().isAttacker(),
-                yRange = _ts.getYRange(),
+                yRange = _ts.getYRange(isAttacker),
                 startY,
                 deataY = isAttacker ? -1 : 1,
                 endY = yRange[_ts.PUBLIC_ROW_COUNT],
                 columns = {},
                 minX = Number.MAX_VALUE,
-                y, i, distance;
+                y, i, distance = 0;
             
             for (i in tiles) {
                 columns[tiles[i].x] = tiles[i].x;
@@ -2241,14 +2265,18 @@ coh.BattleScene = function() {
             
             if (isAttacker ? startY <= endY : startY >= endY) return 0;
             
-            y = startY + deataY;
-            while (y != endY) {
-                for (i in columns) {
-                    if (_buf.unitMatrix[columns[i]][y]) break;
-                }
+            y = startY;
+            do {
                 y += deataY;
-            }
-            distance = startY - y - deataY;
+                for (i in columns) {
+                    if (_buf.unitMatrix[columns[i]][y]) {
+                        break;
+                    } else {
+                        distance -= deataY;
+                    }
+                }
+            } while (y != endY);
+            console.log(distance);
             
             if (distance) {
                 self.setUnitToTile(unitWrap, {x : minX, y : startY - distance});
@@ -2397,6 +2425,14 @@ coh.BattleScene = function() {
         
         isTileInGround : function(isAttacker, tile) {
             return handlerList.tileSelector.isTileInGround(isAttacker, tile);
+        },
+        
+        getPositionFromTile : function(tile) {
+            return self.getMapTile(tile).getPosition();
+        },
+        
+        getMapTile : function(tile) {
+            return self.battleMap.getLayer(coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(tile);
         },
         
         getUnit : function(tile) {
@@ -2683,7 +2719,7 @@ coh.BattleScene = function() {
             
             targetTile = handlerList.tileSelector.transformUpdate(isAttacker, unitWrap.unit.getType(), targetTile);
             
-            targetMapTile = this.battleMap.getLayer(_coh.LocalConfig.MAP_BATTLE_LAYER_NAME).getTileAt(targetTile);
+            targetMapTile = self.getMapTile(targetTile);
             
             focusTag.arrowDirection.attr({
                 visible : true,
@@ -2709,20 +2745,26 @@ coh.BattleScene = function() {
             this.getFocusTag().hide();
             
             var _util = util,
-                affectedUnits = _util.getChargingUnits([unitWrap], [unitWrap.getTileRecords()]),
-                chargedUnits = affectedUnits;
+                affectedUnits,
+                chargedUnits = [unitWrap],
+                tileRecords = [unitWrap.getTileRecords()];
             
             // XXXXXX Play the removing animate in target tile.
+            
             self.battleMap.removeChild(unitWrap.tileSprite, true);
             self.unbindUnit(unitWrap);
             
             while (chargedUnits.length) {
-                affectedUnits = util.getChargingUnits(chargedUnits);
+                affectedUnits = util.getChargingUnits(chargedUnits, tileRecords);
                 chargedUnits = [];
+                tileRecords = [];
                 for (var i in affectedUnits) {
                     // the unit isn't moved, so it won't have any effect on other units behind it.
+                    tileRecords.push(affectedUnits[i].getTileRecords());
                     if (util.chargeToFrontLine(affectedUnits[i])) {
                         chargedUnits.push(affectedUnits[i]);
+                    } else {
+                        tileRecords.pop();
                     }
                 }
             };

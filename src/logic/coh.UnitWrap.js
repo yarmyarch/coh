@@ -19,7 +19,7 @@ coh.UnitWrap = function() {
         player : null,
         // just for a record, no other purposes.
         // indexed by x_y
-        tileRecord : {}
+        tileRecord : null
     };
 
     var construct = function(unit, tileSprite, unitSprite) {
@@ -93,11 +93,22 @@ coh.UnitWrap = function() {
         return coh.LocalConfig.LOCATION_TYPE[self.unit.getType()];
     };
     
+    /**
+     * deep copy.
+     */
     self.getTileRecords = function() {
-        return buf.tileRecord;
+        var i, _buf = buf, tmpRecords = null;
+        if (_buf.tileRecord) {
+            tmpRecords = {};
+            for (var i in _buf.tileRecord) {
+                tmpRecords[i] = _buf.tileRecord[i];
+            }
+        }
+        return tmpRecords;
     };
     
     self.addTileRecord = function(newTile) {
+        if (!buf.tileRecord) buf.tileRecord = {};
         buf.tileRecord[newTile.x + "_" + newTile.y] = newTile;
     };
     
@@ -105,6 +116,12 @@ coh.UnitWrap = function() {
         var _buf = buf;
         _buf.tileRecord[oldTile.x + "_" + oldTile.y] = null;
         delete _buf.tileRecord[oldTile.x + "_" + oldTile.y];
+        
+        var counter = 0;
+        for (var i in _buf.tileRecord) {
+            ++counter;
+        }
+        if (!counter) _buf.tileRecord = null;
     };
     
     self.updateTileRecord = function(oldTile, newTile) {
