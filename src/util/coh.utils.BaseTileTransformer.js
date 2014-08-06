@@ -59,8 +59,26 @@ coh.utils = coh.utils || {};
              */
             instance.transformUpdate = function(isAttacker, type, position) {
                 handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](!isAttacker, position));
-                
                 return position;
+            };
+            
+            /**
+             * Get the left bottom tile fo the unitwarp.
+             * in a 16X16 map, this tile is just the one it should be placed into the scene.
+             */
+            instance.getValidTile = function(unitWrap) {
+                var tiles = unitWrap.getTileRecords();
+                if (!tiles) return null;
+                
+                var  minX = Number.POSITIVE_INFINITY,
+                    maxY = Number.NEGATIVE_INFINITY;
+                
+                for (var i = 0; tiles[i]; ++i) {
+                    minX = Math.min(tiles[i].x, minX);
+                    maxY = Math.max(tiles[i].y, maxY);
+                }
+                
+                return {x : minX, y : maxY};
             }
         }
         return instance;

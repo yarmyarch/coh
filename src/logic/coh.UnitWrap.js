@@ -19,7 +19,7 @@ coh.UnitWrap = function() {
         player : null,
         // just for a record, no other purposes.
         // indexed by x_y
-        tileRecord : null
+        tileRecord : []
     };
 
     var construct = function(unit, tileSprite, unitSprite) {
@@ -97,31 +97,22 @@ coh.UnitWrap = function() {
      * deep copy.
      */
     self.getTileRecords = function() {
-        var i, _buf = buf, tmpRecords = null;
-        if (_buf.tileRecord) {
-            tmpRecords = {};
-            for (var i in _buf.tileRecord) {
-                tmpRecords[i] = _buf.tileRecord[i];
-            }
-        }
-        return tmpRecords;
+        if (!buf.tileRecord.length) return null;
+        return buf.tileRecord.concat();
     };
     
     self.addTileRecord = function(newTile) {
-        if (!buf.tileRecord) buf.tileRecord = {};
-        buf.tileRecord[newTile.x + "_" + newTile.y] = newTile;
+        buf.tileRecord.push(newTile);
     };
     
     self.removeTileRecord = function(oldTile) {
         var _buf = buf;
-        _buf.tileRecord[oldTile.x + "_" + oldTile.y] = null;
-        delete _buf.tileRecord[oldTile.x + "_" + oldTile.y];
         
-        var counter = 0;
-        for (var i in _buf.tileRecord) {
-            ++counter;
+        for (var i = 0; _buf.tileRecord[i]; ++i) {
+            if (_buf.tileRecord[i].x == oldTile.x && _buf.tileRecord[i].y == oldTile.y) {
+                _buf.tileRecord = _buf.tileRecord.slice(0, i).concat(_buf.tileRecord.slice(i + 1));
+            }
         }
-        if (!counter) _buf.tileRecord = null;
     };
     
     self.updateTileRecord = function(oldTile, newTile) {
@@ -130,7 +121,7 @@ coh.UnitWrap = function() {
     };
     
     self.clearTileRecords = function() {
-        buf.tileRecord = null;
+        buf.tileRecord = [];
     };
     
     construct.apply(self, arguments);

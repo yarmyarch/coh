@@ -58,7 +58,7 @@ coh.MapLayer = cc.Layer.extend({
                     dMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), defender);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
-                    //~ battleScene.setAttackerTurn(false);
+                    battleScene.setAttackerTurn(false);
                 };
                 
                 var render = function(battleScene) {

@@ -107,25 +107,24 @@ coh.UIController = (function() {
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
                 columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
                 _buf = buf,
-                lastTile = _buf.battle.exiledTileTo || _buf.battle.lastTile;
+                lastTile = _buf.battle.exiledTileTo || _buf.battle.lastTile,
+                targetTile;
             
             if (!columnTile || !_buf.battle.exiledUnit || lastTile.x == columnTile.x) {
                 return;
             }
             
-            var isSucceed = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom    );
-            
-            if (isSucceed) {
-                _buf.battle.exiledTileTo = columnTile;
-            }
+            targetTile = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom    );
+            targetTile && (_buf.battle.exiledTileTo = targetTile);
         },
         doUnExile : function(event, battleScene) {
             
             var _buf = buf,
                 location = event.getLocationInView(),
-                globalTile = battleScene.getTileInGlobal(location.x, location.y);
+                globalTile = battleScene.getTileInGlobal(location.x, location.y),
+                exiledUnit = _buf.battle.exiledUnit;
             
-            _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
+            exiledUnit && exiledUnit.unExile(); 
             
             // There should be a target tile found, 
             // further more, the target tile should be within the battle field,
@@ -135,14 +134,16 @@ coh.UIController = (function() {
             if (
                 _buf.battle.exiledTileTo 
                 && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x 
-                && battleScene.isTileInGround(battleScene.isAttackerTurn(), globalTile))
-            {
-                //~ battleScene.moveUnit(unitWrap, from, _buf.battle.exiledTile);
-                battleScene.cancelFocus();
-            } else {
-                battleScene.setUnitToTile(_buf.battle.exiledUnit, _buf.battle.exiledTileFrom, function() {
-                    battleScene.cancelFocus();
+                && battleScene.isTileInGround(battleScene.isAttackerTurn(), globalTile)) {
+                
+                battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileTo, function() {
+                    // If type 1 - normal solders, then there might be converts generated.
+                    // Let's find and make it directly.
+                    if (exiledUnit.unit.getType() == 1)
+                    battleScene.tryConvert(exiledUnit);
                 });
+            } else {
+                battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileFrom);
             }
             
             _buf.battle.exiledUnit = null;
@@ -239,9 +240,11 @@ coh.UIController = (function() {
         
         util.clearStatus(battleScene);
         
-        // the original tile should be modified for type 4, to prevent the wrong position restored while canceling. Ahhhhhhhhhh.
+        // the original tile should be modified for type that's not 1, to prevent the wrong position restored while canceling.
+        // when set to map, the target tile should be the left bottom tile of the unit.
         for (var i in unitTiles) {
             if (exiledTileFrom.x >= unitTiles[i].x) exiledTileFrom.x = unitTiles[i].x;
+            if (exiledTileFrom.y <= unitTiles[i].y) exiledTileFrom.y = unitTiles[i].y;
         }
         
         // unExile would be executed in the doUnExile process.
