@@ -23,13 +23,14 @@ coh.UnitWrap = function() {
     };
 
     var construct = function(unit, tileSprite, unitSprite) {
-        this.unit = unit;
         this.tileSprite = tileSprite;
-        this.unitSprite = unitSprite;
         
         var _coh = coh,
             shadow = cc.Sprite.create(_coh.res.imgs.shadow),
             typeConfig = this.getTypeConfig();
+        
+        this.unit = unit;
+        this.unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : _coh.Battle.getColorFromStatus(status)}),;
         
         shadow.attr({
             x : 0,

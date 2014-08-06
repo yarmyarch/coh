@@ -142,14 +142,6 @@ coh.Battle = (function(){
         },
         
         /**
-         * @param attacker [String] attacker faction
-         * @param defender [String] defender faction
-         */
-        generate : function(attacker, defender) {
-            
-        },
-        
-        /**
          * @param current
          * @param config {Object}
          *  {

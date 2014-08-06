@@ -533,7 +533,6 @@ coh.BattleScene = function() {
                 
                 // color would be kept in the unit object.
                 unit = player.getUnplacedUnit(status),
-                unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : _coh.Battle.getColorFromStatus(status)}),
                 tileSprite = cc.DrawNode.create(),
                 unitWrap = new _coh.UnitWrap(unit, tileSprite, unitSprite),
                 
@@ -744,6 +743,24 @@ coh.BattleScene = function() {
             if (unitWrap.unit.getType() != 1) return;
             
             // Here we go!
+            var _buf = buf,
+                tile = unitWrap.getTileRecords()[0],
+                index = handlerList.tileSelector.getArrowIndex(
+                    unitWrap.getPlayer().isAttacker(), 
+                    unitWrap.unit.getType(), 
+                    tile.x, 
+                    tile.y
+                ),
+                converts = coh.Battle.findAllPossibleConverts(_buf.statusMatrix[unitWrap.getPlayer().getId()], 
+                    index.x, 
+                    index.y, 
+                    unitWrap.unit.getColor()
+                );
+            
+            // there won't be any complicated converts for a single unit.
+            if (converts.length) {
+                
+            }
         },
         
         // XXXXXX for debug usage currently.
