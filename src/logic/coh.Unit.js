@@ -77,6 +77,17 @@ var UnitObject = function(unitName) {
         return buf.color;
     };
     
+    /**
+     * could only be actived once the color is set.
+     */
+    self.getStatus = function() {
+        var _buf = buf;
+        if (_buf.color == coh.LocalConfig.NO_COLOR) {
+            return 0;
+        }
+        return coh.Battle.getStatus(self.getType(), _buf.color);
+    };
+    
     construct.apply(self, arguments);
     
     return self;

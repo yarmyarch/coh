@@ -1,9 +1,9 @@
 /**
- *@implements TileSelector
- * relay on instance of TileSelector,
- * Decorator of tileSelectors.
+ *@implements MapUtil
+ * relay on instance of MapUtil,
+ * Decorator of mapUtils.
  *
- * It's departed from tileSelector because it's related to the unit types.
+ * It's departed from mapUtil because it's related to the unit types.
  */
 
 var coh = coh || {};
@@ -34,20 +34,20 @@ coh.utils = coh.utils || {};
         }
     };
     
-    var getInstance = function(tileSelector) {
+    var getInstance = function(mapUtil) {
         if (!instance) {
-            if (!tileSelector) return null;
+            if (!mapUtil) return null;
             instance = {};
             
-            for (var i in tileSelector) {
-                instance[i] = tileSelector[i];
+            for (var i in mapUtil) {
+                instance[i] = mapUtil[i];
             };
             
             /**
              * functions modifying results from the tile selectors;
              */
             instance.getTilePosition = function(isAttacker, type, row, column) {
-                var position = tileSelector.getTilePosition(isAttacker, type, row, column);
+                var position = mapUtil.getTilePosition(isAttacker, type, row, column);
                 handlerList.baseTransformer[type] && (position = handlerList.baseTransformer[type](isAttacker, position));
                 
                 return position;
@@ -84,9 +84,9 @@ coh.utils = coh.utils || {};
         return instance;
     };
     
-    coh.utils.BaseTileTransformer = function(tileSelector) {
+    coh.utils.BaseTileTransformer = function(mapUtil) {
         //getTilePosition
-        return getInstance(tileSelector);
+        return getInstance(mapUtil);
     }
 
     coh.utils.BaseTileTransformer.getInstance = getInstance;

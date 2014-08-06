@@ -36,8 +36,8 @@ coh.MapLayer = cc.Layer.extend({
             investigate = function() {
                 _coh.scene["battle"] = _coh.scene["battle"] || (_coh.scene["battle"] = new _coh.BattleScene(_coh.res.map.battle.field_16X16, _coh.res.imgs.market));
                 
-                _coh.scene["battle"].setTileSelector(
-                    _coh.utils.BaseTileTransformer.getInstance(_coh.utils.TileSelector_16X16.getInstance())
+                _coh.scene["battle"].setMapUtil(
+                    _coh.utils.BaseTileTransformer.getInstance(_coh.utils.MapUtil_16X16.getInstance())
                 );
                 
                 cc.director.runScene(

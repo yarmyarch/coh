@@ -1,6 +1,6 @@
 /**
  * relay on :
-    TileSelector: if you would like to place units to the battle ground;
+    MapUtil: if you would like to place units to the battle ground;
  * inject it from the outer factory.
  *
  *@dispatch filterName: battleSceneEntered
@@ -44,7 +44,7 @@ coh.BattleScene = function() {
     var handlerList = {
         // private properties
         // should be injected from outside.
-        tileSelector : null
+        mapUtil : null
     };
     
     // private functions
@@ -54,7 +54,7 @@ coh.BattleScene = function() {
          * Otherwise, locate to the poingint column, and always try to find a unit that's closer to the front line.
          */
         getAvaliableTiles : function(isAttacker, tileX, tileY) {
-            var _ts = handlerList.tileSelector,
+            var _ts = handlerList.mapUtil,
                 xRange = _ts.getXRange(),
                 yRange = _ts.getYRange(isAttacker),
             
@@ -89,7 +89,7 @@ coh.BattleScene = function() {
         },
         
         getRealColumnTile : function(unitWrap, columnTile) {
-            var _ts = handlerList.tileSelector,
+            var _ts = handlerList.mapUtil,
                 typeConfig = unitWrap.getTypeConfig(),
                 isAttacker = unitWrap.getPlayer().isAttacker(),
                 yRange = _ts.getYRange(isAttacker),
@@ -157,7 +157,7 @@ coh.BattleScene = function() {
         },
         
         chargeToFrontLine : function(unitWrap) {
-            var _ts = handlerList.tileSelector,
+            var _ts = handlerList.mapUtil,
                 _buf = buf,
                 tiles = unitWrap.getTileRecords(),
                 isAttacker = unitWrap.getPlayer().isAttacker(),
@@ -295,14 +295,14 @@ coh.BattleScene = function() {
             this.battleMap = _buf.tmxList[mapSrc];
         },
         
-        setTileSelector : function(selector) {
-            handlerList.tileSelector = selector;
+        setMapUtil : function(selector) {
+            handlerList.mapUtil = selector;
         },
         
         getTileInGlobal : function(posX, posY) {
             var scale = this.battleMap.scale;
             
-            return handlerList.tileSelector.getTileFromCoord(
+            return handlerList.mapUtil.getTileFromCoord(
                 this.battleMap.width * scale, 
                 this.battleMap.height * scale,
                 posX - this.battleMap.x * scale, 
@@ -325,7 +325,7 @@ coh.BattleScene = function() {
             if (!buf.unitMatrix[tile.x]) return null;
             
             var _buf = buf,
-                range = handlerList.tileSelector.getYRange(isAttacker),
+                range = handlerList.mapUtil.getYRange(isAttacker),
                 start = range[0],
                 deata = this.isAttackerTurn() ? 1 : -1,
                 end = range[range.length - 1],
@@ -343,7 +343,7 @@ coh.BattleScene = function() {
         },
         
         isTileInGround : function(isAttacker, tile) {
-            return handlerList.tileSelector.isTileInGround(isAttacker, tile);
+            return handlerList.mapUtil.isTileInGround(isAttacker, tile);
         },
         
         getPositionFromTile : function(tile) {
@@ -501,7 +501,7 @@ coh.BattleScene = function() {
         },
         
         getDefaultDataGroup : function(isAttacker) {
-            return handlerList.tileSelector.getDefaultDataGroup(isAttacker);
+            return handlerList.mapUtil.getDefaultDataGroup(isAttacker);
         },
         
         renderPlayer : function(player, matrix) {
@@ -521,7 +521,7 @@ coh.BattleScene = function() {
         },
         
         /**
-         * tileSelector required. Should be injected from outside.
+         * mapUtil required. Should be injected from outside.
          * translate rowNum and colNum into tile and position to be placed.
          */
         placeUnit : function(player, status, rowNum, colNum) {
@@ -533,11 +533,11 @@ coh.BattleScene = function() {
                 
                 // color would be kept in the unit object.
                 unit = player.getUnplacedUnit(status),
-                tileSprite = cc.DrawNode.create(),
-                unitWrap = new _coh.UnitWrap(unit, tileSprite, unitSprite),
+                unitWrap = new _coh.UnitWrap(unit),
+                tileSprite = unitWrap.tileSprite,
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                tilePosition = handlerList.tileSelector.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
+                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitWrap
             unitWrap.setPlayer(player);
@@ -571,7 +571,7 @@ coh.BattleScene = function() {
                 typeConfig = unitWrap.getTypeConfig(),
                 // if there exist tiles in the unitWrap and having the same column number (x), move it directly here.
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
-                originalY = handlerList.tileSelector.getValidTile(unitWrap);
+                originalY = handlerList.mapUtil.getValidTile(unitWrap);
             
             // prevent focus, no other mouse/touch actions during the moving;
             _buf.focusTagLocked = true;
@@ -617,7 +617,7 @@ coh.BattleScene = function() {
             var _buf = buf,
                 type = unitWrap.unit.getType(),
                 playerId = unitWrap.getPlayer().getId(),
-                indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+                indexes = handlerList.mapUtil.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
             
             _buf.unitMatrix[tile.x][tile.y] = unitWrap;
             
@@ -628,13 +628,13 @@ coh.BattleScene = function() {
             // modify the status matrix for the player
             !_buf.statusMatrix[playerId] && (_buf.statusMatrix[playerId] = []);
             !_buf.statusMatrix[playerId][indexes.row] && (_buf.statusMatrix[playerId][indexes.row] = []);
-            _buf.statusMatrix[playerId][indexes.row][indexes.column] = coh.Battle.getStatus(type, unitWrap.unit.getColor());
+            _buf.statusMatrix[playerId][indexes.row][indexes.column] = unitWrap.unit.getStatus();
         },
         
         unbindUnitToTile : function(unitWrap, tile) {
             var _buf = buf,
                 type = unitWrap.unit.getType(),
-                indexes = handlerList.tileSelector.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+                indexes = handlerList.mapUtil.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
             
             _buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
@@ -668,7 +668,7 @@ coh.BattleScene = function() {
                     }),
                 targetMapTile;
             
-            if (!handlerList.tileSelector.isTileInGround(isAttacker, targetTile)) {
+            if (!handlerList.mapUtil.isTileInGround(isAttacker, targetTile)) {
                 // try to find it in another direction.
                 targetTile = util.getRealColumnTile(
                     unitWrap, {
@@ -677,12 +677,12 @@ coh.BattleScene = function() {
                     });
             }
             // faild finding a possible tile, do nothing.
-            if (!handlerList.tileSelector.isTileInGround(isAttacker, targetTile)) {
+            if (!handlerList.mapUtil.isTileInGround(isAttacker, targetTile)) {
                 focusTag.arrowDirection.setVisible(false);
                 return false;
             }
             
-            targetTile = handlerList.tileSelector.transformUpdate(isAttacker, unitWrap.unit.getType(), targetTile);
+            targetTile = handlerList.mapUtil.transformUpdate(isAttacker, unitWrap.unit.getType(), targetTile);
             
             targetMapTile = self.getMapTile(targetTile);
             
@@ -745,7 +745,7 @@ coh.BattleScene = function() {
             // Here we go!
             var _buf = buf,
                 tile = unitWrap.getTileRecords()[0],
-                index = handlerList.tileSelector.getArrowIndex(
+                index = handlerList.mapUtil.getArrowIndex(
                     unitWrap.getPlayer().isAttacker(), 
                     unitWrap.unit.getType(), 
                     tile.x, 

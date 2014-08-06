@@ -1,5 +1,5 @@
 /**
- *@implements TileSelector
+ *@implements MapUtil
  */
  
 var coh = coh || {};
@@ -108,10 +108,10 @@ coh.utils = coh.utils || {};
         return instance;
     };
     
-    coh.utils.TileSelector_16X16 = function() {
+    coh.utils.MapUtil_16X16 = function() {
         //getTilePosition
         return getInstance();
     }
 
-    coh.utils.TileSelector_16X16.getInstance = getInstance;
+    coh.utils.MapUtil_16X16.getInstance = getInstance;
 })();
