@@ -59,8 +59,8 @@ coh.Battle = (function(){
                 convert,
                 match,
                 result = [];
-            for (var i in _lc.CONVERT_TYPE) {
-                convert = _lc.CONVERT_TYPE[i];
+            for (var i in _lc.CONVERT_MATRIX) {
+                convert = _lc.CONVERT_MATRIX[i];
                 match = true;
                 if (convert.length > rowNum + 1 || convert[0].length > colNum + 1) continue;
                 for (var rowInCon = convert.length - 1, queue; queue = convert[rowInCon]; --rowInCon) {

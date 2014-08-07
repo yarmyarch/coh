@@ -210,11 +210,50 @@ coh.BattleScene = function() {
             {
                 column : column number,
                 row : row number,
-                converts : [<typeId>]
+                converts : [<typeId>],
+                isAttacker : <bool>
             }
          */
         getPhalanx : function(convert) {
+            var _buf = buf,
+                _coh = coh,
+                // right bottom tile of the convert
+                rbTile = handlerList.mapUtil.getTilePosition(convert.isAttacker, _coh.LocalConfig.UNIT_TYPES.SOLDIER, convert.row, convert.column),
+                convertMatrix,
+                unitWraps,
+                unitWrap,
+                halt = false,
+                row, column,
+                i,j,k;
             
+            for (i = 0, cType; cType = convert.converts[i]; ++i) {
+                convertMatrix = _coh.LocalConfig.CONVERT_MATRIX[cType];
+                headUnit = null;
+                halt = false;
+                unitWraps = [];
+                for (j = 0; row = convertMatrix[j]; ++j) {   
+                    for (k = 0; column = row[k]; ++k) {
+                        unitWrap = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
+                        
+                        // if the unit is in another phalanx that's having the same type with the existing one, fail for the convert.
+                        if (unitWrap.inPhalanx(cType)) {
+                            halt = true;
+                            break;
+                        }
+                        
+                        unitWraps.push(unitWrap);
+                    }
+                    if (halt) {
+                        break;
+                    }
+                }
+                if (halt) {
+                    continue;
+                }
+                
+                // create the phalanx object
+                
+            }
         }
     };
     
@@ -756,10 +795,12 @@ coh.BattleScene = function() {
             var _buf = buf,
                 _coh = coh,
                 _mu = handlerList.mapUtil,
+                player,
                 unitWrap,
                 tile,
                 index,
-                converts = [];
+                converts,
+                allConverts = [];
             
             for (var i = 0; unitWrap = unitWraps[i]; ++i) {
                 // do nothing for types that's not 1.
@@ -767,23 +808,30 @@ coh.BattleScene = function() {
                 
                 // Here we go!
                 tile = unitWrap.getTileRecords()[0];
+                player = unitWrap.getPlayer();
                 index = _mu.getArrowIndex(
-                    unitWrap.getPlayer().isAttacker(), 
+                    player.isAttacker(), 
                     unitWrap.unit.getType(), 
                     tile.x, 
                     tile.y
                 );
-                converts = converts.concat(_coh.Battle.findAllPossibleConverts(_buf.statusMatrix[unitWrap.getPlayer().getId()], 
+                converts = _coh.Battle.findAllPossibleConverts(_buf.statusMatrix[player.getId()], 
                     index.x, 
                     index.y, 
                     unitWrap.unit.getColor()
-                ));
+                );
+                
+                for (var j in converts) {
+                    converts[j].isAttacker = player.isAttacker();
+                }
+                
+                allConverts = allConverts.concat(converts);
             }
                 
             // Mind dulplicated converts for multy units.
             // No units could be joint into 2 converts that's having the same type, except for walls.
-            for (var i = 0, convert; convert = converts[i]; ++i) {
-                util.getPhalanx(convert);
+            for (var i = 0, convert; convert = allConverts[i]; ++i) {
+                util.getPhalanx(allConverts[i]);
             }
         },
         

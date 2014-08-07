@@ -21,7 +21,14 @@ coh.LocalConfig = {
         TANK : 3,
         CHAMPION : 4
     },
-    CONVERT_TYPE : {
+    CONVERT_TYPES : {
+        SOLDIER : 1,
+        ELITE : 2,
+        WALL : 3,
+        TANK : 4,
+        CHAMPION : 5
+    },
+    CONVERT_MATRIX : {
         // possible location type may create a convert.
         1 : [
             [1], 
@@ -75,7 +82,7 @@ coh.LocalConfig = {
         4 : 1.1
     },
     
-    PRE_RAND_ID : "YarRi_",
+    PRE_RAND_ID : "yri_",
     
     // priority when drawn in the canvas.
     Z_INDEX : {
