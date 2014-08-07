@@ -122,11 +122,11 @@ coh.BattleScene = function() {
         },
         
         /**
-         * When 1 unit removed, all other units behind it should be in charging mode to the front line.
+         * When 1 unit removed, all other units behind it should be in movinging mode to the front line.
          * This function is used to find the directly affected units behind the given unit.
          * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getChargingUnits : function(unitWraps, tileRecords) {
+        getMovingingUnits : function(unitWraps, tileRecords) {
             
             var _buf = buf,
                 tiles,
@@ -156,7 +156,7 @@ coh.BattleScene = function() {
             return result;
         },
         
-        chargeToFrontLine : function(unitWrap) {
+        moveToFrontLine : function(unitWrap) {
             var _ts = handlerList.mapUtil,
                 _buf = buf,
                 tiles = unitWrap.getTileRecords(),
@@ -203,6 +203,18 @@ coh.BattleScene = function() {
             
             // return moved distance.
             return distance;
+        },
+        
+        /**
+         *@param convert convert object generated from coh.Battle that having data below:
+            {
+                column : column number,
+                row : row number,
+                converts : [<typeId>]
+            }
+         */
+        getPhalanx : function(convert) {
+            
         }
     };
     
@@ -705,6 +717,7 @@ coh.BattleScene = function() {
             return targetTile;
         },
         
+        // mind removeUnits - all affected units are gathered, sharing the same convert group.
         removeUnit : function(unitWrap) {
             
             if (buf.focusTagLocked) return;
@@ -714,7 +727,7 @@ coh.BattleScene = function() {
             
             var _util = util,
                 affectedUnits,
-                chargedUnits = [unitWrap],
+                movedUnits = [unitWrap],
                 tileRecords = [unitWrap.getTileRecords()];
             
             // XXXXXX Play the removing animate in target tile.
@@ -722,15 +735,15 @@ coh.BattleScene = function() {
             self.battleMap.removeChild(unitWrap.tileSprite, true);
             self.unbindUnit(unitWrap);
             
-            while (chargedUnits.length) {
-                affectedUnits = util.getChargingUnits(chargedUnits, tileRecords);
-                chargedUnits = [];
+            while (movedUnits.length) {
+                affectedUnits = util.getMovingUnits(movedUnits, tileRecords);
+                movedUnits = [];
                 tileRecords = [];
                 for (var i in affectedUnits) {
                     // the unit isn't moved, so it won't have any effect on other units behind it.
                     tileRecords.push(affectedUnits[i].getTileRecords());
-                    if (util.chargeToFrontLine(affectedUnits[i])) {
-                        chargedUnits.push(affectedUnits[i]);
+                    if (util.moveToFrontLine(affectedUnits[i])) {
+                        movedUnits.push(affectedUnits[i]);
                     } else {
                         tileRecords.pop();
                     }
@@ -738,28 +751,39 @@ coh.BattleScene = function() {
             };
         },
         
-        tryConvert : function(unitWrap) {
-            // do nothing for types that's not 1.
-            if (unitWrap.unit.getType() != 1) return;
+        doConverts : function(unitWraps) {
             
-            // Here we go!
             var _buf = buf,
-                tile = unitWrap.getTileRecords()[0],
-                index = handlerList.mapUtil.getArrowIndex(
+                _coh = coh,
+                _mu = handlerList.mapUtil,
+                unitWrap,
+                tile,
+                index,
+                converts = [];
+            
+            for (var i = 0; unitWrap = unitWraps[i]; ++i) {
+                // do nothing for types that's not 1.
+                if (unitWrap.unit.getType() != 1) continue;
+                
+                // Here we go!
+                tile = unitWrap.getTileRecords()[0];
+                index = _mu.getArrowIndex(
                     unitWrap.getPlayer().isAttacker(), 
                     unitWrap.unit.getType(), 
                     tile.x, 
                     tile.y
-                ),
-                converts = coh.Battle.findAllPossibleConverts(_buf.statusMatrix[unitWrap.getPlayer().getId()], 
+                );
+                converts = converts.concat(_coh.Battle.findAllPossibleConverts(_buf.statusMatrix[unitWrap.getPlayer().getId()], 
                     index.x, 
                     index.y, 
                     unitWrap.unit.getColor()
-                );
-            
-            // there won't be any complicated converts for a single unit.
-            if (converts.length) {
+                ));
+            }
                 
+            // Mind dulplicated converts for multy units.
+            // No units could be joint into 2 converts that's having the same type, except for walls.
+            for (var i = 0, convert; convert = converts[i]; ++i) {
+                util.getPhalanx(convert);
             }
         },
         

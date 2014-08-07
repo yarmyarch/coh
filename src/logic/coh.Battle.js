@@ -278,7 +278,11 @@ coh.Battle = (function(){
          * we won't test those ones behind (row number + 1) the target position,
          * because that means the node was moved (position changed), while another findAllPossibleConverts required for that node.
          * this function is based on util.findConvert.
-         * @return 
+         * @return {
+                column : column number,
+                row : row number,
+                converts : [<typeId>]
+            }
          */
         findAllPossibleConverts : function(dataGroup, colNum, rowNum, color) {
             

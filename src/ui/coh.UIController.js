@@ -79,6 +79,7 @@ coh.UIController = (function() {
                 _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitWrap, tile, battleScene);
             }
         },
+        
         doCheckOrExile : function(event, battleScene) {
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
@@ -102,6 +103,7 @@ coh.UIController = (function() {
             
             _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitWrap, tile, battleScene);
         },
+        
         doExileMove : function(event, battleScene) {
             var location = event.getLocationInView(),
                 globalTile = battleScene.getTileInGlobal(location.x, location.y),
@@ -114,9 +116,10 @@ coh.UIController = (function() {
                 return;
             }
             
-            targetTile = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom    );
+            targetTile = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom);
             targetTile && (_buf.battle.exiledTileTo = targetTile);
         },
+        
         doUnExile : function(event, battleScene) {
             
             var _buf = buf,
@@ -149,6 +152,7 @@ coh.UIController = (function() {
             _buf.battle.exiledUnit = null;
             _buf.mouseAction = "locate";
         },
+        
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),

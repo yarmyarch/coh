@@ -13,6 +13,14 @@ coh.LocalConfig = {
         3 : [1,2],
         4 : [2,2]
     },
+    UNIT_TYPES: {
+        // blank, unused datagroup data and converted units shares this type.
+        STATIC : 0,
+        SOLDIER : 1,
+        ELITE : 2,
+        TANK : 3,
+        CHAMPION : 4
+    },
     CONVERT_TYPE : {
         // possible location type may create a convert.
         1 : [
@@ -42,6 +50,7 @@ coh.LocalConfig = {
     },
     STATUS_BLANK : 0,
     STATUS_OCCUPIED : 1,
+    STATUS_CONVERTED : 2,
     COLOR_COUNT : 3,
     // frame rate for general animations.
     FRAME_RATE : 1/60,

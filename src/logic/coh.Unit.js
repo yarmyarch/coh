@@ -16,12 +16,6 @@ var UnitObject = function(unitName) {
     var buf = {
         id : 0,
         name : false,
-        
-        level : 0,
-        
-        // generated from level
-        defend : 0,
-        attack : 0,
         color : _coh.LocalConfig.NO_COLOR,
         
         // other configurations from LC.
@@ -55,18 +49,6 @@ var UnitObject = function(unitName) {
     
     self.getId = function() {
         return buf.id;
-    };
-    
-    self.getLevel = function() {
-        return buf.level;
-    };
-    
-    self.getDefend = function() {
-        return buf.defend;
-    };
-    
-    self.getAttack = function() {
-        return buf.attack;
     };
     
     self.setColor = function(newColor) {
