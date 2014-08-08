@@ -6,9 +6,14 @@ echo "compiling js files..."
 
 sfile="src/jsList.json"
 tfile="project.json"
+pfile="coh.js"
 mfile="asset/coh.js"
 mfileCmp="asset\/coh\.js"
 vNum=`awk -F '=|"' '/jsList/ {print $5+1}' ${tfile}`
+
+echo "making backup files for coh.js..."
+
+cp ${mfile} "src/${pfile}.bak"
 
 if 
     [ ! -n $vNum ]

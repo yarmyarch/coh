@@ -8,7 +8,7 @@
         "src/util/coh.Util.js",
         
         "src/util/SlideUtil.js",
-        "src/util/coh.utils.TileSelector_16X16.js",
+        "src/util/coh.utils.MapUtil_16X16.js",
         "src/util/coh.utils.BaseTileTransformer.js",
         "src/util/coh.utils.FilterUtil.js",
         "src/util/coh.utils.BaseCalculator.js",
