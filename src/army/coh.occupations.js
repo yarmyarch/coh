@@ -1,6 +1,5 @@
 var coh = coh || {};
 
-// ui related config exists in resource.js
 coh.occupations = {
     archer : {
         attack : 8,

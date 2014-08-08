@@ -3308,7 +3308,7 @@ coh.UIController = (function() {
                     // If type 1 - normal solders, then there might be converts generated.
                     // Let's find and make it directly.
                     if (exiledUnit.unit.getType() == 1)
-                    battleScene.tryConvert(exiledUnit);
+                    battleScene.doConverts([exiledUnit]);
                 });
             } else {
                 battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileFrom);

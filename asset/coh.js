@@ -113,7 +113,6 @@ coh.units = {
     }
 };var coh = coh || {};
 
-// ui related config exists in resource.js
 coh.occupations = {
     archer : {
         attack : 8,
@@ -1376,14 +1375,16 @@ var UnitObject = function(unitName) {
     
     var self = this,
         _coh = coh,
-        LC = _coh.units[unitName];
-    
-    if (!LC) return null;
+        // occupation config
+        O_LC = _coh.occupations[unitName],
+        // unit config
+        U_LC = _coh.units[unitName];
     
     var buf = {
         id : 0,
         name : false,
         color : _coh.LocalConfig.NO_COLOR,
+        isHero : false,
         
         // other configurations from LC.
         conf : {}
@@ -1391,13 +1392,22 @@ var UnitObject = function(unitName) {
     
     var construct = function(unitName) {
         
-        var _buf = buf;
+        var _buf = buf,
+            _lc,
+            i;
         
         _buf.name = unitName;
         
+        for (i in U_LC) {
+            _lc[i] = U_LC[i];
+        }
+        for (i in O_LC) {
+            _lc[i] = O_LC[i];
+        }
+        
         // other initializations required;
-        for (var i in LC) {
-            _buf.conf[i] = LC[i];
+        for (i in _lc) {
+            _buf.conf[i] = _lc[i];
             
             // append getter for all configs.
             self["get" + i[0].toUpperCase() + i.substr(1)] = (function(i) {
@@ -1437,6 +1447,20 @@ var UnitObject = function(unitName) {
         return coh.Battle.getStatus(self.getType(), _buf.color);
     };
     
+    self.isHero = function() {
+        return buf.isHero;
+    };
+    
+    self.setAsHero = function() {
+        var _buf = buf;
+        
+        // We won't set it again.
+        if (_buf.isHero) return;
+        _buf.isHero = true;
+        
+        coh.util.FilterUtil.applyFilters("heroGenerated", unit);
+    };
+    
     construct.apply(self, arguments);
     
     return self;
@@ -1445,10 +1469,49 @@ var UnitObject = function(unitName) {
 /**
  * Unit factary and all public functions related to units.
  */
-coh.Unit = (function(level) {
+coh.Unit = (function() {
     
-    var self;
+    var self,
+        _coh = coh;
 
+    // react filters here.
+    
+    /**
+     * extea actions appended for hero units.
+     */
+    _coh.FilterUtil.addFilter("heroGenerated", function(unit) {
+        
+        // New buffer for the unit object.
+        var buf = {
+            occupation : null,
+            levels : null
+        };
+        
+        /**
+         * Set level history for the unit, the level history won't include it's current occupation.
+         * Attack/Hp/Speeds would be generated from the level history.
+         * The object may look like this:
+            {
+                <occupation name> : <level>,
+                // ... other occupations here.
+            }
+         */
+        unit.setLevels = function(levels) {
+            buf.levels = levels;
+        };
+        
+        unit.setOccupation = function(ocptName) {
+            buf.occupation = _coh.occupations[ocptName];
+        };
+        
+        /**
+         * XXXXXX Mind for generated heros. If it's not configured in units/occupations, functions related should all be regenerated. Is that right?
+         */
+        unit.getAttack = function() {
+            // here we go.
+        }
+    });
+    
     return self = {
         getType : function(unitName) {
             return (coh.units[unitName] && coh.units[unitName].type) || 0;
@@ -1458,7 +1521,11 @@ coh.Unit = (function(level) {
          * factory function that returns the unit object via the given key.
          */
         getInstance : function(unitName) {
-            return new UnitObject(unitName);
+            var unit = new UnitObject(unitName);
+            
+            coh.util.FilterUtil.applyFilters("unitGenerated", unit);
+            
+            return unit;
         }
     }
     
@@ -1482,18 +1549,6 @@ var coh = coh || {};
         // ... others
     }
  */
-var g_util = {
-    /**
-     * get attack of a non-hero unit.
-     * linear.
-     */
-    getUnitAttack : function(unit, level) {
-        return unit.getAttack()
-    },
-    
-    
-}
-
 coh.Player = function(unitConfig) {
     
     var self = this;
@@ -1525,7 +1580,10 @@ coh.Player = function(unitConfig) {
         unitsUnplaced : {},
         
         savedData : {
-            unitLevels : {}
+            unitLevels : {},
+            heros : {
+                
+            }
         }
     };
     
@@ -1571,6 +1629,14 @@ coh.Player = function(unitConfig) {
             if (_u[i][type]) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
+                
+                unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
+                // set level history for hero units.
+                if (_buf.savedData.heros[unitName]) {
+                    unit.setAsHero();
+                    unit.setLevels(_buf.savedData.heros[unitName].levels);
+                }
+                
                 unit.setColor(_coh.Battle.getColorFromStatus(status));
                 break;
             }
@@ -1638,15 +1704,20 @@ coh.Player = function(unitConfig) {
         buf.isAttacker = false;
     };
     
-    self.getUnitAttack = function(unitName) {
-        var _buf = buf,
-            attack = "XXXXXX";
-        
-        if (_buf.savedData.unitLevels[unitName]) {
-            // normal unit.
-        }
-        
-        return _buf.savedData.unitLevels[unitName] || 0;
+    self.getUnitAttack = function(unit) {
+        return handlerList.calculator.getAttack(unit.getAttack(), _buf.savedData.unitLevels[unitName] || 0);
+    };
+    
+    self.getUnitHp = function(unit) {
+        return handlerList.calculator.getHp(unit.getHp(), _buf.savedData.unitLevels[unitName] || 0);
+    };
+    
+    self.getUnitSpeed = function(unit) {
+        return handlerList.calculator.getSpeed(unit.getSpeed(), unit.getLevel());
+    };
+    
+    self.getTurnsForCharge = function(unit) {
+        return handlerList.calculator.getTurn(self.getUnitSpeed(unit));
     };
     
     self.setCalculator = function(newClt) {

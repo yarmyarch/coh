@@ -16,18 +16,6 @@ var coh = coh || {};
         // ... others
     }
  */
-var g_util = {
-    /**
-     * get attack of a non-hero unit.
-     * linear.
-     */
-    getUnitAttack : function(unit, level) {
-        return unit.getAttack()
-    },
-    
-    
-}
-
 coh.Player = function(unitConfig) {
     
     var self = this;
@@ -59,7 +47,10 @@ coh.Player = function(unitConfig) {
         unitsUnplaced : {},
         
         savedData : {
-            unitLevels : {}
+            unitLevels : {},
+            heros : {
+                
+            }
         }
     };
     
@@ -105,6 +96,14 @@ coh.Player = function(unitConfig) {
             if (_u[i][type]) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
+                
+                unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
+                // set level history for hero units.
+                if (_buf.savedData.heros[unitName]) {
+                    unit.setAsHero();
+                    unit.setLevels(_buf.savedData.heros[unitName].levels);
+                }
+                
                 unit.setColor(_coh.Battle.getColorFromStatus(status));
                 break;
             }
@@ -172,15 +171,20 @@ coh.Player = function(unitConfig) {
         buf.isAttacker = false;
     };
     
-    self.getUnitAttack = function(unitName) {
-        var _buf = buf,
-            attack = "XXXXXX";
-        
-        if (_buf.savedData.unitLevels[unitName]) {
-            // normal unit.
-        }
-        
-        return _buf.savedData.unitLevels[unitName] || 0;
+    self.getUnitAttack = function(unit) {
+        return handlerList.calculator.getAttack(unit.getAttack(), _buf.savedData.unitLevels[unitName] || 0);
+    };
+    
+    self.getUnitHp = function(unit) {
+        return handlerList.calculator.getHp(unit.getHp(), _buf.savedData.unitLevels[unitName] || 0);
+    };
+    
+    self.getUnitSpeed = function(unit) {
+        return handlerList.calculator.getSpeed(unit.getSpeed(), unit.getLevel());
+    };
+    
+    self.getTurnsForCharge = function(unit) {
+        return handlerList.calculator.getTurn(self.getUnitSpeed(unit));
     };
     
     self.setCalculator = function(newClt) {
