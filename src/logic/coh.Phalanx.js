@@ -13,8 +13,21 @@ coh.Phalanx = function(type, units) {
         hp : 0
     };
     
-    var construct = function(type, units) {
-        buf.type = type;
+    var construct = function(type, unitWraps) {
+        
+        var _buf = buf;
+        
+        _buf.type = type;
+        _buf.unitWraps= unitWraps;
+        
+        var leadUnit = unitWraps[0];
+        
+        for (var i = 0, unitWrap; unitWrap = unitWraps[i]; ++i) {
+            unitWrap.convert();
+        }
+        
+        // How should the attack be calculated via the level?
+        _buf.attack = leadUnit.unit.getAttack() * leadUnit.getPlayer().getLevelOfUnit(leadUnit.unit.getName())
     };
     
     self.getType = function() {
@@ -27,6 +40,10 @@ coh.Phalanx = function(type, units) {
     
     self.getHp = function() {
         return buf.hp;
+    };
+    
+    self.getUnitWraps = function() {
+        return buf.unitWraps;
     };
     
     construct.apply(self, arguments);

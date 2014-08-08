@@ -126,6 +126,13 @@ coh.UnitBody = function() {
         buf.tileRecord = [];
     };
     
+    /**
+     * play convert animations, or change status if necessary.
+     */
+    self.convert(cType) {
+        
+    };
+    
     construct.apply(self, arguments);
     
     return self;

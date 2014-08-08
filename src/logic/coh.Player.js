@@ -20,8 +20,10 @@ coh.Player = function(faction, level, unitConfig) {
     var buf = {
         
         id : 0,
-        dataGroup : [],
         
+        /**
+         * Should these dynamic data be loaded from saved data?
+         *
         faction : false, 
         
         level : 0, 
@@ -29,6 +31,7 @@ coh.Player = function(faction, level, unitConfig) {
         // generated from level
         currentHP : 0,
         totalHP : 0,
+        */
         
         // attacker for default.
         isAttacker : true,
@@ -38,10 +41,14 @@ coh.Player = function(faction, level, unitConfig) {
         /**
          * indexed by priority and unit type.
          */
-        unitsUnplaced : {}
+        unitsUnplaced : {},
+        
+        savedData : {
+            unitLevels : {}
+        }
     };
     
-    var construct = function(faction, level, unitConfig) {
+    var construct = function(unitConfig) {
         
         var _buf = buf,
             _coh = coh,
@@ -107,7 +114,6 @@ coh.Player = function(faction, level, unitConfig) {
         
         if (unit) {
             _buf.unitsUnplaced[unit.getPriority()][unit.getType()].push(unit.getName());
-            unit.
             delete(_buf.units[unitId]);
         }
     };
@@ -116,10 +122,7 @@ coh.Player = function(faction, level, unitConfig) {
         return buf.units[unitId];
     };
     
-    self.getDataGroup = function() {
-        return buf.dataGroup;
-    };
-    
+    /*
     self.getCurrentHP = function() {
         return buf.currentHP;
     };
@@ -127,6 +130,7 @@ coh.Player = function(faction, level, unitConfig) {
     self.getTotalHP = function() {
         return buf.totalHP;
     };
+    */
     
     /**
      * get all units that's on the ground.
@@ -141,13 +145,36 @@ coh.Player = function(faction, level, unitConfig) {
     
     self.isAttacker = function() {
         return buf.isAttacker;
-    }
+    };
     self.setAsAttacker = function() {
         buf.isAttacker = true;
-    }
+    };
     self.setAsDefender = function() {
         buf.isAttacker = false;
-    }
+    };
+    
+    self.getLevelOfUnit = function(unitName) {
+        var _buf = buf;
+        
+        return _buf.savedData.unitLevels[unitName] || 0;
+    };
+    
+    /**
+     * set dynamic data.
+     */
+    self.setData = function(newDataObject) {
+        buf.savedData = newDataObject;
+        // XXXXXX Other actions required for additional calculatings in future.
+    };
+    
+    /**
+     * Get all dynamic data of the player in Object, for saving purpose.
+     * Maybe it should be parsed into base64 or something like that?
+     * Never mind, that's not this Class should be focused on.
+     */
+    self.getData = function() {
+        return buf.savedData;
+    };
     
     construct.apply(self, arguments);
     
