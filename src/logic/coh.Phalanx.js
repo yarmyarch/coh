@@ -27,7 +27,7 @@ coh.Phalanx = function(type, units) {
         }
         
         // How should the attack be calculated via the level?
-        _buf.attack = leadUnit.unit.getAttack() * leadUnit.getPlayer().getLevelOfUnit(leadUnit.unit.getName())
+        _buf.attack = leadUnit.getPlayer().getUnitAttack(leadUnit.unit.getName());
     };
     
     self.getType = function() {

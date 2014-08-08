@@ -1,3 +1,6 @@
+/**
+ * @require Calculator
+ */
 var coh = coh || {};
 
 (function() {
@@ -13,6 +16,18 @@ var coh = coh || {};
         // ... others
     }
  */
+var g_util = {
+    /**
+     * get attack of a non-hero unit.
+     * linear.
+     */
+    getUnitAttack : function(unit, level) {
+        return unit.getAttack()
+    },
+    
+    
+}
+
 coh.Player = function(faction, level, unitConfig) {
     
     var self = this;
@@ -46,6 +61,10 @@ coh.Player = function(faction, level, unitConfig) {
         savedData : {
             unitLevels : {}
         }
+    };
+    
+    handlerList = {
+        calculator : null
     };
     
     var construct = function(unitConfig) {
@@ -153,10 +172,18 @@ coh.Player = function(faction, level, unitConfig) {
         buf.isAttacker = false;
     };
     
-    self.getLevelOfUnit = function(unitName) {
+    self.getUnitAttack = function(unitName) {
         var _buf = buf;
         
+        if (_buf.savedData.unitLevels[unitName]) {
+            // normal unit.
+        }
+        
         return _buf.savedData.unitLevels[unitName] || 0;
+    };
+    
+    self.setCalculator = function(newClt) {
+        handlerList.calculator = newClt;
     };
     
     /**
@@ -173,6 +200,7 @@ coh.Player = function(faction, level, unitConfig) {
      * Never mind, that's not this Class should be focused on.
      */
     self.getData = function() {
+        // XXXXXX JSON.stringify to be used for this case.
         return buf.savedData;
     };
     

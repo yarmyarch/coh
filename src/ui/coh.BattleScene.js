@@ -1,7 +1,6 @@
 /**
- * relay on :
-    MapUtil: if you would like to place units to the battle ground;
- * inject it from the outer factory.
+ *@require {MapUtil}: if you would like to place units to the battle ground;
+ *  inject it from the outer factory.
  *
  *@dispatch filterName: battleSceneEntered
  *@dispatch filterName: unitSpriteCreated
