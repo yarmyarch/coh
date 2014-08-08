@@ -2,7 +2,8 @@
     "jsList" : [
     
         "src/config.js",
-        "src/units/coh.units.js",
+        "src/army/coh.units.js",
+        "src/army/coh.occupations.js",
         "src/resource.js",
         "src/util/coh.Util.js",
         
@@ -10,6 +11,7 @@
         "src/util/coh.utils.TileSelector_16X16.js",
         "src/util/coh.utils.BaseTileTransformer.js",
         "src/util/coh.utils.FilterUtil.js",
+        "src/util/coh.utils.BaseCalculator.js",
         
         "src/cpns/coh.cpns.Cursor.js",
         

@@ -173,7 +173,8 @@ coh.Player = function(faction, level, unitConfig) {
     };
     
     self.getUnitAttack = function(unitName) {
-        var _buf = buf;
+        var _buf = buf,
+            attack = ;
         
         if (_buf.savedData.unitLevels[unitName]) {
             // normal unit.
