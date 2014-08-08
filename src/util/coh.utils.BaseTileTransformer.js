@@ -66,8 +66,8 @@ coh.utils = coh.utils || {};
              * Get the left bottom tile fo the unitwarp.
              * in a 16X16 map, this tile is just the one it should be placed into the scene.
              */
-            instance.getValidTile = function(unitWrap) {
-                var tiles = unitWrap.getTileRecords();
+            instance.getValidTile = function(unitBody) {
+                var tiles = unitBody.getTileRecords();
                 if (!tiles) return null;
                 
                 var  minX = Number.POSITIVE_INFINITY,

@@ -11,7 +11,7 @@ var g_lc = {
     FOCUS_BLINK : cc.repeatForever(cc.sequence(cc.fadeTo(0.618, 64), cc.fadeTo(0.618, 204)))
 }
     
-coh.UnitWrap = function() {
+coh.UnitBody = function() {
     
     var self = this;
     

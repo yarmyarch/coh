@@ -45,8 +45,8 @@ coh.UIController = (function() {
     
     var buf = {
         battle : {            
-            // mark the last handled unitWrap and tile, for click and slide events.
-            lastUnitWrap : null, 
+            // mark the last handled unitBody and tile, for click and slide events.
+            lastUnitBody : null, 
             lastTile : null,
             
             // if a unit is checked twice, it would be removed from the scene.
@@ -72,11 +72,11 @@ coh.UIController = (function() {
                     location.x, 
                     location.y
                 ),
-                unitWrap = battleScene.getUnit(tile);
+                unitBody = battleScene.getUnit(tile);
             
-            if (unitWrap) {
-                battleScene.locateToUnit(unitWrap);
-                _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitWrap, tile, battleScene);
+            if (unitBody) {
+                battleScene.locateToUnit(unitBody);
+                _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitBody, tile, battleScene);
             }
         },
         
@@ -84,14 +84,14 @@ coh.UIController = (function() {
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
                 // only units in its side could be clicked or exiled.
-                unitWrap = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y),
+                unitBody = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y),
                 clickedUnit = battleScene.getUnitInGlobal(location.x, location.y),
-                lastUnitWrap = buf.battle.lastUnitWrap,
+                lastUnitBody = buf.battle.lastUnitBody,
                 lastTile = buf.battle.lastTile;
             
-            // the same unit clicked: clickedUnit should be the same as the lastUnitWrap.
-            if (lastUnitWrap && unitWrap == lastUnitWrap && clickedUnit == unitWrap) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitWrap, tile, battleScene);
+            // the same unit clicked: clickedUnit should be the same as the lastUnitBody.
+            if (lastUnitBody && unitBody == lastUnitBody && clickedUnit == unitBody) {
+                _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitBody, tile, battleScene);
                 return;
             }
             
@@ -101,7 +101,7 @@ coh.UIController = (function() {
                 return;
             }
             
-            _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitWrap, tile, battleScene);
+            _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitBody, tile, battleScene);
         },
         
         doExileMove : function(event, battleScene) {
@@ -156,9 +156,9 @@ coh.UIController = (function() {
         recordTile : function(event, battleScene) {            
             var location = event.getLocationInView(),
                 tile = battleScene.getTileInGlobal(location.x, location.y),
-                unitWrap = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y);
+                unitBody = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y);
 
-            buf.battle.lastUnitWrap = unitWrap;
+            buf.battle.lastUnitBody = unitBody;
             buf.battle.lastTile = tile;
         }
     };
@@ -220,18 +220,18 @@ coh.UIController = (function() {
         }, battleScene);
     });
     
-    _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitWrap, tile, battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitBody, tile, battleScene) {
         
         var _buf = buf;
         
-        if (_buf.battle.checkedUnit == unitWrap) {
+        if (_buf.battle.checkedUnit == unitBody) {
             util.clearStatus(battleScene);
-            battleScene.removeUnit(unitWrap, tile);
+            battleScene.removeUnit(unitBody, tile);
         } else {
             util.clearStatus(battleScene);
-            battleScene.focusOnUnit(unitWrap);
+            battleScene.focusOnUnit(unitBody);
             
-            _buf.battle.checkedUnit = unitWrap;
+            _buf.battle.checkedUnit = unitBody;
         }
     });
     
@@ -261,7 +261,7 @@ coh.UIController = (function() {
         }
     });
     
-    _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitWrap, tile, battleScene) {
+    _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitBody, tile, battleScene) {
         util.clearStatus(battleScene);
     });
     

@@ -22,7 +22,7 @@ coh.BattleScene = function() {
          * Index by poition x and position y.
         unitMatrix = {
             [positionX] : {
-                [positionY] : [UnitWrap],
+                [positionY] : [UnitBody],
                 ... // other unit groups with the position x;
             },
             // other row data
@@ -31,6 +31,9 @@ coh.BattleScene = function() {
         unitMatrix : {},
         // used for the battle util, records the status data group.
         statusMatrix : {},
+        
+        // Units that are ready to charge.
+        phalanxList : [],
         
         focusTag : null,
         
@@ -88,10 +91,10 @@ coh.BattleScene = function() {
             return null;
         },
         
-        getRealColumnTile : function(unitWrap, columnTile) {
+        getRealColumnTile : function(unitBody, columnTile) {
             var _ts = handlerList.mapUtil,
-                typeConfig = unitWrap.getTypeConfig(),
-                isAttacker = unitWrap.getPlayer().isAttacker(),
+                typeConfig = unitBody.getTypeConfig(),
+                isAttacker = unitBody.getPlayer().isAttacker(),
                 yRange = _ts.getYRange(isAttacker),
                 // find the possible tile that can hold the unit.
                 realColTile = columnTile,
@@ -126,7 +129,7 @@ coh.BattleScene = function() {
          * This function is used to find the directly affected units behind the given unit.
          * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getMovingingUnits : function(unitWraps, tileRecords) {
+        getMovingingUnits : function(unitBodys, tileRecords) {
             
             var _buf = buf,
                 tiles,
@@ -137,10 +140,10 @@ coh.BattleScene = function() {
                 tmpUnit,
                 result = [];
             
-            for (i = 0; unitWraps[i]; ++i) {
+            for (i = 0; unitBodys[i]; ++i) {
                 tiles = tileRecords[i],
                 columns = {},
-                isAttacker = unitWraps[i].getPlayer().isAttacker(),
+                isAttacker = unitBodys[i].getPlayer().isAttacker(),
                 startY = 0;
                 
                 for (j in tiles) {
@@ -156,17 +159,17 @@ coh.BattleScene = function() {
             return result;
         },
         
-        moveToFrontLine : function(unitWrap) {
+        moveToFrontLine : function(unitBody) {
             var _ts = handlerList.mapUtil,
                 _buf = buf,
-                tiles = unitWrap.getTileRecords(),
-                isAttacker = unitWrap.getPlayer().isAttacker(),
+                tiles = unitBody.getTileRecords(),
+                isAttacker = unitBody.getPlayer().isAttacker(),
                 yRange = _ts.getYRange(isAttacker),
                 startY,
                 deataY = isAttacker ? -1 : 1,
                 endY = yRange[_ts.PUBLIC_ROW_COUNT],
                 columns = {},
-                validTile = _ts.getValidTile(unitWrap),
+                validTile = _ts.getValidTile(unitBody),
                 y, i, distance = 0, 
                 unitFound;
             
@@ -198,11 +201,24 @@ coh.BattleScene = function() {
             } while (y != endY);
             
             if (distance) {
-                self.setUnitToTile(unitWrap, {x : validTile.x, y : validTile.y - distance});
+                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - distance});
             }
             
             // return moved distance.
             return distance;
+        },
+        
+        inPhalanx : function(phalanxHash, cType, unitBody) {
+            var unitId = unitBody.getId(),
+                phalanxes = phalanxHash[unitId];
+            
+            if (phalanxes && phalanxes.length) {
+                // phalanx type won't be 0.
+                for (var i = 0, pType; pType = phalanxes[i]; ++i) {
+                    if (pType == cType) return true;
+                }
+            } 
+            return false;
         },
         
         /**
@@ -220,28 +236,32 @@ coh.BattleScene = function() {
                 // right bottom tile of the convert
                 rbTile = handlerList.mapUtil.getTilePosition(convert.isAttacker, _coh.LocalConfig.UNIT_TYPES.SOLDIER, convert.row, convert.column),
                 convertMatrix,
-                unitWraps,
-                unitWrap,
+                unitBodys,
+                unitBody,
                 halt = false,
                 row, column,
+                // used to check dulplicated phalanxes for a single unit.
+                // indexed by unitid.
+                phalanxHash = {},
                 i,j,k;
             
             for (i = 0, cType; cType = convert.converts[i]; ++i) {
                 convertMatrix = _coh.LocalConfig.CONVERT_MATRIX[cType];
                 headUnit = null;
                 halt = false;
-                unitWraps = [];
+                unitBodys = [];
                 for (j = 0; row = convertMatrix[j]; ++j) {   
                     for (k = 0; column = row[k]; ++k) {
-                        unitWrap = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
+                        unitBody = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
                         
-                        // if the unit is in another phalanx that's having the same type with the existing one, fail for the convert.
-                        if (unitWrap.inPhalanx(cType)) {
+                        // if the unit is in another phalanx that's having the same type with the existing one(except for walls), fail for the convert.
+                        if (cType != _coh.LocalConfig.CONVERT_TYPES.WALL && util.inPhalanx(phalanxHash, cType, unitBody)) {
                             halt = true;
                             break;
                         }
                         
-                        unitWraps.push(unitWrap);
+                        unitBodys.push(unitBody);
+                        phalanxHash[unitBody.unit.getId()] = (phalanxHash[unitBody.unit.getId()] || []).concat(cType);
                     }
                     if (halt) {
                         break;
@@ -251,8 +271,19 @@ coh.BattleScene = function() {
                     continue;
                 }
                 
-                // create the phalanx object
+                // create the phalanx object.
                 
+                // for walls, each unit is a single phalanx.
+                if (cType == _coh.LocalConfig.CONVERT_TYPES.WALL) {
+                    for (j = 0, unitBody; unitBody = unitBodys[j]; ++j) {
+                        _buf.phalanxList.push(new _coh.Phalanx(cType, [unitBody]));
+                    }
+                } else {
+                    _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodys));
+                }
+                
+                // update statusMatrix and unitMatrix for each phalanxes created.
+                // phalanxes except for walls won't react to any mouse events.
             }
         }
     };
@@ -429,8 +460,8 @@ coh.BattleScene = function() {
             return this.getUnit(this.getLastTileInColumn(isAttacker, tile));
         },
         
-        isLastUnitInColumn : function(isAttacker, unitWrap, tile) {
-            return unitWrap == this.getLastUnitInColumn(isAttacker, unitWrap, tile);
+        isLastUnitInColumn : function(isAttacker, unitBody, tile) {
+            return unitBody == this.getLastUnitInColumn(isAttacker, unitBody, tile);
         },
         
         getFocusTag : function() {
@@ -448,16 +479,16 @@ coh.BattleScene = function() {
         /**
          * Highlight the hovered unit.
          */
-        locateToUnit : function(unitWrap){
+        locateToUnit : function(unitBody){
             
             // if tag locked - for example focusing on some a unit - do nothing.
             if (buf.focusTagLocked) return;
             
             var tag = this.getFocusTag(),
-                isAttacker = unitWrap.getPlayer().isAttacker(),
+                isAttacker = unitBody.getPlayer().isAttacker(),
                 _coh = coh;
             
-            tag.locateTo(isAttacker, unitWrap.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
+            tag.locateTo(isAttacker, unitBody.tileSprite, isAttacker ? _coh.LocalConfig.ATTACKER_FOCUS_COLOR : _coh.LocalConfig.DEFENDER_FOCUS_COLOR);
             if (isAttacker != this.isAttackerTurn()) {
                 tag.arrowDirection.setVisible(false);
             }
@@ -466,21 +497,21 @@ coh.BattleScene = function() {
         /**
          * Mark a unit to be deleted.
          */
-        focusOnUnit : function(unitWrap){
+        focusOnUnit : function(unitBody){
             
-            if (!unitWrap) return;
+            if (!unitBody) return;
             buf.focusTagLocked = false;
             
             var tag = this.getFocusTag(),
-                isAttacker = unitWrap.getPlayer().isAttacker(),
+                isAttacker = unitBody.getPlayer().isAttacker(),
                 _coh = coh;
             
             // sprite changes to the tag;
-            this.locateToUnit(unitWrap);
-            tag.focusOn(isAttacker, unitWrap.tileSprite);
+            this.locateToUnit(unitBody);
+            tag.focusOn(isAttacker, unitBody.tileSprite);
             
             // sprite changes to the unit itself
-            unitWrap.check();
+            unitBody.check();
             
             // buffer changes
             buf.focusTagLocked = true;
@@ -490,33 +521,33 @@ coh.BattleScene = function() {
          *@return if the unit could be exiled for a relocation.
          *  mainly for types that's occupying 2 columns.
          */
-        exileUnit : function(unitWrap) {
+        exileUnit : function(unitBody) {
             
-            if (!unitWrap) return false;
+            if (!unitBody) return false;
             
             // do validate for types that's having more than 2 columns.
-            var typeConfig = unitWrap.getTypeConfig(),
-                isAttacker = unitWrap.getPlayer().isAttacker(),
-                tiles = unitWrap.getTileRecords(),
+            var typeConfig = unitBody.getTypeConfig(),
+                isAttacker = unitBody.getPlayer().isAttacker(),
+                tiles = unitBody.getTileRecords(),
                 lastUnit,
                 _buf = buf;
             
             for (var i in tiles) {
-                if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitWrap) return false;
+                if (self.getLastUnitInColumn(isAttacker, tiles[i]) != unitBody) return false;
             }
             
             for (var i in tiles) {
-                self.unbindUnitToTile(unitWrap, tiles[i]);
+                self.unbindUnitToTile(unitBody, tiles[i]);
             }
             
             buf.focusTagLocked = false;
             
             // sprite changes to the tag;
-            this.locateToUnit(unitWrap);
+            this.locateToUnit(unitBody);
             
-            this.getFocusTag().exile(unitWrap.tileSprite, isAttacker);
+            this.getFocusTag().exile(unitBody.tileSprite, isAttacker);
             
-            unitWrap.exile(isAttacker);
+            unitBody.exile(isAttacker);
             
             // buffer changes
             buf.focusTagLocked = true;
@@ -584,45 +615,45 @@ coh.BattleScene = function() {
                 
                 // color would be kept in the unit object.
                 unit = player.getUnplacedUnit(status),
-                unitWrap = new _coh.UnitWrap(unit),
-                tileSprite = unitWrap.tileSprite,
+                unitBody = new _coh.UnitBody(unit),
+                tileSprite = unitBody.tileSprite,
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
             
-            // init unitWrap
-            unitWrap.setPlayer(player);
+            // init unitBody
+            unitBody.setPlayer(player);
             
             setTimeout(function() {
                 self.battleMap.addChild(tileSprite, tilePosition.y);
-                self.setUnitToTile(unitWrap, tilePosition);
+                self.setUnitToTile(unitBody, tilePosition);
             }, _buf.unitDelay);
             
             // XXXXXX For debug usage.
             _coh.unitList = _coh.unitList || [];
-            _coh.unitList.push(unitWrap);
+            _coh.unitList.push(unitBody);
         },
         
         /**
          * @param tile the bottom left tile of the unit.
          * @param callback {Function} would be checked when the moving animate finished.
          */
-        setUnitToTile : function(unitWrap, tile, callback) {
+        setUnitToTile : function(unitBody, tile, callback) {
             
             // find correct unit from the player via given status(type defined);
             var _coh = coh,
                 _buf = buf,
-                isAttacker = unitWrap.getPlayer().isAttacker(),
+                isAttacker = unitBody.getPlayer().isAttacker(),
                 // get tile and do the possible translation, for example for a type 2 defender unit.
                 mapTile = self.getMapTile(tile),
-                unit = unitWrap.unit,
-                unitSprite = unitWrap.unitSprite,
-                tileSprite = unitWrap.tileSprite,
+                unit = unitBody.unit,
+                unitSprite = unitBody.unitSprite,
+                tileSprite = unitBody.tileSprite,
                 srcName ="img_" + (+unit.getColor() || 0),
-                typeConfig = unitWrap.getTypeConfig(),
-                // if there exist tiles in the unitWrap and having the same column number (x), move it directly here.
+                typeConfig = unitBody.getTypeConfig(),
+                // if there exist tiles in the unitBody and having the same column number (x), move it directly here.
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
-                originalY = handlerList.mapUtil.getValidTile(unitWrap);
+                originalY = handlerList.mapUtil.getValidTile(unitBody);
             
             // prevent focus, no other mouse/touch actions during the moving;
             _buf.focusTagLocked = true;
@@ -630,14 +661,14 @@ coh.BattleScene = function() {
             if (originalY) {
                 originalY = self.getPositionFromTile({x : tile.x, y : originalY.y}).y;
             }
-            self.unbindUnit(unitWrap);
+            self.unbindUnit(unitBody);
             
             // set unit matrix for further usage.
             // mind types that's not only having 1 tile.
             for (var rowCount = 0; rowCount < typeConfig[0]; ++rowCount) {
                 for (var columnCount = 0; columnCount < typeConfig[1]; ++columnCount) {
                     _buf.unitMatrix[tile.x + columnCount] = _buf.unitMatrix[tile.x + columnCount] || {};
-                    self.bindUnitToTile(unitWrap, {x : tile.x + columnCount, y : tile.y - rowCount});
+                    self.bindUnitToTile(unitBody, {x : tile.x + columnCount, y : tile.y - rowCount});
                 }
             }
             
@@ -655,7 +686,7 @@ coh.BattleScene = function() {
             // Animations appended.
             unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "assult", srcName)));
             tileSprite.runAction(tileSprite.runningAction = cc.sequence(cc.moveTo(coh.LocalConfig.ASSAULT_RATE, mapTile.x, mapTile.y), cc.callFunc(function() {
-                unitWrap.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
+                unitBody.unitSprite.runAction(cc.repeatForever(_coh.View.getAnimation(unit.getName(), "idle", srcName)));
                 
                 _coh.Util.isExecutable(callback) && callback();
                 
@@ -664,40 +695,40 @@ coh.BattleScene = function() {
             })));
         },
         
-        bindUnitToTile : function(unitWrap, tile) {
+        bindUnitToTile : function(unitBody, tile) {
             var _buf = buf,
-                type = unitWrap.unit.getType(),
-                playerId = unitWrap.getPlayer().getId(),
-                indexes = handlerList.mapUtil.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+                type = unitBody.unit.getType(),
+                playerId = unitBody.getPlayer().getId(),
+                indexes = handlerList.mapUtil.getArrowIndex(unitBody.getPlayer().isAttacker(), type, tile.x, tile.y);
             
-            _buf.unitMatrix[tile.x][tile.y] = unitWrap;
+            _buf.unitMatrix[tile.x][tile.y] = unitBody;
             
             // It should be removed/updated when moved or removed.
             // That's why I didn't want to do this.
-            unitWrap.addTileRecord(tile);
+            unitBody.addTileRecord(tile);
             
             // modify the status matrix for the player
             !_buf.statusMatrix[playerId] && (_buf.statusMatrix[playerId] = []);
             !_buf.statusMatrix[playerId][indexes.row] && (_buf.statusMatrix[playerId][indexes.row] = []);
-            _buf.statusMatrix[playerId][indexes.row][indexes.column] = unitWrap.unit.getStatus();
+            _buf.statusMatrix[playerId][indexes.row][indexes.column] = unitBody.unit.getStatus();
         },
         
-        unbindUnitToTile : function(unitWrap, tile) {
+        unbindUnitToTile : function(unitBody, tile) {
             var _buf = buf,
-                type = unitWrap.unit.getType(),
-                indexes = handlerList.mapUtil.getArrowIndex(unitWrap.getPlayer().isAttacker(), type, tile.x, tile.y);
+                type = unitBody.unit.getType(),
+                indexes = handlerList.mapUtil.getArrowIndex(unitBody.getPlayer().isAttacker(), type, tile.x, tile.y);
             
             _buf.unitMatrix[tile.x][tile.y] = null;
             delete buf.unitMatrix[tile.x][tile.y];
-            unitWrap.removeTileRecord(tile);
+            unitBody.removeTileRecord(tile);
             
-            _buf.statusMatrix[unitWrap.getPlayer().getId()][indexes.row][indexes.column] = 0;
+            _buf.statusMatrix[unitBody.getPlayer().getId()][indexes.row][indexes.column] = 0;
         },
         
-        unbindUnit : function(unitWrap) {
-            var tiles = unitWrap.getTileRecords();
+        unbindUnit : function(unitBody) {
+            var tiles = unitBody.getTileRecords();
             for (var i in tiles) {
-                self.unbindUnitToTile(unitWrap, tiles[i]);
+                self.unbindUnitToTile(unitBody, tiles[i]);
             }
         },
         
@@ -705,15 +736,15 @@ coh.BattleScene = function() {
          * @param columnTile the last tile of the column specificed by columnTile.y;
          * @param lastTile the tile where the mouse just moved from, it's also a tile that's having the last unit in that column.
          */
-        prepareMoving : function(unitWrap, columnTile, lastTile) {
+        prepareMoving : function(unitBody, columnTile, lastTile) {
             var _buf = buf,
-                isAttacker = unitWrap.getPlayer().isAttacker(),
-                typeConfig = _coh.LocalConfig.LOCATION_TYPE[unitWrap.unit.getType()],
+                isAttacker = unitBody.getPlayer().isAttacker(),
+                typeConfig = _coh.LocalConfig.LOCATION_TYPE[unitBody.unit.getType()],
                 focusTag = self.getFocusTag(),
                 // find the possible tile from direction 1,
                 // while direction 1 is where the last tile comes from.
                 targetTile = util.getRealColumnTile(
-                    unitWrap, {
+                    unitBody, {
                         x : lastTile.x > columnTile.x ? columnTile.x : columnTile.x + 1 - typeConfig[1],
                         y : columnTile.y
                     }),
@@ -722,7 +753,7 @@ coh.BattleScene = function() {
             if (!handlerList.mapUtil.isTileInGround(isAttacker, targetTile)) {
                 // try to find it in another direction.
                 targetTile = util.getRealColumnTile(
-                    unitWrap, {
+                    unitBody, {
                         x : lastTile.x < columnTile.x ? columnTile.x : columnTile.x + 1 - typeConfig[1],
                         y : columnTile.y
                     });
@@ -733,21 +764,21 @@ coh.BattleScene = function() {
                 return false;
             }
             
-            targetTile = handlerList.mapUtil.transformUpdate(isAttacker, unitWrap.unit.getType(), targetTile);
+            targetTile = handlerList.mapUtil.transformUpdate(isAttacker, unitBody.unit.getType(), targetTile);
             
             targetMapTile = self.getMapTile(targetTile);
             
             focusTag.arrowDirection.attr({
                 visible : true,
                 rotation : isAttacker ? 0 : 180,
-                x : unitWrap.tileSprite.width / 2 - focusTag.x + targetMapTile.x
+                x : unitBody.tileSprite.width / 2 - focusTag.x + targetMapTile.x
             });
             
-            unitWrap.unitSprite.attr({
+            unitBody.unitSprite.attr({
                 x : 0,
                 y : 0
             });
-            unitWrap.tileSprite.attr({
+            unitBody.tileSprite.attr({
                 x : targetMapTile.x,
                 y : targetMapTile.y,
                 zIndex : targetTile.y
@@ -757,7 +788,7 @@ coh.BattleScene = function() {
         },
         
         // mind removeUnits - all affected units are gathered, sharing the same convert group.
-        removeUnit : function(unitWrap) {
+        removeUnit : function(unitBody) {
             
             if (buf.focusTagLocked) return;
             
@@ -766,13 +797,14 @@ coh.BattleScene = function() {
             
             var _util = util,
                 affectedUnits,
-                movedUnits = [unitWrap],
-                tileRecords = [unitWrap.getTileRecords()];
+                movedUnits = [unitBody],
+                tileRecords = [unitBody.getTileRecords()];
             
             // XXXXXX Play the removing animate in target tile.
             
-            self.battleMap.removeChild(unitWrap.tileSprite, true);
-            self.unbindUnit(unitWrap);
+            self.battleMap.removeChild(unitBody.tileSprite, true);
+            self.unbindUnit(unitBody);
+            unitBody.getPlayer().killUnit(unitBody.unit);
             
             while (movedUnits.length) {
                 affectedUnits = util.getMovingUnits(movedUnits, tileRecords);
@@ -790,35 +822,35 @@ coh.BattleScene = function() {
             };
         },
         
-        doConverts : function(unitWraps) {
+        doConverts : function(unitBodys) {
             
             var _buf = buf,
                 _coh = coh,
                 _mu = handlerList.mapUtil,
                 player,
-                unitWrap,
+                unitBody,
                 tile,
                 index,
                 converts,
                 allConverts = [];
             
-            for (var i = 0; unitWrap = unitWraps[i]; ++i) {
+            for (var i = 0; unitBody = unitBodys[i]; ++i) {
                 // do nothing for types that's not 1.
-                if (unitWrap.unit.getType() != 1) continue;
+                if (unitBody.unit.getType() != 1) continue;
                 
                 // Here we go!
-                tile = unitWrap.getTileRecords()[0];
-                player = unitWrap.getPlayer();
+                tile = unitBody.getTileRecords()[0];
+                player = unitBody.getPlayer();
                 index = _mu.getArrowIndex(
                     player.isAttacker(), 
-                    unitWrap.unit.getType(), 
+                    unitBody.unit.getType(), 
                     tile.x, 
                     tile.y
                 );
                 converts = _coh.Battle.findAllPossibleConverts(_buf.statusMatrix[player.getId()], 
                     index.x, 
                     index.y, 
-                    unitWrap.unit.getColor()
+                    unitBody.unit.getColor()
                 );
                 
                 for (var j in converts) {

@@ -101,12 +101,13 @@ coh.Player = function(faction, level, unitConfig) {
         return result;
     };
     
-    self.killUnit = function(unitId) {
+    self.killUnit = function(unit) {
         var _buf = buf,
-            unit = _buf.units[unitId];
+            unit = _buf.units[unit.getId()];
         
         if (unit) {
             _buf.unitsUnplaced[unit.getPriority()][unit.getType()].push(unit.getName());
+            unit.
             delete(_buf.units[unitId]);
         }
     };
