@@ -36,7 +36,7 @@ coh.utils = coh.utils || {};
             77 - 106 : 1
             107 + : 0
      */
-    var LocalConfig = {
+    var LC = {
         ADDITIONS : {
             // type 2: elite units defined in coh.LocalConfig.UNIT_TYPES.
             2 : {
