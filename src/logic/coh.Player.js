@@ -28,7 +28,7 @@ var g_util = {
     
 }
 
-coh.Player = function(faction, level, unitConfig) {
+coh.Player = function(unitConfig) {
     
     var self = this;
     
@@ -133,7 +133,7 @@ coh.Player = function(faction, level, unitConfig) {
         
         if (unit) {
             _buf.unitsUnplaced[unit.getPriority()][unit.getType()].push(unit.getName());
-            delete(_buf.units[unitId]);
+            delete(_buf.units[unit.getId()]);
         }
     };
     
@@ -174,7 +174,7 @@ coh.Player = function(faction, level, unitConfig) {
     
     self.getUnitAttack = function(unitName) {
         var _buf = buf,
-            attack = ;
+            attack = "XXXXXX";
         
         if (_buf.savedData.unitLevels[unitName]) {
             // normal unit.

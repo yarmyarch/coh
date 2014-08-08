@@ -27,11 +27,13 @@ coh.UnitBody = function() {
         var _coh = coh,
             _cc = cc,
             shadow = _cc.Sprite.create(_coh.res.imgs.shadow),
-            typeConfig = this.getTypeConfig();
+            typeConfig;;
         
         this.unit = unit;
         this.unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : this.unit.getColor()});
         this.tileSprite = _cc.DrawNode.create(),
+        
+        typeConfig = this.getTypeConfig();
         
         shadow.attr({
             x : 0,
@@ -56,7 +58,7 @@ coh.UnitBody = function() {
         });
         
         this.unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
-        this.tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
+        this.tileSprite.addChild(this.unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
     }
     
     self.check = function() {
@@ -129,7 +131,7 @@ coh.UnitBody = function() {
     /**
      * play convert animations, or change status if necessary.
      */
-    self.convert(cType) {
+    self.convert = function(cType) {
         
     };
     

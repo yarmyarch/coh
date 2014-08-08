@@ -266,7 +266,7 @@ coh.Util = (function(){
             }
             buf[ri] = 1;
             return ri;
-        }，
+        },
         
         base64Encode : function(data) {
             var buf = [],
@@ -914,7 +914,7 @@ coh.utils = coh.utils || {};
                 attack : 2,
                 hp : 4.5,
                 speed : 0.5
-            }
+            },
             // type 4: champions defined in coh.LocalConfig.UNIT_TYPES.
             4 : {
                 attack : 12,
@@ -1494,7 +1494,7 @@ var g_util = {
     
 }
 
-coh.Player = function(faction, level, unitConfig) {
+coh.Player = function(unitConfig) {
     
     var self = this;
     
@@ -1599,7 +1599,7 @@ coh.Player = function(faction, level, unitConfig) {
         
         if (unit) {
             _buf.unitsUnplaced[unit.getPriority()][unit.getType()].push(unit.getName());
-            delete(_buf.units[unitId]);
+            delete(_buf.units[unit.getId()]);
         }
     };
     
@@ -1640,7 +1640,7 @@ coh.Player = function(faction, level, unitConfig) {
     
     self.getUnitAttack = function(unitName) {
         var _buf = buf,
-            attack = ;
+            attack = "XXXXXX";
         
         if (_buf.savedData.unitLevels[unitName]) {
             // normal unit.
@@ -2044,11 +2044,13 @@ coh.UnitBody = function() {
         var _coh = coh,
             _cc = cc,
             shadow = _cc.Sprite.create(_coh.res.imgs.shadow),
-            typeConfig = this.getTypeConfig();
+            typeConfig;;
         
         this.unit = unit;
         this.unitSprite = _coh.View.getSprite(unit.getName(), "idle", {color : this.unit.getColor()});
         this.tileSprite = _cc.DrawNode.create(),
+        
+        typeConfig = this.getTypeConfig();
         
         shadow.attr({
             x : 0,
@@ -2073,7 +2075,7 @@ coh.UnitBody = function() {
         });
         
         this.unitSprite.addChild(shadow, _coh.LocalConfig.Z_INDEX.BACKGROUND);
-        this.tileSprite.addChild(unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
+        this.tileSprite.addChild(this.unitSprite, _coh.LocalConfig.Z_INDEX.CONTENT);
     }
     
     self.check = function() {
@@ -2146,7 +2148,7 @@ coh.UnitBody = function() {
     /**
      * play convert animations, or change status if necessary.
      */
-    self.convert(cType) {
+    self.convert = function(cType) {
         
     };
     
@@ -2218,14 +2220,14 @@ coh.MapLayer = cc.Layer.extend({
                 var attacker, aMatrix, defender, dMatrix;
                 var generatePlayer = function(battleScene) {
                     // attacker
-                    attacker = new _coh.Player("", 1, { archer : 16, knight: 1, paladin: 1});
+                    attacker = new _coh.Player({ archer : 16, knight: 1, paladin: 1});
                     attacker.setAsDefender();
-                    attacker.setCalculator(_coh.BaseCalculator.getInstance());
+                    attacker.setCalculator(_coh.utils.BaseCalculator.getInstance());
                     aMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), attacker);
                     // defender
-                    defender = new _coh.Player("", 1, { archer : 24, knight: 4, paladin: 3});
+                    defender = new _coh.Player({ archer : 24, knight: 4, paladin: 3});
                     defender.setAsAttacker();
-                    defender.setCalculator(_coh.BaseCalculator.getInstance());
+                    defender.setCalculator(_coh.utils.BaseCalculator.getInstance());
                     dMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), defender);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);

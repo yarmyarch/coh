@@ -49,7 +49,7 @@ coh.utils = coh.utils || {};
                 attack : 2,
                 hp : 4.5,
                 speed : 0.5
-            }
+            },
             // type 4: champions defined in coh.LocalConfig.UNIT_TYPES.
             4 : {
                 attack : 12,

@@ -38,7 +38,7 @@ coh.Util = (function(){
             }
             buf[ri] = 1;
             return ri;
-        }，
+        },
         
         base64Encode : function(data) {
             var buf = [],
