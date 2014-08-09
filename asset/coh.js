@@ -1573,9 +1573,15 @@ coh.Unit = (function() {
             // it should be regenerated once the history level changed.
             inner_buf.historyOcpt = null;
         };
+        unit.getLevels = function(levels) {
+            return inner_buf.levels;
+        };
         
         unit.setOccupation = function(ocptName) {
             inner_buf.occupation = _coh.occupations[ocptName];
+        };
+        unit.getOccupation = function(ocptName) {
+            return inner_buf.occupation;
         };
         
         /**
