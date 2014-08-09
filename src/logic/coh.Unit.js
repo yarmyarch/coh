@@ -17,7 +17,8 @@ var UnitObject = function(unitName) {
     var buf = {
         id : 0,
         name : false,
-        level : 0,
+        // level 1 for default.
+        level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.NO_COLOR,
         isHero : false,
         
@@ -101,7 +102,8 @@ var UnitObject = function(unitName) {
     };
     
     self.setLevel = function(newLevel) {
-        buf.level = newLevel;
+        var _coh = coh;
+        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL)) || _coh.LocalConfig.UNIT.MIN_LEVEL;
     };
     
     self.isHero = function() {

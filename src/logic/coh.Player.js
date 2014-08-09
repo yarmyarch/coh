@@ -98,7 +98,7 @@ coh.Player = function(unitConfig) {
                 unit = _coh.Unit.getInstance(unitName);
                 
                 unit.setColor(_coh.Battle.getColorFromStatus(status));
-                unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
+                unit.setLevel(_buf.savedData.unitLevels[unitName]);
                 
                 // set level history for hero units.
                 if (_buf.savedData.heros[unitName]) {
@@ -200,7 +200,6 @@ coh.Player = function(unitConfig) {
      */
     self.setData = function(newDataObject) {
         buf.savedData = newDataObject;
-        // XXXXXX Other actions required for additional calculatings in future.
     };
     
     /**

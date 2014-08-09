@@ -95,6 +95,7 @@ coh.LocalConfig = {
     UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
     
     UNIT : {
-        MAX_LEVEL : 20
+        MAX_LEVEL : 20,
+        MIN_LEVEL : 1
     }
 };
