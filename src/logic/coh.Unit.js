@@ -29,13 +29,13 @@ var UnitObject = function(unitName) {
     var construct = function(unitName) {
         
         var _buf = buf,
-            _lc,
+            _lc = {},
             i;
         
         _buf.name = unitName;
         
         // if a unit isn't having the name configed in occupations, let's treat it as a hero unit.
-        if (U_LC.unitName == unitName) {
+        if (U_LC.occupation == unitName) {
             for (i in U_LC) {
                 _lc[i] = U_LC[i];
             }
@@ -103,7 +103,7 @@ var UnitObject = function(unitName) {
     
     self.setLevel = function(newLevel) {
         var _coh = coh;
-        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL)) || _coh.LocalConfig.UNIT.MIN_LEVEL;
+        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL) || _coh.LocalConfig.UNIT.MIN_LEVEL;
     };
     
     self.isHero = function() {
@@ -163,7 +163,7 @@ coh.Unit = (function() {
     /**
      * extea actions appended for hero units.
      */
-    _coh.FilterUtil.addFilter("heroGenerated", function(unit) {
+    _coh.utils.FilterUtil.addFilter("heroGenerated", function(unit) {
         
         // New buffer for the unit object.
         var inner_buf = {
@@ -180,7 +180,7 @@ coh.Unit = (function() {
         unit.setType = function(newType) {
             inner_buf.type = newType;
         };
-        unit.getType = function(newType) {
+        unit.getType = function() {
             return inner_buf.type;
         };
         
@@ -250,9 +250,9 @@ coh.Unit = (function() {
         getInstance : function(unitName) {
             var unit = new UnitObject(unitName);
             
-            unit = coh.util.FilterUtil.applyFilters("unitGenerated", unit);
-            if (unit.isHero) {
-                unit = coh.util.FilterUtil.applyFilters("heroGenerated", unit);
+            unit = coh.utils.FilterUtil.applyFilters("unitGenerated", unit);
+            if (unit.isHero()) {
+                unit = coh.utils.FilterUtil.applyFilters("heroGenerated", unit);
             }
             
             return unit;

@@ -226,7 +226,7 @@ coh.res = {
         var _coh = coh;
         // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
         for (var i in _coh.units) {
-            if (!_coh.occupations[i].occupation) continue;
+            if (!_coh.units[i].occupation) continue;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",
@@ -892,25 +892,6 @@ coh.utils = coh.utils || {};
 (function() {
     var instance;
     
-    /**
-     * Turns required recharging,
-        t = Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3))):
-            0 : infinity
-            1 : 15
-            2 : 12
-            3 : 11
-            4 - 5 : 10
-            6 - 7 : 9
-            8 - 10 : 8
-            11 - 14 : 7
-            15 - 20 : 6
-            21 - 28 : 5
-            29 - 39 : 4
-            40 - 53 : 3
-            55 - 76 : 2
-            77 - 106 : 1
-            107 + : 0
-     */
     var LC = {
         ADDITIONS : {
             // type 2: elite units defined in coh.LocalConfig.UNIT_TYPES.
@@ -980,7 +961,27 @@ coh.utils = coh.utils || {};
                     speed = speed * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].speed || 1);
                     return Math.floor(Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100 * speed);
                 },
-                getTurns : function(speed) {
+                
+                /**
+                 * Duration required recharging,
+                    t = Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3))):
+                        0 : infinity
+                        1 : 15
+                        2 : 12
+                        3 : 11
+                        4 - 5 : 10
+                        6 - 7 : 9
+                        8 - 10 : 8
+                        11 - 14 : 7
+                        15 - 20 : 6
+                        21 - 28 : 5
+                        29 - 39 : 4
+                        40 - 53 : 3
+                        55 - 76 : 2
+                        77 - 106 : 1
+                        107 + : 0
+                 */
+                getDuration : function(speed) {
                     return Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3)));
                 }
             }
@@ -1441,13 +1442,13 @@ var UnitObject = function(unitName) {
     var construct = function(unitName) {
         
         var _buf = buf,
-            _lc,
+            _lc = {},
             i;
         
         _buf.name = unitName;
         
         // if a unit isn't having the name configed in occupations, let's treat it as a hero unit.
-        if (U_LC.unitName == unitName) {
+        if (U_LC.occupation == unitName) {
             for (i in U_LC) {
                 _lc[i] = U_LC[i];
             }
@@ -1515,7 +1516,7 @@ var UnitObject = function(unitName) {
     
     self.setLevel = function(newLevel) {
         var _coh = coh;
-        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL)) || _coh.LocalConfig.UNIT.MIN_LEVEL;
+        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL) || _coh.LocalConfig.UNIT.MIN_LEVEL;
     };
     
     self.isHero = function() {
@@ -1575,7 +1576,7 @@ coh.Unit = (function() {
     /**
      * extea actions appended for hero units.
      */
-    _coh.FilterUtil.addFilter("heroGenerated", function(unit) {
+    _coh.utils.FilterUtil.addFilter("heroGenerated", function(unit) {
         
         // New buffer for the unit object.
         var inner_buf = {
@@ -1592,7 +1593,7 @@ coh.Unit = (function() {
         unit.setType = function(newType) {
             inner_buf.type = newType;
         };
-        unit.getType = function(newType) {
+        unit.getType = function() {
             return inner_buf.type;
         };
         
@@ -1662,9 +1663,9 @@ coh.Unit = (function() {
         getInstance : function(unitName) {
             var unit = new UnitObject(unitName);
             
-            unit = coh.util.FilterUtil.applyFilters("unitGenerated", unit);
-            if (unit.isHero) {
-                unit = coh.util.FilterUtil.applyFilters("heroGenerated", unit);
+            unit = coh.utils.FilterUtil.applyFilters("unitGenerated", unit);
+            if (unit.isHero()) {
+                unit = coh.utils.FilterUtil.applyFilters("heroGenerated", unit);
             }
             
             return unit;
@@ -1862,8 +1863,8 @@ coh.Player = function(unitConfig) {
         return handlerList.calculator.getSpeed(unit);
     };
     
-    self.getTurnsForCharge = function(unit) {
-        return handlerList.calculator.getTurn(self.getUnitSpeed(unit));
+    self.getDurationForCharge = function(unit) {
+        return handlerList.calculator.getDuration(self.getUnitSpeed(unit));
     };
     
     self.setCalculator = function(newClt) {
@@ -2626,7 +2627,7 @@ coh.BattleScene = function() {
          * This function is used to find the directly affected units behind the given unit.
          * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getMovingingUnits : function(unitBodys, tileRecords) {
+        getMovingUnits : function(unitBodys, tileRecords) {
             
             var _buf = buf,
                 tiles,

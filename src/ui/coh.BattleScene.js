@@ -128,7 +128,7 @@ coh.BattleScene = function() {
          * This function is used to find the directly affected units behind the given unit.
          * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getMovingingUnits : function(unitBodys, tileRecords) {
+        getMovingUnits : function(unitBodys, tileRecords) {
             
             var _buf = buf,
                 tiles,
