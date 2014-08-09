@@ -33,11 +33,25 @@ var UnitObject = function(unitName) {
         
         _buf.name = unitName;
         
-        for (i in U_LC) {
-            _lc[i] = U_LC[i];
-        }
-        for (i in O_LC) {
-            _lc[i] = O_LC[i];
+        // if a unit isn't having the full config in both libs, let's treat it as a hero unit.
+        if (U_LC && O_LC) {
+            for (i in U_LC) {
+                _lc[i] = U_LC[i];
+            }
+            for (i in O_LC) {
+                _lc[i] = O_LC[i];
+            }
+        } else {
+            // load common configs for heros first;
+            for (i in _coh.units["hero"]) {
+                _lc[i] = _coh.units["hero"][i];
+            }
+            // if a hero is having other configs, let's load it here.
+            for (i in U_LC) {
+                _lc[i] = U_LC[i];
+            }
+            // set occupation-related functions
+            self.setAsHero();
         }
         
         // other initializations required;
@@ -94,14 +108,13 @@ var UnitObject = function(unitName) {
         return buf.isHero;
     };
     
+    // let's move extra functions out of the class defination, make it possible be expanded.
     self.setAsHero = function() {
         var _buf = buf;
         
         // We won't set it again.
         if (_buf.isHero) return;
         _buf.isHero = true;
-        
-        coh.util.FilterUtil.applyFilters("heroGenerated", unit);
     };
     
     construct.apply(self, arguments);
@@ -197,6 +210,10 @@ coh.Unit = (function() {
                 };
             })(i);
         }
+        
+        // Use the newly affected unit instead of the original one.
+        // Actually it's not necessary returning this, as in js it's pointers parsed... Never mind, who nows.
+        return unit;
     });
     
     return self = {
@@ -210,7 +227,10 @@ coh.Unit = (function() {
         getInstance : function(unitName) {
             var unit = new UnitObject(unitName);
             
-            coh.util.FilterUtil.applyFilters("unitGenerated", unit);
+            unit = coh.util.FilterUtil.applyFilters("unitGenerated", unit);
+            if (unit.isHero) {
+                unit = coh.util.FilterUtil.applyFilters("heroGenerated", unit);
+            }
             
             return unit;
         }

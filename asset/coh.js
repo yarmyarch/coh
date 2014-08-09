@@ -93,7 +93,11 @@ coh.LocalConfig = {
     
     ATTACKER_FOCUS_COLOR : new cc.Color(55, 229, 170, 204),
     DEFENDER_FOCUS_COLOR : new cc.Color(200, 50, 120, 204),
-    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204)
+    UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
+    
+    UNIT : {
+        MAX_LEVEL : 20
+    }
 };var coh = coh || {};
 
 // ui related config exists in resource.js
@@ -111,26 +115,32 @@ coh.units = {
         type : 4,
         priority : 24
     }
+    // XXXXXX what should be configured for hero units?
 };var coh = coh || {};
 
 coh.occupations = {
     archer : {
-        attack : 8,
-        hp : 3,
+        attack : 12,
+        hp : 4,
         speed : 75
     },
     knight : {
-        attack : 8,
-        hp : 4,
+        attack : 15,
+        hp : 6,
         speed : 60
     },
     paladin : {
-        attack : 10,
-        hp : 4,
+        attack : 14,
+        hp : 5,
         speed : 66
     },
+    worrior : {
+        attack : 16,
+        hp : 5,
+        speed : 48
+    },
     elf_archer : {
-        attack : 7, 
+        attack : 9,
         hp : 2,
         speed : 105
     }
@@ -872,16 +882,6 @@ coh.utils = coh.utils || {};
     var instance;
     
     /**
-     * Elite Units:
-        attack * 4
-        hp * 2
-        speed / 2
-    
-     * Champions:
-        attack * 12
-        hp * 6
-        speed / 3
-    
      * Turns required recharging,
         t = Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3))):
             0 : infinity
@@ -904,20 +904,20 @@ coh.utils = coh.utils || {};
         ADDITIONS : {
             // type 2: elite units defined in coh.LocalConfig.UNIT_TYPES.
             2 : {
-                attack : 4,
+                attack : 2.5,
                 hp : 2,
                 speed : 0.5
             },
             // type 3: tanks defined in coh.LocalConfig.UNIT_TYPES.
             3 : {
-                attack : 2,
-                hp : 4.5,
+                attack : 1.5,
+                hp : 3.5,
                 speed : 0.5
             },
             // type 4: champions defined in coh.LocalConfig.UNIT_TYPES.
             4 : {
-                attack : 12,
-                hp : 6,
+                attack : 9,
+                hp : 5,
                 speed : 1/3
             }
         }
@@ -925,13 +925,14 @@ coh.utils = coh.utils || {};
     var getInstance = function() {
         if (!instance) {
             instance = {
-                getAttack : function(attack, level) {
+                getAttack : function(unit) {
+                    var attack = unit.getAttack(),
+                        level = unit.getLevel();
+                },
+                getSpeed : function(unit) {
                     
                 },
-                getSpeed : function(speed, level) {
-                    
-                },
-                getHp : function(hp, level) {
+                getHp : function(unit) {
                     
                 },
                 getTurns : function(speed) {
@@ -1383,6 +1384,7 @@ var UnitObject = function(unitName) {
     var buf = {
         id : 0,
         name : false,
+        level : 0,
         color : _coh.LocalConfig.NO_COLOR,
         isHero : false,
         
@@ -1398,11 +1400,25 @@ var UnitObject = function(unitName) {
         
         _buf.name = unitName;
         
-        for (i in U_LC) {
-            _lc[i] = U_LC[i];
-        }
-        for (i in O_LC) {
-            _lc[i] = O_LC[i];
+        // if a unit isn't having the full config in both libs, let's treat it as a hero unit.
+        if (U_LC && O_LC) {
+            for (i in U_LC) {
+                _lc[i] = U_LC[i];
+            }
+            for (i in O_LC) {
+                _lc[i] = O_LC[i];
+            }
+        } else {
+            // load common configs for heros first;
+            for (i in _coh.units["hero"]) {
+                _lc[i] = _coh.units["hero"][i];
+            }
+            // if a hero is having other configs, let's load it here.
+            for (i in U_LC) {
+                _lc[i] = U_LC[i];
+            }
+            // set occupation-related functions
+            self.setAsHero();
         }
         
         // other initializations required;
@@ -1447,18 +1463,25 @@ var UnitObject = function(unitName) {
         return coh.Battle.getStatus(self.getType(), _buf.color);
     };
     
+    self.getLevel = function() {
+        return buf.level;
+    };
+    
+    self.setLevel = function(newLevel) {
+        buf.level = newLevel;
+    };
+    
     self.isHero = function() {
         return buf.isHero;
     };
     
+    // let's move extra functions out of the class defination, make it possible be expanded.
     self.setAsHero = function() {
         var _buf = buf;
         
         // We won't set it again.
         if (_buf.isHero) return;
         _buf.isHero = true;
-        
-        coh.util.FilterUtil.applyFilters("heroGenerated", unit);
     };
     
     construct.apply(self, arguments);
@@ -1474,6 +1497,32 @@ coh.Unit = (function() {
     var self,
         _coh = coh;
 
+    var util = {
+        /**
+         * @return object with items in each occupations, plus an index "level",
+         * that tells how much levels in total exists in the history.
+         */
+        getLeveledOccupation : function(levels) {
+            var historyLevel = 0,
+                maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                ocpt = {
+                    level : 0
+                },
+                i, attribute;
+            
+            if (!levels) return;
+            
+            for (i in levels) {
+                for (attribute in levels[i]) {
+                    ocpt[attribute] = ocpt[attribute] || 0;
+                    ocpt[attribute] += (levels[i] / maxLevel) * _coh.occupations[i][attribute];
+                }
+                ocpt.level += levels[i];
+            }
+            return ocpt;
+        }
+    };
+    
     // react filters here.
     
     /**
@@ -1482,9 +1531,10 @@ coh.Unit = (function() {
     _coh.FilterUtil.addFilter("heroGenerated", function(unit) {
         
         // New buffer for the unit object.
-        var buf = {
+        var inner_buf = {
             occupation : null,
-            levels : null
+            levels : null,
+            historyOcpt : null
         };
         
         /**
@@ -1497,19 +1547,40 @@ coh.Unit = (function() {
             }
          */
         unit.setLevels = function(levels) {
-            buf.levels = levels;
+            inner_buf.levels = levels;
+            // it should be regenerated once the history level changed.
+            inner_buf.historyOcpt = null;
         };
         
         unit.setOccupation = function(ocptName) {
-            buf.occupation = _coh.occupations[ocptName];
+            inner_buf.occupation = _coh.occupations[ocptName];
         };
         
         /**
-         * XXXXXX Mind for generated heros. If it's not configured in units/occupations, functions related should all be regenerated. Is that right?
+         * There must be a more simple solution for heros.
+         * Bingo! I found it!
+         * getAttack and other functions regenerated here via it's current occupation.
          */
-        unit.getAttack = function() {
-            // here we go.
+        for (var i in _coh.occupations[_buf.occupation]) {
+            unit["get" + i[0].toUpperCase() + i.substr(1)] = (function(attribute) {
+                return function() {                    
+                    // here we go.
+                    var _buf = inner_buf,
+                        maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                        maxAttr = 0;
+                    if (!_buf.levels || !_buf.occupation) return 0;
+                    
+                    _buf.historyOcpt = _buf.historyOcpt || util.getLeveledOccupation(_buf.levels);
+                    
+                    maxAttr = _buf.historyOcpt[attribute] + (1 - _buf.historyOcpt.level / maxLevel) * _coh.occupations[_buf.occupation][attribute];
+                    return Math.ceil(maxAttr);
+                };
+            })(i);
         }
+        
+        // Use the newly affected unit instead of the original one.
+        // Actually it's not necessary returning this, as in js it's pointers parsed... Never mind, who nows.
+        return unit;
     });
     
     return self = {
@@ -1523,7 +1594,10 @@ coh.Unit = (function() {
         getInstance : function(unitName) {
             var unit = new UnitObject(unitName);
             
-            coh.util.FilterUtil.applyFilters("unitGenerated", unit);
+            unit = coh.util.FilterUtil.applyFilters("unitGenerated", unit);
+            if (unit.isHero) {
+                unit = coh.util.FilterUtil.applyFilters("heroGenerated", unit);
+            }
             
             return unit;
         }
@@ -1630,14 +1704,14 @@ coh.Player = function(unitConfig) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
                 
+                unit.setColor(_coh.Battle.getColorFromStatus(status));
                 unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
                 // set level history for hero units.
                 if (_buf.savedData.heros[unitName]) {
-                    unit.setAsHero();
                     unit.setLevels(_buf.savedData.heros[unitName].levels);
+                    unit.setOccupation(_buf.savedData.heros[unitName].ocpt);
                 }
                 
-                unit.setColor(_coh.Battle.getColorFromStatus(status));
                 break;
             }
         }
@@ -1705,15 +1779,15 @@ coh.Player = function(unitConfig) {
     };
     
     self.getUnitAttack = function(unit) {
-        return handlerList.calculator.getAttack(unit.getAttack(), _buf.savedData.unitLevels[unitName] || 0);
+        return handlerList.calculator.getAttack(unit);
     };
     
     self.getUnitHp = function(unit) {
-        return handlerList.calculator.getHp(unit.getHp(), _buf.savedData.unitLevels[unitName] || 0);
+        return handlerList.calculator.getHp(unit);
     };
     
     self.getUnitSpeed = function(unit) {
-        return handlerList.calculator.getSpeed(unit.getSpeed(), unit.getLevel());
+        return handlerList.calculator.getSpeed(unit);
     };
     
     self.getTurnsForCharge = function(unit) {

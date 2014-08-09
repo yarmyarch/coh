@@ -52,7 +52,8 @@ coh.utils = coh.utils || {};
         if (!instance) {
             instance = {
                 getAttack : function(unit) {
-                    
+                    var attack = unit.getAttack(),
+                        level = unit.getLevel();
                 },
                 getSpeed : function(unit) {
                     

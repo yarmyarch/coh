@@ -97,14 +97,14 @@ coh.Player = function(unitConfig) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
                 
+                unit.setColor(_coh.Battle.getColorFromStatus(status));
                 unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
                 // set level history for hero units.
                 if (_buf.savedData.heros[unitName]) {
-                    unit.setAsHero();
                     unit.setLevels(_buf.savedData.heros[unitName].levels);
+                    unit.setOccupation(_buf.savedData.heros[unitName].ocpt);
                 }
                 
-                unit.setColor(_coh.Battle.getColorFromStatus(status));
                 break;
             }
         }
