@@ -8,16 +8,6 @@ coh.utils = coh.utils || {};
     var instance;
     
     /**
-     * Elite Units:
-        attack * 4
-        hp * 2
-        speed / 2
-    
-     * Champions:
-        attack * 12
-        hp * 6
-        speed / 3
-    
      * Turns required recharging,
         t = Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3))):
             0 : infinity
@@ -40,20 +30,20 @@ coh.utils = coh.utils || {};
         ADDITIONS : {
             // type 2: elite units defined in coh.LocalConfig.UNIT_TYPES.
             2 : {
-                attack : 4,
+                attack : 2.5,
                 hp : 2,
                 speed : 0.5
             },
             // type 3: tanks defined in coh.LocalConfig.UNIT_TYPES.
             3 : {
-                attack : 2,
-                hp : 4.5,
+                attack : 1.5,
+                hp : 3.5,
                 speed : 0.5
             },
             // type 4: champions defined in coh.LocalConfig.UNIT_TYPES.
             4 : {
-                attack : 12,
-                hp : 6,
+                attack : 9,
+                hp : 5,
                 speed : 1/3
             }
         }
@@ -61,13 +51,13 @@ coh.utils = coh.utils || {};
     var getInstance = function() {
         if (!instance) {
             instance = {
-                getAttack : function(attack, level) {
+                getAttack : function(unit) {
                     
                 },
-                getSpeed : function(speed, level) {
+                getSpeed : function(unit) {
                     
                 },
-                getHp : function(hp, level) {
+                getHp : function(unit) {
                     
                 },
                 getTurns : function(speed) {

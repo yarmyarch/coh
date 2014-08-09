@@ -15,4 +15,5 @@ coh.units = {
         type : 4,
         priority : 24
     }
+    // XXXXXX what should be configured for hero units?
 };

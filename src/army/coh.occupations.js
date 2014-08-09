@@ -2,22 +2,27 @@ var coh = coh || {};
 
 coh.occupations = {
     archer : {
-        attack : 8,
-        hp : 3,
+        attack : 12,
+        hp : 4,
         speed : 75
     },
     knight : {
-        attack : 8,
-        hp : 4,
+        attack : 15,
+        hp : 6,
         speed : 60
     },
     paladin : {
-        attack : 10,
-        hp : 4,
+        attack : 14,
+        hp : 5,
         speed : 66
     },
+    worrior : {
+        attack : 16,
+        hp : 5,
+        speed : 48
+    },
     elf_archer : {
-        attack : 7, 
+        attack : 9,
         hp : 2,
         speed : 105
     }

@@ -172,15 +172,15 @@ coh.Player = function(unitConfig) {
     };
     
     self.getUnitAttack = function(unit) {
-        return handlerList.calculator.getAttack(unit.getAttack(), _buf.savedData.unitLevels[unitName] || 0);
+        return handlerList.calculator.getAttack(unit);
     };
     
     self.getUnitHp = function(unit) {
-        return handlerList.calculator.getHp(unit.getHp(), _buf.savedData.unitLevels[unitName] || 0);
+        return handlerList.calculator.getHp(unit);
     };
     
     self.getUnitSpeed = function(unit) {
-        return handlerList.calculator.getSpeed(unit.getSpeed(), unit.getLevel());
+        return handlerList.calculator.getSpeed(unit);
     };
     
     self.getTurnsForCharge = function(unit) {

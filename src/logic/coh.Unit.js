@@ -17,6 +17,7 @@ var UnitObject = function(unitName) {
     var buf = {
         id : 0,
         name : false,
+        level : 0,
         color : _coh.LocalConfig.NO_COLOR,
         isHero : false,
         
@@ -81,6 +82,14 @@ var UnitObject = function(unitName) {
         return coh.Battle.getStatus(self.getType(), _buf.color);
     };
     
+    self.getLevel = function() {
+        return buf.level;
+    };
+    
+    self.setLevel = function(newLevel) {
+        buf.level = newLevel;
+    };
+    
     self.isHero = function() {
         return buf.isHero;
     };
@@ -108,6 +117,32 @@ coh.Unit = (function() {
     var self,
         _coh = coh;
 
+    var util = {
+        /**
+         * @return object with items in each occupations, plus an index "level",
+         * that tells how much levels in total exists in the history.
+         */
+        getLeveledOccupation : function(levels) {
+            var historyLevel = 0,
+                maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                ocpt = {
+                    level : 0
+                },
+                i, attribute;
+            
+            if (!levels) return;
+            
+            for (i in levels) {
+                for (attribute in levels[i]) {
+                    ocpt[attribute] = ocpt[attribute] || 0;
+                    ocpt[attribute] += (levels[i] / maxLevel) * _coh.occupations[i][attribute];
+                }
+                ocpt.level += levels[i];
+            }
+            return ocpt;
+        }
+    };
+    
     // react filters here.
     
     /**
@@ -116,9 +151,10 @@ coh.Unit = (function() {
     _coh.FilterUtil.addFilter("heroGenerated", function(unit) {
         
         // New buffer for the unit object.
-        var buf = {
+        var inner_buf = {
             occupation : null,
-            levels : null
+            levels : null,
+            historyOcpt : null
         };
         
         /**
@@ -131,18 +167,35 @@ coh.Unit = (function() {
             }
          */
         unit.setLevels = function(levels) {
-            buf.levels = levels;
+            inner_buf.levels = levels;
+            // it should be regenerated once the history level changed.
+            inner_buf.historyOcpt = null;
         };
         
         unit.setOccupation = function(ocptName) {
-            buf.occupation = _coh.occupations[ocptName];
+            inner_buf.occupation = _coh.occupations[ocptName];
         };
         
         /**
-         * XXXXXX Mind for generated heros. If it's not configured in units/occupations, functions related should all be regenerated. Is that right?
+         * There must be a more simple solution for heros.
+         * Bingo! I found it!
+         * getAttack and other functions regenerated here via it's current occupation.
          */
-        unit.getAttack = function() {
-            // here we go.
+        for (var i in _coh.occupations[_buf.occupation]) {
+            unit["get" + i[0].toUpperCase() + i.substr(1)] = (function(attribute) {
+                return function() {                    
+                    // here we go.
+                    var _buf = inner_buf,
+                        maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                        maxAttr = 0;
+                    if (!_buf.levels || !_buf.occupation) return 0;
+                    
+                    _buf.historyOcpt = _buf.historyOcpt || util.getLeveledOccupation(_buf.levels);
+                    
+                    maxAttr = _buf.historyOcpt[attribute] + (1 - _buf.historyOcpt.level / maxLevel) * _coh.occupations[_buf.occupation][attribute];
+                    return Math.ceil(maxAttr);
+                };
+            })(i);
         }
     });
     
