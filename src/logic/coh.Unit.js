@@ -33,8 +33,8 @@ var UnitObject = function(unitName) {
         
         _buf.name = unitName;
         
-        // if a unit isn't having the full config in both libs, let's treat it as a hero unit.
-        if (U_LC && O_LC) {
+        // if a unit isn't having the name configed in occupations, let's treat it as a hero unit.
+        if (U_LC.unitName == unitName) {
             for (i in U_LC) {
                 _lc[i] = U_LC[i];
             }

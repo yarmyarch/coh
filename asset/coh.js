@@ -100,18 +100,23 @@ coh.LocalConfig = {
     }
 };var coh = coh || {};
 
-// ui related config exists in resource.js
+// ui related configs exist in resource.js,
+// occupation related configs exist in coh.occupations.js.
 coh.units = {
     archer : {
+        // used to tag if the unit would be a normal unit that's holding a occupation.
+        occupation : "archer",
         type : 1,
         // lower priority results in a closer position to the front line.
         priority : 8
     },
     knight : {
+        occupation : "knight",
         type : 2,
         priority : 16
     },
     paladin : {
+        occupation : "paladin",
         type : 4,
         priority : 24
     },
@@ -219,8 +224,8 @@ coh.res = {
     var generateUnits = function(resObj) {
         var _coh = coh;
         // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
-        for (var i in _coh.occupations) {
-            if (!_coh.units[i]) continue;
+        for (var i in _coh.units) {
+            if (!_coh.occupations[i].occupation) continue;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",
@@ -1405,8 +1410,8 @@ var UnitObject = function(unitName) {
         
         _buf.name = unitName;
         
-        // if a unit isn't having the full config in both libs, let's treat it as a hero unit.
-        if (U_LC && O_LC) {
+        // if a unit isn't having the name configed in occupations, let's treat it as a hero unit.
+        if (U_LC.unitName == unitName) {
             for (i in U_LC) {
                 _lc[i] = U_LC[i];
             }
