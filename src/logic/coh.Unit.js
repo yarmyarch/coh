@@ -226,7 +226,10 @@ coh.Unit = (function() {
                     _buf.historyOcpt = _buf.historyOcpt || util.getLeveledOccupation(_buf.levels);
                     
                     maxAttr = _buf.historyOcpt[attribute] + (1 - _buf.historyOcpt.level / maxLevel) * _coh.occupations[_buf.occupation][attribute];
-                    return Math.ceil(maxAttr);
+                    
+                    // No ceil. This step would be handled in calculator.
+                    //~ return Math.ceil(maxAttr);
+                    return maxAttr;
                 };
             })(i);
         }

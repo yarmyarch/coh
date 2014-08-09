@@ -57,6 +57,7 @@ coh.utils = coh.utils || {};
         
         if (!maxLevel) maxLevel = coh.LocalConfig.UNIT.MAX_LEVEL;
         
+        // Would the "floor" be a problem as it's float calculating? Think not. Mind it here if it does.
         if (!buf.instances[maxLevel]) {
             buf.instances[maxLevel] = {
                 /**
@@ -67,6 +68,7 @@ coh.utils = coh.utils || {};
                     var attack = unit.getAttack(),
                         level = unit.getLevel();
                     
+                    attack = attack * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].attack || 1);
                     return Math.floor(Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100 * attack);
                 },
                 
@@ -78,6 +80,7 @@ coh.utils = coh.utils || {};
                     var hp = unit.getHp(),
                         level = unit.getLevel();
                     
+                    hp = hp * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].hp || 1);
                     return Math.floor(Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100 * hp);
                 },
                 
@@ -89,6 +92,7 @@ coh.utils = coh.utils || {};
                     var speed = unit.getSpeed(),
                         level = unit.getLevel();
                     
+                    speed = speed * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].speed || 1);
                     return Math.floor(Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100 * speed);
                 },
                 getTurns : function(speed) {

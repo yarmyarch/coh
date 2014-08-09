@@ -96,7 +96,8 @@ coh.LocalConfig = {
     UNIT_DELETE_COLOR : new cc.Color(64, 64, 64, 204),
     
     UNIT : {
-        MAX_LEVEL : 20
+        MAX_LEVEL : 20,
+        MIN_LEVEL : 1
     }
 };var coh = coh || {};
 
@@ -883,7 +884,7 @@ coh.utils.FilterUtil = (function() {
     }
     
 })();/**
- * calculator used to get basic attributes of a unit.
+ * Calculator used to get basic attributes of a unit.
  */
  
 var coh = coh || {};
@@ -931,19 +932,49 @@ coh.utils = coh.utils || {};
                 speed : 1/3
             }
         }
-    };        
-    var getInstance = function() {
-        if (!instance) {
-            instance = {
+    };
+    
+    var buf = {
+        instances : {}
+    };
+    
+    var getInstance = function(maxLevel) {
+        
+        if (!maxLevel) maxLevel = coh.LocalConfig.UNIT.MAX_LEVEL;
+        
+        if (!buf.instances[maxLevel]) {
+            buf.instances[maxLevel] = {
+                /**
+                 * level 1 - 0.22 of max;
+                 * level max - 1 of max;
+                 */
                 getAttack : function(unit) {
                     var attack = unit.getAttack(),
                         level = unit.getLevel();
-                },
-                getSpeed : function(unit) {
                     
+                    return Math.floor(Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100 * attack);
                 },
+                
+                /**
+                 * level 1 - 0.22 of max;
+                 * level max - 1 of max;
+                 */
                 getHp : function(unit) {
+                    var hp = unit.getHp(),
+                        level = unit.getLevel();
                     
+                    return Math.floor(Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100 * hp);
+                },
+                
+                /**
+                 * level 1 - 0.54 of max;
+                 * level max - 1 of max.
+                 */
+                getSpeed : function(unit) {
+                    var speed = unit.getSpeed(),
+                        level = unit.getLevel();
+                    
+                    return Math.floor(Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100 * speed);
                 },
                 getTurns : function(speed) {
                     return Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3)));
@@ -953,12 +984,12 @@ coh.utils = coh.utils || {};
         
         // public static attributes here, if exist.
         
-        return instance;
+        return buf.instances[maxLevel];
     };
     
-    coh.utils.BaseCalculator = function() {
+    coh.utils.BaseCalculator = function(maxLevel) {
         //getTilePosition
-        return getInstance();
+        return getInstance(maxLevel);
     }
 
     coh.utils.BaseCalculator.getInstance = getInstance;
@@ -1394,7 +1425,8 @@ var UnitObject = function(unitName) {
     var buf = {
         id : 0,
         name : false,
-        level : 0,
+        // level 1 for default.
+        level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.NO_COLOR,
         isHero : false,
         
@@ -1478,7 +1510,8 @@ var UnitObject = function(unitName) {
     };
     
     self.setLevel = function(newLevel) {
-        buf.level = newLevel;
+        var _coh = coh;
+        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL)) || _coh.LocalConfig.UNIT.MIN_LEVEL;
     };
     
     self.isHero = function() {
@@ -1733,7 +1766,7 @@ coh.Player = function(unitConfig) {
                 unit = _coh.Unit.getInstance(unitName);
                 
                 unit.setColor(_coh.Battle.getColorFromStatus(status));
-                unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
+                unit.setLevel(_buf.savedData.unitLevels[unitName]);
                 
                 // set level history for hero units.
                 if (_buf.savedData.heros[unitName]) {
@@ -1835,7 +1868,6 @@ coh.Player = function(unitConfig) {
      */
     self.setData = function(newDataObject) {
         buf.savedData = newDataObject;
-        // XXXXXX Other actions required for additional calculatings in future.
     };
     
     /**
