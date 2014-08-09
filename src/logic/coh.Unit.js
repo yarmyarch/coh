@@ -165,9 +165,21 @@ coh.Unit = (function() {
         
         // New buffer for the unit object.
         var inner_buf = {
+            type : 0,
             occupation : null,
             levels : null,
             historyOcpt : null
+        };
+        
+        /**
+         * types chould be changed for heros.
+         * the attribute "type" would be from inner_buf, that's over covering the on (if exist) from common configs.
+         */
+        unit.setType = function(newType) {
+            inner_buf.type = newType;
+        };
+        unit.getType = function(newType) {
+            return inner_buf.type;
         };
         
         /**

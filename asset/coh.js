@@ -114,8 +114,11 @@ coh.units = {
     paladin : {
         type : 4,
         priority : 24
+    },
+    hero : {
+        // types should be set dynamically when generating.
+        priority : 32
     }
-    // XXXXXX what should be configured for hero units?
 };var coh = coh || {};
 
 coh.occupations = {
@@ -215,7 +218,9 @@ coh.res = {
      */
     var generateUnits = function(resObj) {
         var _coh = coh;
-        for (var i in _coh.units) {
+        // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
+        for (var i in _coh.occupations) {
+            if (!_coh.units[i]) continue;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",
@@ -1532,9 +1537,21 @@ coh.Unit = (function() {
         
         // New buffer for the unit object.
         var inner_buf = {
+            type : 0,
             occupation : null,
             levels : null,
             historyOcpt : null
+        };
+        
+        /**
+         * types chould be changed for heros.
+         * the attribute "type" would be from inner_buf, that's over covering the on (if exist) from common configs.
+         */
+        unit.setType = function(newType) {
+            inner_buf.type = newType;
+        };
+        unit.getType = function(newType) {
+            return inner_buf.type;
         };
         
         /**
@@ -1706,10 +1723,14 @@ coh.Player = function(unitConfig) {
                 
                 unit.setColor(_coh.Battle.getColorFromStatus(status));
                 unit.setLevel(_buf.savedData.unitLevels[unitName] || 0);
+                
                 // set level history for hero units.
                 if (_buf.savedData.heros[unitName]) {
-                    unit.setLevels(_buf.savedData.heros[unitName].levels);
-                    unit.setOccupation(_buf.savedData.heros[unitName].ocpt);
+                    var heroData = _buf.savedData.heros[unitName];
+                    
+                    unit.setType(heroData.type);
+                    unit.setLevels(heroData.levels);
+                    unit.setOccupation(heroData.ocpt);
                 }
                 
                 break;

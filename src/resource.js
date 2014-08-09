@@ -69,7 +69,9 @@ coh.res = {
      */
     var generateUnits = function(resObj) {
         var _coh = coh;
-        for (var i in _coh.units) {
+        // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
+        for (var i in _coh.occupations) {
+            if (!_coh.units[i]) continue;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",

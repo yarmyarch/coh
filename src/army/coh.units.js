@@ -14,6 +14,9 @@ coh.units = {
     paladin : {
         type : 4,
         priority : 24
+    },
+    hero : {
+        // types should be set dynamically when generating.
+        priority : 32
     }
-    // XXXXXX what should be configured for hero units?
 };
