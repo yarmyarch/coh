@@ -187,8 +187,8 @@ coh.Player = function(unitConfig) {
         return handlerList.calculator.getSpeed(unit);
     };
     
-    self.getTurnsForCharge = function(unit) {
-        return handlerList.calculator.getTurn(self.getUnitSpeed(unit));
+    self.getDurationForCharge = function(unit) {
+        return handlerList.calculator.getDuration(self.getUnitSpeed(unit));
     };
     
     self.setCalculator = function(newClt) {

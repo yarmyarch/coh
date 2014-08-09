@@ -7,25 +7,6 @@ coh.utils = coh.utils || {};
 (function() {
     var instance;
     
-    /**
-     * Turns required recharging,
-        t = Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3))):
-            0 : infinity
-            1 : 15
-            2 : 12
-            3 : 11
-            4 - 5 : 10
-            6 - 7 : 9
-            8 - 10 : 8
-            11 - 14 : 7
-            15 - 20 : 6
-            21 - 28 : 5
-            29 - 39 : 4
-            40 - 53 : 3
-            55 - 76 : 2
-            77 - 106 : 1
-            107 + : 0
-     */
     var LC = {
         ADDITIONS : {
             // type 2: elite units defined in coh.LocalConfig.UNIT_TYPES.
@@ -95,7 +76,27 @@ coh.utils = coh.utils || {};
                     speed = speed * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].speed || 1);
                     return Math.floor(Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100 * speed);
                 },
-                getTurns : function(speed) {
+                
+                /**
+                 * Duration required recharging,
+                    t = Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3))):
+                        0 : infinity
+                        1 : 15
+                        2 : 12
+                        3 : 11
+                        4 - 5 : 10
+                        6 - 7 : 9
+                        8 - 10 : 8
+                        11 - 14 : 7
+                        15 - 20 : 6
+                        21 - 28 : 5
+                        29 - 39 : 4
+                        40 - 53 : 3
+                        55 - 76 : 2
+                        77 - 106 : 1
+                        107 + : 0
+                 */
+                getDuration : function(speed) {
                     return Math.floor(15 + Math.log(2.72, 1 / Math.pow(x, 3)));
                 }
             }
