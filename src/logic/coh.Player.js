@@ -39,6 +39,8 @@ coh.Player = function(unitConfig) {
         // attacker for default.
         isAttacker : true,
         
+        faction : "human",
+        
         units : {},
         
         /**
@@ -175,20 +177,34 @@ coh.Player = function(unitConfig) {
         buf.isAttacker = false;
     };
     
-    self.getUnitAttack = function(unit) {
+    /**
+     * be sure the given faction is configured in global config.
+     */
+    self.setFaction = function(factionStr) {
+        buf.faction = coh.factions[factionStr] && factionStr || buf.faction;
+    };
+    self.getFaction = function() {
+        return buf.faction;
+    };
+    
+    self.getUnitAttack = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return 0;
         return handlerList.calculator.getAttack(unit);
     };
     
-    self.getUnitHp = function(unit) {
+    self.getUnitHp = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return coh.factions[this.getFaction()].wall.hp;
         return handlerList.calculator.getHp(unit);
     };
     
-    self.getUnitSpeed = function(unit) {
+    self.getUnitSpeed = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return 0;
         return handlerList.calculator.getSpeed(unit);
     };
     
-    self.getDurationForCharge = function(unit) {
-        return handlerList.calculator.getDuration(self.getUnitSpeed(unit));
+    self.getChargingDuration = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return coh.LocalConfig.INVALID;
+        return handlerList.calculator.getDuration(self.getUnitSpeed(unit), convertType);
     };
     
     self.setCalculator = function(newClt) {

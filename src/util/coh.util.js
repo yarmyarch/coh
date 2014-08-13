@@ -40,6 +40,13 @@ coh.Util = (function(){
             return ri;
         },
         
+        /**
+         * return the a string whose first letter is in uppercase.
+         */
+        getFUStr : function(str) {
+            return str[0].toUpperCase() + str.substr(1);
+        },
+        
         base64Encode : function(data) {
             var buf = [],
                 map = LC.MAP_EN,

@@ -18,7 +18,8 @@ coh.Phalanx = function(type, units) {
     
     var construct = function(type, unitBodys) {
         
-        var _buf = buf;
+        var _buf = buf,
+            _coh = coh;
         
         _buf.type = type;
         _buf.unitBodys= unitBodys;
@@ -27,12 +28,14 @@ coh.Phalanx = function(type, units) {
         
         for (var i = 0, unitBody; unitBody = unitBodys[i]; ++i) {
             // index should be considered as well.
-            unitBody.convertTo(type, i);
+            // move it out.
+            _coh.utils.FilterUtil.applyFilters("convertUnit", unitBody, i, leadUnit);
         }
         
-        _buf.attack = leadUnit.getPlayer().getUnitAttack(leadUnit);
-        _buf.hp = leadUnit.getPlayer().getUnitHp(leadUnit);
-        _buf.duration = leadUnit.getPlayer().getUnitDuration(leadUnit);
+        // walls have different value as normal soldiers.
+        _buf.attack = _coh.utils.FilterUtil.applyFilters("unitActivedAttack", leadUnit.getPlayer().getUnitAttack(leadUnit, convertType), leadUnit.unit);
+        _buf.hp = _coh.utils.FilterUtil.applyFilters("unitActivedHp", leadUnit.getPlayer().getUnitHp(leadUnit, convertType), leadUnit.unit);
+        _buf.duration = _coh.utils.FilterUtil.applyFilters("unitActivedDuration", leadUnit.getPlayer().getChargingDuration(leadUnit, convertType), leadUnit.unit);
     };
     
     self.getType = function() {

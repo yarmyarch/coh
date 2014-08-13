@@ -19,7 +19,7 @@ var UnitObject = function(unitName) {
         name : false,
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
-        color : _coh.LocalConfig.NO_COLOR,
+        color : _coh.LocalConfig.INVALID,
         isHero : false,
         
         // other configurations from LC.
@@ -60,9 +60,9 @@ var UnitObject = function(unitName) {
             _buf.conf[i] = _lc[i];
             
             // append getter for all configs.
-            self["get" + i[0].toUpperCase() + i.substr(1)] = (function(i) {
+            self["get" + _coh.Util.getFUStr(i)] = (function(i) {
                 return function() {
-                    return buf.conf[i];
+                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(i), buf.conf[i], self);
                 }
             })(i);
         }
@@ -91,7 +91,7 @@ var UnitObject = function(unitName) {
      */
     self.getStatus = function() {
         var _buf = buf;
-        if (_buf.color == coh.LocalConfig.NO_COLOR) {
+        if (_buf.color == coh.LocalConfig.INVALID) {
             return 0;
         }
         return coh.Battle.getStatus(self.getType(), _buf.color);
@@ -112,11 +112,7 @@ var UnitObject = function(unitName) {
     
     // let's move extra functions out of the class defination, make it possible be expanded.
     self.setAsHero = function() {
-        var _buf = buf;
-        
-        // We won't set it again.
-        if (_buf.isHero) return;
-        _buf.isHero = true;
+        buf.isHero = true;
     };
     
     construct.apply(self, arguments);
@@ -215,7 +211,7 @@ coh.Unit = (function() {
          * getAttack and other functions regenerated here via it's current occupation.
          */
         for (var i in _coh.occupations[_buf.occupation]) {
-            unit["get" + i[0].toUpperCase() + i.substr(1)] = (function(attribute) {
+            unit["get" + _coh.Util.getFUStr(i)] = (function(attribute) {
                 return function() {                    
                     // here we go.
                     var _buf = inner_buf,
@@ -229,7 +225,7 @@ coh.Unit = (function() {
                     
                     // No ceil. This step would be handled in calculator.
                     //~ return Math.ceil(maxAttr);
-                    return maxAttr;
+                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(attribute), maxAttr, unit);
                 };
             })(i);
         }

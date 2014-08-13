@@ -71,7 +71,7 @@ coh.LocalConfig = {
     COLOR_CONFIG : {
         ELF : ["blue", "white", "gold"]
     },
-    NO_COLOR : -1,
+    INVALID : -1,
     
     MAP_BATTLE_LAYER_NAME : "battleField",
     

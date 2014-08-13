@@ -271,6 +271,15 @@ coh.UIController = (function() {
     _coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
     });
     
+    _coh.utils.FilterUtil.addFilter("convertUnit", function(unitFrom, index, unitTo) {
+        
+        var _coh = coh,
+            convertUtil = _coh.utils[_coh.Util.getFUStr(unitFrom.getPlayer().getFaction()) + "CvtUtil"];
+        
+        if (!convertUtil) return;
+        convertUtil.convert(unitFrom, index, unitTo);
+    });
+    
     return self = {
         
     };
