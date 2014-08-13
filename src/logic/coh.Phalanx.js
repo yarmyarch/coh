@@ -9,24 +9,25 @@ coh.Phalanx = function(type, units) {
     var buf = {
         // 0 - blank
         type : 0,
-        unitWraps : false,
+        unitBodys : false,
         
         attack : 0,
         hp : 0,
         duration : 0
     };
     
-    var construct = function(type, unitWraps) {
+    var construct = function(type, unitBodys) {
         
         var _buf = buf;
         
         _buf.type = type;
-        _buf.unitWraps= unitWraps;
+        _buf.unitBodys= unitBodys;
         
-        var leadUnit = unitWraps[0];
+        var leadUnit = unitBodys[0];
         
-        for (var i = 0, unitWrap; unitWrap = unitWraps[i]; ++i) {
-            unitWrap.convert();
+        for (var i = 0, unitBody; unitBody = unitBodys[i]; ++i) {
+            // index should be considered as well.
+            unitBody.convertTo(type, i);
         }
         
         _buf.attack = leadUnit.getPlayer().getUnitAttack(leadUnit);
@@ -50,8 +51,8 @@ coh.Phalanx = function(type, units) {
         return buf.duration;
     };
     
-    self.getUnitWraps = function() {
-        return buf.unitWraps;
+    self.getUnitBodies = function() {
+        return buf.unitBodys;
     };
     
     construct.apply(self, arguments);

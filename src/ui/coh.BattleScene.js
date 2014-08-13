@@ -128,7 +128,7 @@ coh.BattleScene = function() {
          * This function is used to find the directly affected units behind the given unit.
          * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getMovingUnits : function(unitBodys, tileRecords) {
+        getMovingUnits : function(unitBodies, tileRecords) {
             
             var _buf = buf,
                 tiles,
@@ -139,10 +139,10 @@ coh.BattleScene = function() {
                 tmpUnit,
                 result = [];
             
-            for (i = 0; unitBodys[i]; ++i) {
+            for (i = 0; unitBodies[i]; ++i) {
                 tiles = tileRecords[i],
                 columns = {},
-                isAttacker = unitBodys[i].getPlayer().isAttacker(),
+                isAttacker = unitBodies[i].getPlayer().isAttacker(),
                 startY = 0;
                 
                 for (j in tiles) {
@@ -235,7 +235,7 @@ coh.BattleScene = function() {
                 // right bottom tile of the convert
                 rbTile = handlerList.mapUtil.getTilePosition(convert.isAttacker, _coh.LocalConfig.UNIT_TYPES.SOLDIER, convert.row, convert.column),
                 convertMatrix,
-                unitBodys,
+                unitBodies,
                 unitBody,
                 halt = false,
                 row, column,
@@ -248,7 +248,7 @@ coh.BattleScene = function() {
                 convertMatrix = _coh.LocalConfig.CONVERT_MATRIX[cType];
                 headUnit = null;
                 halt = false;
-                unitBodys = [];
+                unitBodies = [];
                 for (j = 0; row = convertMatrix[j]; ++j) {   
                     for (k = 0; column = row[k]; ++k) {
                         unitBody = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
@@ -259,7 +259,7 @@ coh.BattleScene = function() {
                             break;
                         }
                         
-                        unitBodys.push(unitBody);
+                        unitBodies.push(unitBody);
                         phalanxHash[unitBody.unit.getId()] = (phalanxHash[unitBody.unit.getId()] || []).concat(cType);
                     }
                     if (halt) {
@@ -274,11 +274,11 @@ coh.BattleScene = function() {
                 
                 // for walls, each unit is a single phalanx.
                 if (cType == _coh.LocalConfig.CONVERT_TYPES.WALL) {
-                    for (j = 0, unitBody; unitBody = unitBodys[j]; ++j) {
+                    for (j = 0, unitBody; unitBody = unitBodies[j]; ++j) {
                         _buf.phalanxList.push(new _coh.Phalanx(cType, [unitBody]));
                     }
                 } else {
-                    _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodys));
+                    _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodies));
                 }
                 
                 // update statusMatrix and unitMatrix for each phalanxes created.
@@ -821,7 +821,7 @@ coh.BattleScene = function() {
             };
         },
         
-        doConverts : function(unitBodys) {
+        doConverts : function(unitBodies) {
             
             var _buf = buf,
                 _coh = coh,
@@ -833,7 +833,7 @@ coh.BattleScene = function() {
                 converts,
                 allConverts = [];
             
-            for (var i = 0; unitBody = unitBodys[i]; ++i) {
+            for (var i = 0; unitBody = unitBodies[i]; ++i) {
                 // do nothing for types that's not 1.
                 if (unitBody.unit.getType() != 1) continue;
                 
