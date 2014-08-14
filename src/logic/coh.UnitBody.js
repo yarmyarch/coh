@@ -17,6 +17,7 @@ coh.UnitBody = function() {
     
     var buf = {
         player : null,
+        battleScene : null,
         // just for a record, no other purposes.
         // indexed by x_y
         tileRecord : [],
@@ -88,6 +89,14 @@ coh.UnitBody = function() {
         this.unitSprite.y = 0;
     };
     
+    self.setBattleScene = function(scene) {
+        buf.battleScene = scene;
+    };
+    
+    self.getBattleScene = function() {
+        return buf.battleScene;
+    };
+    
     self.setPlayer = function(player) {
         buf.player = player;
     };
@@ -148,12 +157,28 @@ coh.UnitBody = function() {
         return buf.charging;
     };
     
+    /**
+     * if a unit can be convert to another one, it must be a type 1 unit.
+     */
     self.convertTo = function(unitTo) {
         if (!buf.charging) {
             self.unitSprite.setVisible(false);
         }
-        var convertSprite = cc.Sprite.create();
-        convertSprite.runAction(cc.repeatForever(coh.View.getAnimation("convertor", "convert", "img")));
+        var _coh = coh,
+            convertSprite = cc.Sprite.create(res.imgs.convertor),
+            startTile = self.tileRecord[0],
+            targetTile = _coh.Util.getRandom(unitTo.getTileRecords());
+        
+        self.tileSprite.addChild(convertSprite);
+        convertSprite.runAction(cc.repeatForever(cc.rotateBy(_coh.LocalConfig.EXILE_RATE, 360)));
+        
+        // move the unit tile, pick a random tile from the target unit.
+        targetTile = targetTile;
+        
+        self.tileSprite.runAction(cc.bezierTo(_coh.LocalConfig.EXILE_RATE, [
+            // Start Point
+            {x : }
+        ]));
     };
     
     construct.apply(self, arguments);

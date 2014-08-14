@@ -622,6 +622,7 @@ coh.BattleScene = function() {
             
             // init unitBody
             unitBody.setPlayer(player);
+            unitBody.setBattleScene(self);
             
             setTimeout(function() {
                 self.battleMap.addChild(tileSprite, tilePosition.y);
