@@ -59,7 +59,7 @@ coh.View = (function() {
                 rate : frame rate, LC.FRAME_RATE for default.
                 cons : sprite constructor. cc.Sprite for default.
                 color : color, 0/1/2,
-                animMode : animation mode constructor, cc.RepeatForever for default.
+                animMode : animation mode constructor, cc.repeatForever for default.
             }
          */
         getSprite : function(unitName, animationName, spriteConfig) {
@@ -75,13 +75,13 @@ coh.View = (function() {
             var sc = {
                 rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
                 cons : spriteConfig.cons || _cc.Sprite,
-                animMode : spriteConfig.animMode || _cc.RepeatForever,
+                animMode : spriteConfig.animMode || _cc.repeatForever,
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
             srcName = "img" + (sc.color === _coh.LocalConfig.INVALID ? "" : "_" + (+sc.color));
             
-            action = sc.animMode.create(self.getAnimation(unitName, animationName, srcName, sc.rate));
+            action = sc.animMode(self.getAnimation(unitName, animationName, srcName, sc.rate));
             
             var sprite = new sc.cons(buf.animFrames[unitName][animationName][srcName][0]);
             sprite.runAction(action);
@@ -89,6 +89,9 @@ coh.View = (function() {
             return sprite;
         },
         
+        /**
+         * uses coh.res.sprite.<unitName>.<animationName>.<textureIndex>.
+         */
         getAnimation : function(unitName, animationName, textureIndex, rate) {
             
             var _buf = buf,

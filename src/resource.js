@@ -35,6 +35,15 @@ coh.res = {
             }
         },
         /**
+         * XXXXXX TO BE OPTIMIZED
+        convertor : {
+            convert : {
+                plist : "",
+                img : ""
+            }
+        },
+        */
+        /**
          * geneted by unit generator.
         archer : {
             idle : {

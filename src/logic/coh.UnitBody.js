@@ -19,7 +19,10 @@ coh.UnitBody = function() {
         player : null,
         // just for a record, no other purposes.
         // indexed by x_y
-        tileRecord : []
+        tileRecord : [],
+        
+        // if a wall or another phananx generated while charging, other animates won't hide the sprite.
+        charging : false
     };
 
     var construct = function(unit) {
@@ -131,8 +134,26 @@ coh.UnitBody = function() {
     /**
      * play convert animations, or change status if necessary.
      */
-    self.convert = function(cType) {
-        
+    self.charge = function() {
+        var srcName = "img_" + (+self.unit.getColor() || 0);
+        self.unitSprite.setVisible(true);
+        self.unitSprite.runAction(cc.repeatForever(coh.View.getAnimation(self.unit.getName(), "charge", srcName)));
+        buf.charging = true;
+    };
+    
+    /**
+     * once the unit is in charge, it will be in charge forever until it's ready to attack.
+     */
+    self.isCharging = function() {
+        return buf.charging;
+    };
+    
+    self.convertTo = function(unitTo) {
+        if (!buf.charging) {
+            self.unitSprite.setVisible(false);
+        }
+        var convertSprite = cc.Sprite.create();
+        convertSprite.runAction(cc.repeatForever(coh.View.getAnimation("convertor", "convert", "img")));
     };
     
     construct.apply(self, arguments);

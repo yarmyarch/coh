@@ -648,7 +648,7 @@ coh.BattleScene = function() {
                 unit = unitBody.unit,
                 unitSprite = unitBody.unitSprite,
                 tileSprite = unitBody.tileSprite,
-                srcName ="img_" + (+unit.getColor() || 0),
+                srcName = "img_" + (+unit.getColor() || 0),
                 typeConfig = unitBody.getTypeConfig(),
                 // if there exist tiles in the unitBody and having the same column number (x), move it directly here.
                 // Mind type 4, whose x was modified while handling exiledTileFrom.

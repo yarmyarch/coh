@@ -20,7 +20,7 @@
         "src/logic/coh.Unit.js",
         "src/logic/coh.Player.js",
         "src/logic/coh.Battle.js",
-        "src/logic/coh.UnitWrap.js",
+        "src/logic/coh.UnitBody.js",
         
         "src/ui/coh.MapScene.js",
         "src/ui/coh.MapLayer.js",

@@ -29,7 +29,7 @@ coh.Phalanx = function(type, units) {
         for (var i = 0, unitBody; unitBody = unitBodys[i]; ++i) {
             // index should be considered as well.
             // move it out.
-            _coh.utils.FilterUtil.applyFilters("convertUnit", unitBody, i, leadUnit);
+            _coh.utils.FilterUtil.applyFilters("convertUnit", unitBody, leadUnit, type);
         }
         
         // walls have different value as normal soldiers.
