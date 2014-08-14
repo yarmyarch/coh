@@ -50,6 +50,28 @@ coh.Util = (function(){
         getFUStr : function(str) {
             return str[0].toUpperCase() + str.substr(1);
         },
+                
+        /**
+         * get the function of the target line:
+         * y = kx + c,
+         * let's say the original line constructed by a and b is 
+         * y = -1/k * x + d,
+         * while -1/k = (b.y - a.y) / (b.x - a.x).
+         *@param a {Point} start position.
+         *@param b {Point} ending position.
+         */
+        getBesierMidPos : function(a, b) {
+            var k = (a.x - b.x) / (b.y - a.y),
+                midPos = {x : (b.x + a.x) / 2, y : (b.y + a.y) / 2},
+                c = midPos.y - k * midPos.x,
+                halfDist = Math.sqrt(Math.pow(a.y - b.y, 2) + Math.pow(a.x - b.x, 2)) / 2;
+            
+            // The line found, let's get a rand position from the line.
+            // Don't be too far away from the midPos. 
+            // The max distance should be less than half of the distance between a and b.
+            
+            // TO BE CONTINUED...
+        },
         
         base64Encode : function(data) {
             var buf = [],
