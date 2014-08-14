@@ -283,6 +283,8 @@ coh.BattleScene = function() {
                 
                 // update statusMatrix and unitMatrix for each phalanxes created.
                 // phalanxes except for walls won't react to any mouse events.
+                
+                // XXXXXX here we go, for further actions required.
             }
         }
     };

@@ -61,16 +61,16 @@ coh.Util = (function(){
          *@param b {Point} ending position.
          */
         getBesierMidPos : function(a, b) {
-            var k = (a.x - b.x) / (b.y - a.y),
-                midPos = {x : (b.x + a.x) / 2, y : (b.y + a.y) / 2},
-                c = midPos.y - k * midPos.x,
+            var midPos = {x : (b.x + a.x) / 2, y : (b.y + a.y) / 2},
+                //~ k = (a.x - b.x) / (b.y - a.y),
+                //~ c = midPos.y - k * midPos.x,
                 halfDist = Math.sqrt(Math.pow(a.y - b.y, 2) + Math.pow(a.x - b.x, 2)) / 2;
             
             // The line found, let's get a rand position from the line.
             // Don't be too far away from the midPos. 
             // The max distance should be less than half of the distance between a and b.
             
-            // TO BE CONTINUED...
+            return target = {x : midPos.x + Math.round(Math.random(halfDist * 2) - halfDist), y : midPos.y};
         },
         
         base64Encode : function(data) {

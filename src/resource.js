@@ -78,23 +78,32 @@ coh.res = {
      * Full fill the configs of sprite from coh.units.
      */
     var generateUnits = function(resObj) {
-        var _coh = coh;
+        var _coh = coh,
+            colors;
+        
         // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
         for (var i in _coh.units) {
             if (!_coh.units[i].occupation) continue;
+            colors = _coh.factions[_coh.units[i].faction].colors;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",
-                img_0 : "res/sprite/imgs/" + i + "_blue.png",
-                img_1 : "res/sprite/imgs/" + i + "_gold.png",
-                img_2 : "res/sprite/imgs/" + i + "_white.png"
+                img_0 : "res/sprite/imgs/" + i + "_" + colors[0] + ".png",
+                img_1 : "res/sprite/imgs/" + i + "_" + colors[1] + ".png",
+                img_2 : "res/sprite/imgs/" + i + "_" + colors[2] + ".png"
             };
             // XXXXXX TO BE ADDED
             resObj.sprite[i].assult = {
                 plist : "res/sprite/" + i + "_idle.plist",
-                img_0 : "res/sprite/imgs/" + i + "_blue.png",
-                img_1 : "res/sprite/imgs/" + i + "_gold.png",
-                img_2 : "res/sprite/imgs/" + i + "_white.png"
+                img_0 : "res/sprite/imgs/" + i + "_" + colors[0] + ".png",
+                img_1 : "res/sprite/imgs/" + i + "_" + colors[1] + ".png",
+                img_2 : "res/sprite/imgs/" + i + "_" + colors[2] + ".png"
+            };
+            resObj.sprite[i].charge = {
+                plist : "res/sprite/" + i + "_idle.plist",
+                img_0 : "res/sprite/imgs/" + i + "_" + colors[0] + "_charge.png",
+                img_1 : "res/sprite/imgs/" + i + "_" + colors[1] + "_charge.png",
+                img_2 : "res/sprite/imgs/" + i + "_" + colors[2] + "_charge.png"
             };
         }
         return resObj;
