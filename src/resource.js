@@ -26,7 +26,7 @@ coh.res = {
         arrow : "res/imgs/arrow.png",
         cornor : "res/imgs/corner.png",
         blank : "res/imgs/blank.png",
-        convertor : "res/imgs/blank.png"
+        convertor : "res/imgs/convertor.png"
     },
     sprite : {
         awen : {
