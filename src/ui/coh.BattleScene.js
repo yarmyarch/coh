@@ -158,6 +158,9 @@ coh.BattleScene = function() {
             return result;
         },
         
+        /**
+         * try to reset the positoin of given units, make sure there would be no blank tiles in front of them.
+         */
         moveToFrontLine : function(unitBody) {
             var _ts = handlerList.mapUtil,
                 _buf = buf,
@@ -285,6 +288,7 @@ coh.BattleScene = function() {
                 // phalanxes except for walls won't react to any mouse events.
                 
                 // XXXXXX here we go, for further actions required.
+                // kill unit in player for type 2/4/5;
             }
         }
     };
@@ -732,6 +736,7 @@ coh.BattleScene = function() {
             for (var i in tiles) {
                 self.unbindUnitToTile(unitBody, tiles[i]);
             }
+            unitBody.battleScene = null;
         },
         
         /**
@@ -799,14 +804,39 @@ coh.BattleScene = function() {
             
             var _util = util,
                 affectedUnits,
-                movedUnits = [unitBody],
-                tileRecords = [unitBody.getTileRecords()];
+                // get the tileRecords before it's removed.
+                tileRecords = unitBody.getTileRecords().concat();
             
             // XXXXXX Play the removing animate in target tile.
             
             self.battleMap.removeChild(unitBody.tileSprite, true);
             self.unbindUnit(unitBody);
             unitBody.getPlayer().killUnit(unitBody.unit);
+            
+            // return affected unit for further usage, such as queueUnits.
+            return {
+                unitBody : unitBody,
+                tiles : tileRecords
+            };
+            
+            // queueUnits([unitBody], [tileRecords]);
+        },
+        
+        /**
+         * Given units would try to array to the front line.
+         */
+        queueUnits : function(unitBodies, tileRecords) {
+            
+            var movedUnits = unitBodies,
+                affectedUnits,
+                _util = util;
+            
+            for (var i = 0, unitBody; unitBody = movedUnits[i]; ++i) {
+                // if it's still in the battle field, charge.
+                if (unitBody.getTileRecords()) {
+                    _util.moveToFrontLine(unitBody);
+                }
+            }
             
             while (movedUnits.length) {
                 affectedUnits = util.getMovingUnits(movedUnits, tileRecords);
@@ -815,13 +845,20 @@ coh.BattleScene = function() {
                 for (var i in affectedUnits) {
                     // the unit isn't moved, so it won't have any effect on other units behind it.
                     tileRecords.push(affectedUnits[i].getTileRecords());
-                    if (util.moveToFrontLine(affectedUnits[i])) {
+                    if (_util.moveToFrontLine(affectedUnits[i])) {
                         movedUnits.push(affectedUnits[i]);
                     } else {
                         tileRecords.pop();
                     }
                 }
             };
+        },
+        
+        /**
+         * Similar to queueUnits but it affectes all units within a phalanx.
+         */
+        queuePhalanxes : function(phalanxes) {
+            
         },
         
         doConverts : function(unitBodies) {

@@ -222,11 +222,13 @@ coh.UIController = (function() {
     
     _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitBody, tile, battleScene) {
         
-        var _buf = buf;
+        var _buf = buf,
+            removedUnitBody;
         
         if (_buf.battle.checkedUnit == unitBody) {
             util.clearStatus(battleScene);
-            battleScene.removeUnit(unitBody, tile);
+            removedUnitBody = battleScene.removeUnit(unitBody, tile);
+            battleScene.queueUnits([removedUnitBody.unitBody], [removedUnitBody.tiles]);
         } else {
             util.clearStatus(battleScene);
             battleScene.focusOnUnit(unitBody);

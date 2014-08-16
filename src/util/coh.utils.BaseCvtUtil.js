@@ -25,6 +25,11 @@ coh.utils = coh.utils || {};
     var getInstance = function() {
         if (!instance) {
             instance = {
+                
+                /**
+                 * Try to convert the from unit to the target unit.
+                 * Only units with type 1 can be a unitFrom.
+                 */
                 convert : function(unitFrom, unitTo, cType) {
                     handlerList[cType] && handlerList[cType](unitFrom, unitTo, index);
                 }

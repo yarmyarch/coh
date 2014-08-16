@@ -114,7 +114,7 @@ coh.UnitBody = function() {
      */
     self.getTileRecords = function() {
         if (!buf.tileRecord.length) return null;
-        return buf.tileRecord.concat();
+        return buf.tileRecord;
     };
     
     self.addTileRecord = function(newTile) {
@@ -165,6 +165,9 @@ coh.UnitBody = function() {
     self.convertTo = function(unitTo, callback) {
         if (!buf.charging) {
             self.unitSprite.setVisible(false);
+        
+            // remove the unit itself from it's battleScene.
+            _buf.battleScene.removeUnit(self);
         }
         var _coh = coh,
             _buf = buf,
@@ -179,7 +182,7 @@ coh.UnitBody = function() {
         
         // move the unit tile, picking a random tile from the target unit.
         self.tileSprite.runAction(cc.sequence(cc.bezierTo(_coh.LocalConfig.EXILE_RATE, [startPos, ctrlPos, targetPos])), cc.callFunc(function(){
-            _coh.Util.isExecutable(callback) && callback();
+            _coh.Util.isExecutable(callback) && callback(self);
         }));
     };
     
