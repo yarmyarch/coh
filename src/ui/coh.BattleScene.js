@@ -824,6 +824,7 @@ coh.BattleScene = function() {
         
         /**
          * Given units would try to array to the front line.
+         * Mind that the units might have been removed already, so tileRecords for that unit is required.
          */
         queueUnits : function(unitBodies, tileRecords) {
             
@@ -856,6 +857,7 @@ coh.BattleScene = function() {
         
         /**
          * Similar to queueUnits but it affectes all units within a phalanx.
+         * Differently, given phalanxes would never have been removed, so no tileRecords required as a param.
          */
         queuePhalanxes : function(phalanxes) {
             
