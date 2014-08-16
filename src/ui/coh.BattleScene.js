@@ -287,8 +287,12 @@ coh.BattleScene = function() {
                 // update statusMatrix and unitMatrix for each phalanxes created.
                 // phalanxes except for walls won't react to any mouse events.
                 
-                // XXXXXX here we go, for further actions required.
-                // kill unit in player for type 2/4/5;
+                // queue phalanxes first, then
+                // gather all convertedUnitBodies and make a queue for them.
+                
+                // How should the priority be determined for phalanxes? For archers, they're always supposed to be at the bottom of the battle field, while heros - those who's having a high priority while generating might be archers as well.
+                // What if we set "ranged" as a skill, and use filters for the skill to fix the priority while queueing?
+                // Think it's possible.
             }
         }
     };
