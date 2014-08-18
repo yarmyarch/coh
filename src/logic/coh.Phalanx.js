@@ -51,6 +51,7 @@ coh.Phalanx = function(type, units) {
         _buf.attack = _coh.utils.FilterUtil.applyFilters("unitActivedAttack", leadUnit.getPlayer().getUnitAttack(leadUnit, convertType), leadUnit.unit);
         _buf.hp = _coh.utils.FilterUtil.applyFilters("unitActivedHp", leadUnit.getPlayer().getUnitHp(leadUnit, convertType), leadUnit.unit);
         _buf.duration = _coh.utils.FilterUtil.applyFilters("unitActivedDuration", leadUnit.getPlayer().getChargingDuration(leadUnit, convertType), leadUnit.unit);
+        _buf.priority = type == _coh.CONVERT_TYPES.WALL ? _coh.PRIORITY_WALL : _coh.utils.FilterUtil.applyFilters("unitActivedPriority", leadUnit.unit.getPriority(), leadUnit.unit);
     };
     
     self.getType = function() {
@@ -67,6 +68,14 @@ coh.Phalanx = function(type, units) {
     
     self.getDuration = function() {
         return buf.duration;
+    };
+    
+    self.getPriority = function() {
+        return buf.priority;
+    };
+    
+    self.getLeadingUnit = function() {
+        return buf.unitBodies[0];
     };
     
     self.getUnitBodies = function() {

@@ -97,5 +97,7 @@ coh.LocalConfig = {
     UNIT : {
         MAX_LEVEL : 20,
         MIN_LEVEL : 1
-    }
+    },
+    
+    PRIORITY_WALL : 100
 };

@@ -160,6 +160,7 @@ coh.BattleScene = function() {
         
         /**
          * try to reset the positoin of given units, make sure there would be no blank tiles in front of them.
+         *@return distance moved.
          */
         moveToFrontLine : function(unitBody) {
             var _ts = handlerList.mapUtil,
@@ -822,24 +823,26 @@ coh.BattleScene = function() {
                 unitBody : unitBody,
                 tiles : tileRecords
             };
-            
-            // queueUnits([unitBody], [tileRecords]);
         },
         
         /**
          * Given units would try to array to the front line.
          * Mind that the units might have been removed already, so tileRecords for that unit is required.
+         *@return all moved units.
          */
         queueUnits : function(unitBodies, tileRecords) {
             
             var movedUnits = unitBodies,
                 affectedUnits,
-                _util = util;
+                _util = util,
+                result = [];
             
             for (var i = 0, unitBody; unitBody = movedUnits[i]; ++i) {
                 // if it's still in the battle field, charge.
                 if (unitBody.getTileRecords()) {
-                    _util.moveToFrontLine(unitBody);
+                    if (_util.moveToFrontLine(unitBody)) {
+                        result.push(unitBody);
+                    };
                 }
             }
             
@@ -852,11 +855,14 @@ coh.BattleScene = function() {
                     tileRecords.push(affectedUnits[i].getTileRecords());
                     if (_util.moveToFrontLine(affectedUnits[i])) {
                         movedUnits.push(affectedUnits[i]);
+                        result.push(affectedUnits[i]);
                     } else {
                         tileRecords.pop();
                     }
                 }
             };
+            
+            return result;
         },
         
         /**
