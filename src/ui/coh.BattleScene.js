@@ -211,6 +211,29 @@ coh.BattleScene = function() {
             return distance;
         },
         
+        /**
+         * withdraw a single unit back to rowCount tiles from the front line.
+         * if it's running out of the border, kill the unit.
+         * @return <bool> if the unit is still in the battle ground.
+         */
+        withdraw : function(unitBody, rowCount) {
+            var _ts = handlerList.mapUtil,
+                _buf = buf,
+                isAttacker = unitBody.getPlayer().isAttacker(),
+                yRange = _ts.getYRange(isAttacker),
+                validTile = _ts.getValidTile(unitBody);
+            
+            // out of range, kill the unit.
+            if (isAttacker ? validTile.y - rowCount > yRange[yRange.length - 1] : validTile.y - rowCount < yRange[yRange.length - 1]) {
+                self.removeUnit(unitBody);
+                return false;
+            }
+            
+            self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y + rowCount * (isAttacker ? 1 : -1)});
+            
+            return true;
+        },
+        
         inPhalanx : function(phalanxHash, cType, unitBody) {
             var unitId = unitBody.getId(),
                 phalanxes = phalanxHash[unitId];
@@ -852,7 +875,7 @@ coh.BattleScene = function() {
                 tileRecords = [];
                 for (var i in affectedUnits) {
                     // the unit isn't moved, so it won't have any effect on other units behind it.
-                    tileRecords.push(affectedUnits[i].getTileRecords());
+                    tileRecords.push(affectedUnits[i].getTileRecords().concat());
                     if (_util.moveToFrontLine(affectedUnits[i])) {
                         movedUnits.push(affectedUnits[i]);
                         result.push(affectedUnits[i]);
@@ -870,7 +893,51 @@ coh.BattleScene = function() {
          * Differently, given phalanxes would never have been removed, so no tileRecords required as a param.
          */
         queuePhalanxes : function(phalanxes) {
+            // XXXXXX Mind the front-line rules about melee phalanxes.
             
+            // find the correct positions for the phalanxes, and then withdraw units if necessary.
+        },
+        
+        /**
+         * All units in the selected column will try to withdraw for <rowCount> tiles back.
+         * If the row is having more units than the battle grould allowed, overflowed units would be killed.
+         * Mind units that's having more than 1 tile.
+         * @return all moved units that's still not removed.
+         */
+        withdraw : function(unitBodies, rowCount) {
+            
+            var movedUnits = unitBodies,
+                affectedUnits,
+                _util = util,
+                tileRecords = [],
+                result = [];
+            
+            for (var i = 0, unitBody; unitBody = movedUnits[i]; ++i) {
+                // if it's still in the battle field, charge.
+                if (unitBody.getTileRecords()) {
+                    tileRecords.push(unitBody.getTileRecords().concat());
+                    if (_util.withdraw(unitBody, rowCount)) {
+                        result.push(unitBody);
+                    };
+                }
+            }
+            
+            while (movedUnits.length) {
+                affectedUnits = util.getMovingUnits(movedUnits, tileRecords);
+                movedUnits = [];
+                tileRecords = [];
+                for (var i in affectedUnits) {
+                    tileRecords.push(affectedUnits[i].getTileRecords().concat());
+                    movedUnits.push(affectedUnits[i]);
+                    
+                    // if the unit is removed drew to a withdraw, it won't have an effect on new phalanxes that might generate.
+                    if (_util.withdraw(affectedUnits[i], rowCount)) {
+                        result.push(affectedUnits[i]);
+                    }
+                }
+            };
+            
+            return result;
         },
         
         doConverts : function(unitBodies) {
