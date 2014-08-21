@@ -1,4 +1,5 @@
 /**
+ *@require {Battle}: Utils for battle scene.
  *@require {MapUtil}: if you would like to place units to the battle ground;
  *  inject it from the outer factory.
  *
@@ -255,6 +256,8 @@ coh.BattleScene = function() {
                 converts : [<typeId>],
                 isAttacker : <bool>
             }
+         * For each phalanxes created, status of units within the phalanx should be updated,
+         * while the updates would be applied to battleScene in setUnitToTile.
          */
         getPhalanx : function(convert) {
             var _buf = buf,
@@ -308,7 +311,7 @@ coh.BattleScene = function() {
                     _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodies));
                 }
                 
-                // update statusMatrix and unitMatrix for each phalanxes created.
+                
                 // phalanxes except for walls won't react to any mouse events.
                 
                 // queue phalanxes first, then

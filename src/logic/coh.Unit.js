@@ -1,3 +1,6 @@
+/**
+ *@require {Battle}: Utils for battle scene.
+ */
 var coh = coh || {};
 
 (function() {
@@ -23,7 +26,11 @@ var UnitObject = function(unitName) {
         isHero : false,
         
         // other configurations from LC.
-        conf : {}
+        conf : {},
+        
+        // idle for default.
+        // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
     };
     
     var construct = function(unitName) {
@@ -90,11 +97,19 @@ var UnitObject = function(unitName) {
      * could only be actived once the color is set.
      */
     self.getStatus = function() {
-        var _buf = buf;
-        if (_buf.color == coh.LocalConfig.INVALID) {
+        var _buf = buf,
+            _coh = coh;
+        if (_buf.color == _coh.LocalConfig.INVALID) {
             return 0;
         }
-        return coh.Battle.getStatus(self.getType(), _buf.color);
+        
+        return self.getType() * _coh.LocalConfig.COLOR_COUNT + _buf.color;
+    };
+    self.getAction = function() {
+        return buf.action;
+    };
+    self.setAction = function(actionId) {
+        if (coh.LocalConfig.UNIT_ACTIONS[actionId]) buf.action = actionId;
     };
     
     self.getLevel = function() {
@@ -177,7 +192,7 @@ coh.Unit = (function() {
             inner_buf.type = newType;
         };
         unit.getType = function() {
-            return inner_buf.type;
+            return _coh.utils.FilterUtil.applyFilters("unitAttributeType", inner_buf.type, unit);
         };
         
         /**
@@ -233,6 +248,11 @@ coh.Unit = (function() {
         // Use the newly affected unit instead of the original one.
         // Actually it's not necessary returning this, as in js it's pointers parsed... Never mind, who nows.
         return unit;
+    });
+    
+    // filter types generated with action.
+    _coh.utils.FilterUtil.addFilter("unitAttributeType", function(type, unit) {
+        return unit.getAction() * _coh.LocalConfig.UNIT_TYPES_COUNT + type;
     });
     
     return self = {

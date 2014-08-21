@@ -110,7 +110,7 @@ coh.UnitBody = function() {
     };
     
     /**
-     * deep copy.
+     * deep copy required for some cases, do it outside.
      */
     self.getTileRecords = function() {
         if (!buf.tileRecord.length) return null;

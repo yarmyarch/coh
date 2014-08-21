@@ -137,10 +137,6 @@ coh.Battle = (function(){
             return +status % LC.COLOR_COUNT;
         },
         
-        getStatus : function(type, color) {
-            return (+type) * LC.COLOR_COUNT + (+color);
-        },
-        
         /**
          * @param current
          * @param config {Object}

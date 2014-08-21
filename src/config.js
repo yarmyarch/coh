@@ -21,6 +21,15 @@ coh.LocalConfig = {
         TANK : 3,
         CHAMPION : 4
     },
+    // should be recalculated via UNIT_TYPES.
+    UNIT_TYPES_COUNT : 0,
+    // for units whose type code is within <x> * UNIT_TYPES_COUNT ~ <x + 1> * UNIT_TYPES_COUNT, having the action below which value is <x>.
+    // Ex. charging elite unit is having the type of 1 * UNIT_TYPES_COUNT + 2.
+    UNIT_ACTIONS : {
+        // default action is idle.
+        IDLE : 0,
+        CHARGE : 1
+    },
     CONVERT_TYPES : {
         SOLDIER : 1,
         ELITE : 2,
@@ -101,3 +110,12 @@ coh.LocalConfig = {
     
     PRIORITY_WALL : 100
 };
+
+// append configs that's need be calculated.
+(function() {
+// set UNIT_TYPES_COUNT
+for (var i in coh.LocalConfig.UNIT_TYPES) {
+    ++coh.LocalConfig.UNIT_TYPES_COUNT;
+}
+
+})();
