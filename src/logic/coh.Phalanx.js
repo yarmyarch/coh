@@ -2,6 +2,16 @@ var coh = coh || {};
 
 (function() {
 
+    /**
+     * while creating a phalanx, the unit might be :
+        Removed from the battle scene if it's a unit that should be converted to the lead unit;
+        Set to charging status if it's a lead unit;
+        Transformed into a wall;
+     * Together with few data changes:
+     * Action set to coh.LocalConfig.ACTIONS.CHARGE;
+     * Position reset should be handled by battleScene, after the phalax finishes converting or transforming,
+     * Mean while the matrix of battleScene should be updated automatically.
+     */
 coh.Phalanx = function(type, units) {
     
     var self = this;
@@ -42,8 +52,9 @@ coh.Phalanx = function(type, units) {
             if (unitBody.unit.getType != _coh.UNIT_TYPES.SOLDIER && type != _coh.CONVERT_TYPES.WALL)
                 // if the unit was not converted - meanning removed, let's say it's actived.
                 _buf.unitBodies.push(unitBody);
+                unitBody.unit.setAction(_coh.ACTIONS.CHARGE);
             } else {
-                _buf.r_unitBodies.push(convertedUnit);
+                _buf.r_unitBodies.push(unitBody);
             }
         }
         

@@ -161,13 +161,11 @@ coh.UnitBody = function() {
     
     /**
      * if a unit can be convert to another one, it must be a type 1 unit.
+     * Once the convert finished, the unit would be removed from the battle scene.
      */
     self.convertTo = function(unitTo, callback) {
         if (!buf.charging) {
             self.unitSprite.setVisible(false);
-        
-            // remove the unit itself from it's battleScene.
-            _buf.battleScene.removeUnit(self);
         }
         var _coh = coh,
             _buf = buf,
@@ -183,6 +181,11 @@ coh.UnitBody = function() {
         // move the unit tile, picking a random tile from the target unit.
         self.tileSprite.runAction(cc.sequence(cc.bezierTo(_coh.LocalConfig.EXILE_RATE, [startPos, ctrlPos, targetPos])), cc.callFunc(function(){
             _coh.Util.isExecutable(callback) && callback(self);
+            
+            if (!buf.charging) {
+                // remove the unit itself from it's battleScene.
+                _buf.battleScene.removeUnit(self);
+            }
         }));
     };
     

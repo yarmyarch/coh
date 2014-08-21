@@ -311,7 +311,6 @@ coh.BattleScene = function() {
                     _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodies));
                 }
                 
-                
                 // phalanxes except for walls won't react to any mouse events.
                 
                 // queue phalanxes first, then

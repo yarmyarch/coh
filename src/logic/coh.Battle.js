@@ -236,7 +236,6 @@ coh.Battle = (function(){
             
             var unitType;
             for (var unitName in units) {
-                // no interfaces changed.
                 unitType = _coh.Unit.getUnitType(unitName);
                 unitConfig[unitType] || (unitConfig[unitType] = 0);
                 unitConfig[unitType] += units[unitName];
