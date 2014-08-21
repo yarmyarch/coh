@@ -128,15 +128,6 @@ coh.Battle = (function(){
     }
     
     return self = {
-        
-        getTypeFromStatus : function(status) {
-            return ~~(+status / LC.COLOR_COUNT);
-        },
-        
-        getColorFromStatus : function(status) {
-            return +status % LC.COLOR_COUNT;
-        },
-        
         /**
          * @param current
          * @param config {Object}
@@ -144,19 +135,7 @@ coh.Battle = (function(){
                 [location type1] : [count of this type1],
                 // ...
             }
-         * null = status == 0;
-         * color = status % _lc.COLOR_COUNT;
-         * type  = (status - colors) / _lc.COLOR_COUNT = ~~(status / _lc.COLOR_COUNT);
-         * for status == 12: 
-            color == 0;
-            type == 4;
-         * 0 - blank;
-         * 1 - reserved;
-         * 2 - reserved;
-         * 3 - 0/1;
-         * 4 - 1/1;
-         * 5 - 2/1;
-         * ...
+         * @see config.js for more details of status & type & color.
          * @return {
                 succeed : [[]], // Two-dimensional array with similay data type given by the current data group.
                 faild : [] // faild list, filled with data type.
@@ -258,7 +237,7 @@ coh.Battle = (function(){
             var unitType;
             for (var unitName in units) {
                 // no interfaces changed.
-                unitType = _coh.Unit.getType(unitName);
+                unitType = _coh.Unit.getUnitType(unitName);
                 unitConfig[unitType] || (unitConfig[unitType] = 0);
                 unitConfig[unitType] += units[unitName];
             }

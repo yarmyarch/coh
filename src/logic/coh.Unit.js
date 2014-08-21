@@ -4,9 +4,29 @@
 var coh = coh || {};
 
 (function() {
-
+}
 /**
  * Super class for all units.
+ * Details for type/status/action/color:
+ * @see config.js, UNIT_TYPES for all types.
+
+    color : color of the unit, defined in faction configurations. 3 colors in current version, it would be generated radomly while creating a unit.
+    type : read only, the basic field of the unit. Type of a unit is defined in unit configurations.
+        whenever a type should be returned, it should only be those ones defined in config.UNIT_TYPES.
+    action : what the unit is doing at the moment. Defaultly set 0 (idle).
+    status : keycode used calculating. 
+        status = (action * typeCount + type) * colorCount + color.
+    for status == 12: 
+        color == 0;
+        type == 4;
+    0 - blank;
+    1 - reserved;
+    2 - reserved;
+    3 - 0/1;
+    4 - 1/1;
+    5 - 2/1;
+    ...
+ *
  */
 var UnitObject = function(unitName) {
     
@@ -23,14 +43,14 @@ var UnitObject = function(unitName) {
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
+        // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
         isHero : false,
         
         // other configurations from LC.
         conf : {},
         
         // idle for default.
-        // check coh.LocalConfig.UNIT_ACTIONS for full action list.
-        action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
     };
     
     var construct = function(unitName) {
@@ -103,7 +123,7 @@ var UnitObject = function(unitName) {
             return 0;
         }
         
-        return self.getType() * _coh.LocalConfig.COLOR_COUNT + _buf.color;
+        return (self.getType() + _buf.action * _coh.LocalConfig.UNIT_TYPES_COUNT) * _coh.LocalConfig.COLOR_COUNT + _buf.color;
     };
     self.getAction = function() {
         return buf.action;
@@ -141,7 +161,8 @@ var UnitObject = function(unitName) {
 coh.Unit = (function() {
     
     var self,
-        _coh = coh;
+        _coh = coh,
+        LC = _coh.LocalConfig;
 
     var util = {
         /**
@@ -150,7 +171,7 @@ coh.Unit = (function() {
          */
         getLeveledOccupation : function(levels) {
             var historyLevel = 0,
-                maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                maxLevel = LC.UNIT.MAX_LEVEL,
                 ocpt = {
                     level : 0
                 },
@@ -230,7 +251,7 @@ coh.Unit = (function() {
                 return function() {                    
                     // here we go.
                     var _buf = inner_buf,
-                        maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                        maxLevel = LC.UNIT.MAX_LEVEL,
                         maxAttr = 0;
                     if (!_buf.levels || !_buf.occupation) return 0;
                     
@@ -250,13 +271,11 @@ coh.Unit = (function() {
         return unit;
     });
     
-    // filter types generated with action.
-    _coh.utils.FilterUtil.addFilter("unitAttributeType", function(type, unit) {
-        return unit.getAction() * _coh.LocalConfig.UNIT_TYPES_COUNT + type;
-    });
-    
     return self = {
-        getType : function(unitName) {
+        /**
+         * get type by unit name.
+         */
+        getUnitType : function(unitName) {
             return (coh.units[unitName] && coh.units[unitName].type) || 0;
         },
         
@@ -272,6 +291,18 @@ coh.Unit = (function() {
             }
             
             return unit;
+        },
+        
+        getTypeFromStatus : function(status) {
+            return ~~(+status / LC.COLOR_COUNT) % LC.UNIT_TYPES_COUNT;
+        },
+        
+        getActionFromStatus : function(status) {
+            return ~~(~~(+status / LC.COLOR_COUNT) / LC.UNIT_TYPES_COUNT);
+        },
+        
+        getColorFromStatus : function(status) {
+            return +status % LC.COLOR_COUNT;
         }
     }
     

@@ -1,10 +1,8 @@
 var coh = coh || {};
 coh.LocalConfig = {
-    COLOR : {
-        GREEN : 1,
-        RED : 2,
-        BLUE : 3
-    },
+    /**
+     * @see coh.Unit.js for more details of status & type & color.
+     */
     LOCATION_TYPE : {
         // 0 - reserved
         // [row count<y>, column count<x>]
@@ -14,7 +12,7 @@ coh.LocalConfig = {
         4 : [2,2]
     },
     UNIT_TYPES: {
-        // blank, unused datagroup data and converted units shares this type.
+        // blank, unused datagroup data or other unexpected units shares this type.
         STATIC : 0,
         SOLDIER : 1,
         ELITE : 2,
@@ -77,9 +75,6 @@ coh.LocalConfig = {
     
     
     BLINK_RATE : 0.618,
-    COLOR_CONFIG : {
-        ELF : ["blue", "white", "gold"]
-    },
     INVALID : -1,
     
     MAP_BATTLE_LAYER_NAME : "battleField",

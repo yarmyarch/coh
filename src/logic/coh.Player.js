@@ -90,7 +90,7 @@ coh.Player = function(unitConfig) {
         var _coh = coh,
             _buf = buf,
             _u = _buf.unitsUnplaced,
-            type = _coh.Battle.getTypeFromStatus(status),
+            type = _coh.Unit.getTypeFromStatus(status),
             unit =null, 
             unitName;
         
@@ -99,7 +99,7 @@ coh.Player = function(unitConfig) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
                 
-                unit.setColor(_coh.Battle.getColorFromStatus(status));
+                unit.setColor(_coh.Unit.getColorFromStatus(status));
                 unit.setLevel(_buf.savedData.unitLevels[unitName]);
                 
                 // set level history for hero units.

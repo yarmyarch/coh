@@ -631,7 +631,7 @@ coh.BattleScene = function() {
             _buf.unitDelay = 0;
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                    status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
+                    status && _coh.Unit.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                     _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
                     if (!player.getNumOfUnplacedUnit()) return;
                 }
@@ -655,7 +655,7 @@ coh.BattleScene = function() {
                 tileSprite = unitBody.tileSprite,
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
+                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Unit.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitBody
             unitBody.setPlayer(player);
