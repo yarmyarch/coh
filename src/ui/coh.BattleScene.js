@@ -5,6 +5,7 @@
  *
  *@dispatch filterName: battleSceneEntered
  *@dispatch filterName: unitSpriteCreated
+ * to many of them my friend. Just search for "applyFilters" to find all.
  */
 var coh = coh || {};
 
