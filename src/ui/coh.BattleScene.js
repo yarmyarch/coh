@@ -162,9 +162,14 @@ coh.BattleScene = function() {
         /**
          * Find the best tile for given unit in the battle field,
          * When in it's column it's the first blank tile count from the front line.
+         *
+         * @param [isBlankFukc] {Function({UnitBody})} optional. Function used to check if the tile should be treated as a "blank" tile.
+         *  if not specificed, "blank" means no unit is at the found tile.
+         *  return true if it's a "blank" tile for the comparation, that means when the unit is trying to move to the front line, it should pass through the tile checked.
+         *
          * @return the distance from it's current column to the target tile. Always positive.
          */
-        getValidDistance : function(unitBody) {
+        getValidDistance : function(unitBody, isBlankFukc) {
             var _ts = handlerList.mapUtil,
                 _buf = buf,
                 tiles = unitBody.getTileRecords(),
@@ -175,7 +180,10 @@ coh.BattleScene = function() {
                 endY = yRange[_ts.PUBLIC_ROW_COUNT],
                 columns = {},
                 y, i, distance = 0, 
-                unitFound;
+                unitFound,
+                checkIsBlank = checkIsBlank || function(unitBody) {
+                    return !unitBody;
+                };
             
             for (i in tiles) {
                 columns[tiles[i].x] = tiles[i].x;
@@ -190,7 +198,7 @@ coh.BattleScene = function() {
                 y += deataY;
                 unitFound = false;
                 for (i in columns) {
-                    if (_buf.unitMatrix[columns[i]][y]) {
+                    if (!checkIsBlank(_buf.unitMatrix[columns[i]][y])) {
                         unitFound = true;
                         break;
                     } else {
@@ -260,6 +268,18 @@ coh.BattleScene = function() {
         },
         
         /**
+         * @return the priority of a unitBody.
+         */
+        getPriority : function(unitBody) {
+            // XXXXXX Here we go!
+            
+            // How should the priority be determined for phalanxes? For archers, they're always supposed to be at the bottom of the battle field, while heros - those who's having a high priority while generating might be archers as well.
+            // What if we set "ranged" as a skill, and use filters for the skill to fix the priority while queueing?
+            // Think it's possible.
+            return 0;
+        },
+        
+        /**
          *@param convert convert object generated from coh.Battle that having data below:
             {
                 column : column number,
@@ -322,14 +342,11 @@ coh.BattleScene = function() {
                     _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodies));
                 }
                 
+                // XXXXXX To Be Continued.
                 // phalanxes except for walls won't react to any mouse events.
                 
                 // queue phalanxes first, then
                 // gather all convertedUnitBodies and make a queue for them.
-                
-                // How should the priority be determined for phalanxes? For archers, they're always supposed to be at the bottom of the battle field, while heros - those who's having a high priority while generating might be archers as well.
-                // What if we set "ranged" as a skill, and use filters for the skill to fix the priority while queueing?
-                // Think it's possible.
             }
         }
     };
@@ -907,10 +924,10 @@ coh.BattleScene = function() {
          * Differently, given phalanxes would never have been removed, so no tileRecords required as a param.
          */
         queuePhalanxes : function(phalanxes) {
-            // XXXXXX Mind the front-line rules about melee phalanxes.
-            
             var _util = util,
+                _coh = coh,
                 distance,
+                targetTile,
                 unitBody,
                 priority,
                 // If it's having other units or phalanxes in front of the current one, let's make a comparation.
@@ -919,8 +936,20 @@ coh.BattleScene = function() {
             // find the correct positions for the phalanxes, and then withdraw units if necessary.
             for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
                 unitBody = phalanx.getLeadUnit;
-                distance = _util.getValidDistance(unitBody);
-                priority = _util.getPriority(unitBody);
+                distance = _util.getValidDistance(unitBody, function(comparedUnit) {
+                    // 
+                    return _util.getPriority(comparedUnit) < _util.getPriority(unitBody);
+                });
+                
+                // The front-line rules about melee phalanxes should be handled outside into the filters,
+                // Maybe somewhere else related to a skill set.
+                distance = _coh.utils.FilterUtil.applyFilters("phalanxMovingDistance", distance, phalanx);
+                // if no charge required for current phalanx, do nothing.
+                if (!distance) continue;
+                
+                // if there exist a unit in target place, let's try withdraw for sevral tiles.
+                // specially, if the unit belongs to enimy side, there would be something bad happen to that unlucky guy.
+                // XXXXXX Here we go!
             }
         },
         
