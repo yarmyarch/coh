@@ -909,8 +909,19 @@ coh.BattleScene = function() {
         queuePhalanxes : function(phalanxes) {
             // XXXXXX Mind the front-line rules about melee phalanxes.
             
-            // find the correct positions for the phalanxes, and then withdraw units if necessary.
+            var _util = util,
+                distance,
+                unitBody,
+                priority,
+                // If it's having other units or phalanxes in front of the current one, let's make a comparation.
+                comparedPriority,
             
+            // find the correct positions for the phalanxes, and then withdraw units if necessary.
+            for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
+                unitBody = phalanx.getLeadUnit;
+                distance = _util.getValidDistance(unitBody);
+                priority = _util.getPriority(unitBody);
+            }
         },
         
         /**
