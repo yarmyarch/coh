@@ -160,10 +160,11 @@ coh.BattleScene = function() {
         },
         
         /**
-         * try to reset the positoin of given units, make sure there would be no blank tiles in front of them.
-         *@return distance moved.
+         * Find the best tile for given unit in the battle field,
+         * When in it's column it's the first blank tile count from the front line.
+         * @return the distance from it's current column to the target tile. Always positive.
          */
-        moveToFrontLine : function(unitBody) {
+        getValidDistance : function(unitBody) {
             var _ts = handlerList.mapUtil,
                 _buf = buf,
                 tiles = unitBody.getTileRecords(),
@@ -173,7 +174,6 @@ coh.BattleScene = function() {
                 deataY = isAttacker ? -1 : 1,
                 endY = yRange[_ts.PUBLIC_ROW_COUNT],
                 columns = {},
-                validTile = _ts.getValidTile(unitBody),
                 y, i, distance = 0, 
                 unitFound;
             
@@ -204,12 +204,23 @@ coh.BattleScene = function() {
                 }
             } while (y != endY);
             
-            if (distance) {
-                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - distance});
-            }
-            
             // return moved distance.
-            return distance;
+            return distance * deataY;
+        },
+        
+        /**
+         * try to reset the positoin of given units, make sure there would be no blank tiles in front of them.
+         *@return distance moved.
+         */
+        moveToFrontLine : function(unitBody) {
+            var _ts = handlerList.mapUtil,
+                validTile = _ts.getValidTile(unitBody),
+                distance = util.getValidDistance(unitBody),
+                isAttacker = unitBody.getPlayer().isAttacker();
+            
+            if (distance) {
+                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - (isAttacker ? 1 : -1) * distance});
+            }
         },
         
         /**
@@ -838,7 +849,8 @@ coh.BattleScene = function() {
                 tileRecords = unitBody.getTileRecords().concat();
             
             // XXXXXX Play the removing animate in target tile.
-            
+            coh.FilterUtil.applyFilters("unitRemoved", unitBody);
+
             self.battleMap.removeChild(unitBody.tileSprite, true);
             self.unbindUnit(unitBody);
             unitBody.getPlayer().killUnit(unitBody.unit);
@@ -898,6 +910,7 @@ coh.BattleScene = function() {
             // XXXXXX Mind the front-line rules about melee phalanxes.
             
             // find the correct positions for the phalanxes, and then withdraw units if necessary.
+            
         },
         
         /**
