@@ -49,9 +49,15 @@ coh.Player = function(unitConfig) {
         unitsUnplaced : {},
         
         savedData : {
-            unitLevels : {},
+            unitLevels : {
+                // <unitName> : <unitLevel>
+            },
             heros : {
-                
+                /*
+                <unitName> : {
+                    
+                }
+                */
             }
         }
     };
