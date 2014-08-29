@@ -43,9 +43,16 @@ coh.Hero = (function() {
     // react filters here.
     
     // Render growth of the hero. Data from calculators, such as coh.utils.BaseCalculator
-    _coh.utils.FilterUtil.addFilter("getLevelAttack", function(levelRate, unit) {
-        var level = unit.getLevel();
-    };
+    _coh.utils.FilterUtil.addFilter("getAttackModifier", function(levelRate, unit) {
+        // The growth could be in the saved data of a player, or in the unit settings.
+        // XXXXXX Now let's try to find the player that's having the hero, in order to get required info.
+        // eg. getModifier.
+        var level = unit.getLevel(),
+            modifier = unit.getModifier();
+        
+        return levelRate * (1 + (modifier - 1) * (1 - level / _coh.LocalConfig.UNIT.MAX_LEVEL));
+        
+    });
     
     /**
      * extea actions appended for hero units.
@@ -126,6 +133,9 @@ coh.Hero = (function() {
         return unit;
     });
     
+    return self = {
+        
+    };
 })();
 
 })();

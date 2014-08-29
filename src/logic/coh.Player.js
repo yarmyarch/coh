@@ -52,10 +52,14 @@ coh.Player = function(unitConfig) {
             unitLevels : {
                 // <unitName> : <unitLevel>
             },
+            // XXXXXX when to use these info? should it be set into & obtained by the generated hero object?
+            // Should it be matched with those in units configs (coh.units.js)?
             heros : {
                 /*
                 <unitName> : {
-                    
+                    type : <type>,
+                    levels : <level history>,
+                    ocpt : <job name>
                 }
                 */
             }
@@ -112,6 +116,7 @@ coh.Player = function(unitConfig) {
                 if (_buf.savedData.heros[unitName]) {
                     var heroData = _buf.savedData.heros[unitName];
                     
+                    // XXXXXX methonds attaching saved data required.
                     unit.setType(heroData.type);
                     unit.setLevels(heroData.levels);
                     unit.setOccupation(heroData.ocpt);

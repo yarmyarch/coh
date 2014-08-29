@@ -28,7 +28,29 @@ TODO:
         7. Do update in View;
             BattleScene, update HP info for a sprite.
 
+    About hero:
+        setData in heroUnit defination(coh.Hero.js);
+        configs in units;
+        modifier to be used.
+        Some heros are good at sevral occupations, that gains it's growth.
+
 Game:
+    成长率：
+        英雄属性构成：
+            职业数值x；
+            天赋r（未满级时展现）；
+            成长率c（满级数值直接加成）；
+            当前等级i;
+            最大等级L;
+        计算：
+            满级属性 = x + c;
+            当前属性 = 1 + (r - 1) * (1 - i / L) - Maybe it should be more complexed to prevent when r > 1.6, rate drops down to 1 instead of grows to?
+            XXXXXX 当天赋值大于1.6时，攻击力数值将可能超过最大允许数值并在最大等级（20）时回落。需要解决。
+            eg:
+                var modifier = 1, level = 1, max = 20, rate = 1 + (modifier - 1) * (1 - level / max);
+                (Math.floor(0.5 * Math.pow(4 / max * level, 0.5) * 100) / 100) * rate * 40
+                    when level and modifier changes, see the output.
+
     突围模式：map 16*16
         每回合受攻击，例如炮火；
         切换进攻/防御方向；
