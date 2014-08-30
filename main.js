@@ -29,9 +29,6 @@ TODO:
             BattleScene, update HP info for a sprite.
 
     About hero:
-        setData in heroUnit defination(coh.Hero.js);
-        configs in units;
-        modifier to be used.
         Some heros are good at sevral occupations, that gains it's growth.
 
 Game:
@@ -46,7 +43,6 @@ Game:
             满级属性 = x + c;
             当前属性 = (x + c) * Math.pow(f(i), 1 / r)
                 f(i) 为属性等级计算函数。
-            // 1 + (r - 1) * (1 - i / L)
 
     突围模式：map 16*16
         每回合受攻击，例如炮火；
