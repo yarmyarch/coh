@@ -1,6 +1,3 @@
-/**
- *@require {Battle}: Utils for battle scene.
- */
 var coh = coh || {};
 
 (function() {
@@ -45,13 +42,12 @@ coh.Hero = (function() {
     // Render growth of the hero. Data from calculators, such as coh.utils.BaseCalculator
     _coh.utils.FilterUtil.addFilter("getAttackModifier", function(levelRate, unit) {
         // The growth could be in the saved data of a player, or in the unit settings.
-        // XXXXXX Now let's try to find the player that's having the hero, in order to get required info.
+        // Now let's try to find the player that's having the hero, in order to get required info, modifier.
         // eg. getModifier.
         var level = unit.getLevel(),
-            modifier = unit.getModifier();
+            modifier = unit.getTalent();
         
-        return levelRate * (1 + (modifier - 1) * (1 - level / _coh.LocalConfig.UNIT.MAX_LEVEL));
-        
+        return Math.pow(levelRate, 1/modifier);
     });
     
     /**
@@ -68,17 +64,8 @@ coh.Hero = (function() {
         };
         
         /**
-         * types chould be changed for heros.
-         * the attribute "type" would be from inner_buf, that's over covering the on (if exist) from common configs.
-         */
-        unit.setType = function(newType) {
-            inner_buf.type = newType;
-        };
-        unit.getType = function() {
-            return _coh.utils.FilterUtil.applyFilters("unitAttributeType", inner_buf.type, unit);
-        };
-        
-        /**
+         * rewrite attribute "levels" generated from savedData.
+         *
          * Set level history for the unit, the level history won't include it's current occupation.
          * Attack/Hp/Speeds would be generated from the level history.
          * The object may look like this:
@@ -88,19 +75,12 @@ coh.Hero = (function() {
             }
          */
         unit.setLevels = function(levels) {
-            inner_buf.levels = levels;
+            inner_buf.levels = _coh.utils.FilterUtil.applyFilters("setUnitLevels", levels, unit);
             // it should be regenerated once the history level changed.
             inner_buf.historyOcpt = null;
         };
-        unit.getLevels = function(levels) {
-            return inner_buf.levels;
-        };
-        
-        unit.setOccupation = function(ocptName) {
-            inner_buf.occupation = _coh.occupations[ocptName];
-        };
-        unit.getOccupation = function(ocptName) {
-            return inner_buf.occupation;
+        unit.getLevels = function() {
+            return _coh.utils.FilterUtil.applyFilters("getUnitLevels", inner_buf.levels, unit);;
         };
         
         /**
@@ -123,7 +103,7 @@ coh.Hero = (function() {
                     
                     // No ceil. This step would be handled in calculator.
                     //~ return Math.ceil(maxAttr);
-                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(attribute), maxAttr, unit);
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + _coh.Util.getFUStr(attribute), maxAttr, unit);
                 };
             })(i);
         }

@@ -49,17 +49,12 @@ coh.Player = function(unitConfig) {
         unitsUnplaced : {},
         
         savedData : {
-            unitLevels : {
-                // <unitName> : <unitLevel>
-            },
-            // XXXXXX when to use these info? should it be set into & obtained by the generated hero object?
-            // Should it be matched with those in units configs (coh.units.js)?
-            heros : {
+            
+            // saved data required from data configuration in coh.unitData.js.
+            units : {
                 /*
                 <unitName> : {
-                    type : <type>,
-                    levels : <level history>,
-                    ocpt : <job name>
+                    <data_id> : <data_value>
                 }
                 */
             }
@@ -81,7 +76,7 @@ coh.Player = function(unitConfig) {
         _buf.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
         
         for (var unitName in unitConfig) {
-            unit = _coh.units[unitName];
+            unit = _coh.unitStatic[unitName];
             if (!unit) continue;
             
             _u[unit.priority] = _u[unit.priority] || {};
@@ -107,20 +102,11 @@ coh.Player = function(unitConfig) {
         for (var i in _u) {
             if (_u[i][type]) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
-                unit = _coh.Unit.getInstance(unitName);
+                // for normal units, level & numbers are injected already;
+                // for heros, data such as type/level history/occupation are generated, from savd data.
+                unit = _coh.Unit.getInstance(unitName, buf.savedData.units[unitName]);
                 
                 unit.setColor(_coh.Unit.getColorFromStatus(status));
-                unit.setLevel(_buf.savedData.unitLevels[unitName]);
-                
-                // set level history for hero units.
-                if (_buf.savedData.heros[unitName]) {
-                    var heroData = _buf.savedData.heros[unitName];
-                    
-                    // XXXXXX methonds attaching saved data required.
-                    unit.setType(heroData.type);
-                    unit.setLevels(heroData.levels);
-                    unit.setOccupation(heroData.ocpt);
-                }
                 
                 break;
             }

@@ -1,6 +1,3 @@
-/**
- *@require {Battle}: Utils for battle scene.
- */
 var coh = coh || {};
 
 (function() {
@@ -27,14 +24,14 @@ var coh = coh || {};
     ...
  *
  */
-var UnitObject = function(unitName) {
+var UnitObject = function(unitName, savedData) {
     
     var self = this,
         _coh = coh,
         // occupation config
         O_LC = _coh.occupations[unitName],
         // unit config
-        U_LC = _coh.units[unitName];
+        U_LC = _coh.unitStatic[unitName];
     
     var buf = {
         id : 0,
@@ -43,16 +40,18 @@ var UnitObject = function(unitName) {
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
         // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        // idle for default.
         action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
         isHero : false,
         
         // other configurations from LC.
         conf : {},
         
-        // idle for default.
+        // initilized in constructor.
+        savedData : null
     };
     
-    var construct = function(unitName) {
+    var construct = function(unitName, savedData) {
         
         var _buf = buf,
             _lc = {},
@@ -70,8 +69,8 @@ var UnitObject = function(unitName) {
             }
         } else {
             // load common configs for heros first;
-            for (i in _coh.units["hero"]) {
-                _lc[i] = _coh.units["hero"][i];
+            for (i in _coh.unitStatic["hero"]) {
+                _lc[i] = _coh.unitStatic["hero"][i];
             }
             // if a hero is having other configs, let's load it here.
             for (i in U_LC) {
@@ -82,13 +81,38 @@ var UnitObject = function(unitName) {
         }
         
         // other initializations required;
+        // static configs, readonly.
+        var index;
         for (i in _lc) {
             _buf.conf[i] = _lc[i];
             
+            index = _coh.Util.getFUStr(i);
             // append getter for all configs.
-            self["get" + _coh.Util.getFUStr(i)] = (function(i) {
+            self["get" + index] = (function(i) {
                 return function() {
-                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(i), buf.conf[i], self);
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, buf.conf[i], self);
+                }
+            })(i);
+        }
+        // dynamic data, read/write.
+        var basicData = self.isHero() ? _coh.unitData.hero || _coh.unitData.unit;
+        // configs for specific heros.
+        for (i in _coh.unitData[unitName]) {
+            basicData[i] = _coh.unitData[unitName][i];
+        }
+        for (i in basicData) {
+            // verifications could be appended outside.
+            _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData[i] || basicData[i], i, self);
+            
+            index = _coh.Util.getFUStr(i);
+            self["get" + index] = (function(i) {
+                return function() {
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, _buf.savedData[i], self);
+                }
+            })(i);
+            self["set" + index] = (function(i) {
+                return function(value) {
+                    _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("setUnit" + index, value, self);
                 }
             })(i);
         }
@@ -131,13 +155,8 @@ var UnitObject = function(unitName) {
         if (coh.LocalConfig.UNIT_ACTIONS[actionId]) buf.action = actionId;
     };
     
-    self.getLevel = function() {
-        return buf.level;
-    };
-    
-    self.setLevel = function(newLevel) {
-        var _coh = coh;
-        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL) || _coh.LocalConfig.UNIT.MIN_LEVEL;
+    self.getSavedData = function() {
+        return buf.savedData;
     };
     
     self.isHero = function() {
@@ -168,7 +187,7 @@ coh.Unit = (function() {
          * get type by unit name.
          */
         getUnitType : function(unitName) {
-            return (coh.units[unitName] && coh.units[unitName].type) || 0;
+            return (coh.unitStatic[unitName] && coh.unitStatic[unitName].type) || 0;
         },
         
         /**

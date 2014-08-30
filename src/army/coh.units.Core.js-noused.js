@@ -1,11 +1,11 @@
 var coh = coh || {},
-    coh.units = coh.units  || {};
+    coh.unitStatic = coh.unitStatic  || {};
 
 (function() {
 /**
  * @implement static getType
  */
-var self = coh.units.Core = function(level) {
+var self = coh.unitStatic.Core = function(level) {
     
     var self = this,
         self._super;
@@ -18,8 +18,8 @@ var self = coh.units.Core = function(level) {
     return self;
 };
 
-coh.units.Core.prototype = new coh.Unit();
-coh.units.Core.prototype.constructor = units.Core;
+coh.unitStatic.Core.prototype = new coh.Unit();
+coh.unitStatic.Core.prototype.constructor = units.Core;
 
 // public functions
 

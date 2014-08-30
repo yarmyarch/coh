@@ -2,7 +2,8 @@
     "jsList" : [
     
         "src/config.js",
-        "src/army/coh.units.js",
+        "src/army/coh.unitStatic.js",
+        "src/army/coh.unitData.js",
         "src/army/coh.occupations.js",
         "src/army/coh.factions.js",
         "src/resource.js",

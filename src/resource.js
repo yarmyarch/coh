@@ -75,16 +75,16 @@ coh.res = {
     };
     
     /**
-     * Full fill the configs of sprite from coh.units.
+     * Full fill the configs of sprite from coh.unitStatic.
      */
     var generateUnits = function(resObj) {
         var _coh = coh,
             colors;
         
         // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
-        for (var i in _coh.units) {
-            if (!_coh.units[i].occupation) continue;
-            colors = _coh.factions[_coh.units[i].faction].colors;
+        for (var i in _coh.unitStatic) {
+            if (!_coh.unitStatic[i].occupation) continue;
+            colors = _coh.factions[_coh.unitStatic[i].faction].colors;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",

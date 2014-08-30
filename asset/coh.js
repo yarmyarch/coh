@@ -1475,7 +1475,7 @@ coh.Unit = (function() {
             inner_buf.type = newType;
         };
         unit.getType = function() {
-            return _coh.utils.FilterUtil.applyFilters("unitAttributeType", inner_buf.type, unit);
+            return _coh.utils.FilterUtil.applyFilters("getUnitType", inner_buf.type, unit);
         };
         
         /**

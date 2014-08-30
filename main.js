@@ -44,12 +44,9 @@ Game:
             最大等级L;
         计算：
             满级属性 = x + c;
-            当前属性 = 1 + (r - 1) * (1 - i / L) - Maybe it should be more complexed to prevent when r > 1.6, rate drops down to 1 instead of grows to?
-            XXXXXX 当天赋值大于1.6时，攻击力数值将可能超过最大允许数值并在最大等级（20）时回落。需要解决，考虑采用非线性递减。
-            eg:
-                var modifier = 1, level = 1, max = 20, rate = 1 + (modifier - 1) * (1 - level / max);
-                (Math.floor(0.5 * Math.pow(4 / max * level, 0.5) * 100) / 100) * rate * 40
-                    when level and modifier changes, see the output.
+            当前属性 = (x + c) * Math.pow(f(i), 1 / r)
+                f(i) 为属性等级计算函数。
+            // 1 + (r - 1) * (1 - i / L)
 
     突围模式：map 16*16
         每回合受攻击，例如炮火；

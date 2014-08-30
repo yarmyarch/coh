@@ -1,8 +1,8 @@
 var coh = coh || {},
-    coh.units = coh.units  || {};
+    coh.unitStatic = coh.unitStatic  || {};
 
 (function() {
-var self = coh.units.Archer = function(level) {
+var self = coh.unitStatic.Archer = function(level) {
     
     var self = this,
         self._super;
@@ -15,8 +15,8 @@ var self = coh.units.Archer = function(level) {
     return self;
 };
 
-coh.units.Archer.prototype = new coh.Core();
-coh.units.Archer.prototype.constructor = units.Archer;
+coh.unitStatic.Archer.prototype = new coh.Core();
+coh.unitStatic.Archer.prototype.constructor = units.Archer;
 
 // public functions
 
