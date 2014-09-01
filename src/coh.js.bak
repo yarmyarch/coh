@@ -1,11 +1,9 @@
 
 var coh = coh || {};
 coh.LocalConfig = {
-    COLOR : {
-        GREEN : 1,
-        RED : 2,
-        BLUE : 3
-    },
+    /**
+     * @see coh.Unit.js for more details of status & type & color.
+     */
     LOCATION_TYPE : {
         // 0 - reserved
         // [row count<y>, column count<x>]
@@ -15,12 +13,21 @@ coh.LocalConfig = {
         4 : [2,2]
     },
     UNIT_TYPES: {
-        // blank, unused datagroup data and converted units shares this type.
+        // blank, unused datagroup data or other unexpected units shares this type.
         STATIC : 0,
         SOLDIER : 1,
         ELITE : 2,
         TANK : 3,
         CHAMPION : 4
+    },
+    // should be recalculated via UNIT_TYPES.
+    UNIT_TYPES_COUNT : 0,
+    // for units whose type code is within <x> * UNIT_TYPES_COUNT ~ <x + 1> * UNIT_TYPES_COUNT, having the action below which value is <x>.
+    // Ex. charging elite unit is having the type of 1 * UNIT_TYPES_COUNT + 2.
+    UNIT_ACTIONS : {
+        // default action is idle.
+        IDLE : 0,
+        CHARGE : 1
     },
     CONVERT_TYPES : {
         SOLDIER : 1,
@@ -69,10 +76,7 @@ coh.LocalConfig = {
     
     
     BLINK_RATE : 0.618,
-    COLOR_CONFIG : {
-        ELF : ["blue", "white", "gold"]
-    },
-    NO_COLOR : -1,
+    INVALID : -1,
     
     MAP_BATTLE_LAYER_NAME : "battleField",
     
@@ -98,8 +102,20 @@ coh.LocalConfig = {
     UNIT : {
         MAX_LEVEL : 20,
         MIN_LEVEL : 1
-    }
-};var coh = coh || {};
+    },
+    
+    PRIORITY_WALL : 100
+};
+
+// append configs that's need be calculated.
+(function() {
+// set UNIT_TYPES_COUNT
+for (var i in coh.LocalConfig.UNIT_TYPES) {
+    ++coh.LocalConfig.UNIT_TYPES_COUNT;
+}
+
+})();
+var coh = coh || {};
 
 // ui related configs exist in resource.js,
 // occupation related configs exist in coh.occupations.js.
@@ -107,17 +123,20 @@ coh.units = {
     archer : {
         // used to tag if the unit would be a normal unit that's holding a occupation.
         occupation : "archer",
+        faction : "human",
         type : 1,
         // lower priority results in a closer position to the front line.
         priority : 8
     },
     knight : {
         occupation : "knight",
+        faction : "human",
         type : 2,
         priority : 16
     },
     paladin : {
         occupation : "paladin",
+        faction : "human",
         type : 4,
         priority : 24
     },
@@ -154,6 +173,15 @@ coh.occupations = {
         speed : 105
     }
 };var coh = coh || {};
+
+coh.factions = {
+    human : {
+        wall : {
+            hp : 8
+        },
+        colors : ["blue", "white", "gold"]
+    }
+};var coh = coh || {};
 coh.res = {
     //image
     //plist
@@ -181,6 +209,7 @@ coh.res = {
         arrow : "res/imgs/arrow.png",
         cornor : "res/imgs/corner.png",
         blank : "res/imgs/blank.png",
+        convertor : "res/imgs/convertor.png"
     },
     sprite : {
         awen : {
@@ -189,6 +218,15 @@ coh.res = {
                 img : "res/sprite/imgs/sprite.png"
             }
         },
+        /**
+         * XXXXXX TO BE OPTIMIZED
+        convertor : {
+            convert : {
+                plist : "",
+                img : ""
+            }
+        },
+        */
         /**
          * geneted by unit generator.
         archer : {
@@ -223,23 +261,32 @@ coh.res = {
      * Full fill the configs of sprite from coh.units.
      */
     var generateUnits = function(resObj) {
-        var _coh = coh;
+        var _coh = coh,
+            colors;
+        
         // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
         for (var i in _coh.units) {
             if (!_coh.units[i].occupation) continue;
+            colors = _coh.factions[_coh.units[i].faction].colors;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",
-                img_0 : "res/sprite/imgs/" + i + "_blue.png",
-                img_1 : "res/sprite/imgs/" + i + "_gold.png",
-                img_2 : "res/sprite/imgs/" + i + "_white.png"
+                img_0 : "res/sprite/imgs/" + i + "_" + colors[0] + ".png",
+                img_1 : "res/sprite/imgs/" + i + "_" + colors[1] + ".png",
+                img_2 : "res/sprite/imgs/" + i + "_" + colors[2] + ".png"
             };
             // XXXXXX TO BE ADDED
             resObj.sprite[i].assult = {
                 plist : "res/sprite/" + i + "_idle.plist",
-                img_0 : "res/sprite/imgs/" + i + "_blue.png",
-                img_1 : "res/sprite/imgs/" + i + "_gold.png",
-                img_2 : "res/sprite/imgs/" + i + "_white.png"
+                img_0 : "res/sprite/imgs/" + i + "_" + colors[0] + ".png",
+                img_1 : "res/sprite/imgs/" + i + "_" + colors[1] + ".png",
+                img_2 : "res/sprite/imgs/" + i + "_" + colors[2] + ".png"
+            };
+            resObj.sprite[i].charge = {
+                plist : "res/sprite/" + i + "_idle.plist",
+                img_0 : "res/sprite/imgs/" + i + "_" + colors[0] + "_charge.png",
+                img_1 : "res/sprite/imgs/" + i + "_" + colors[1] + "_charge.png",
+                img_2 : "res/sprite/imgs/" + i + "_" + colors[2] + "_charge.png"
             };
         }
         return resObj;
@@ -269,6 +316,10 @@ coh.Util = (function(){
             return target instanceof Function && (typeof(target)).toLowerCase() == "function";
         },
         
+        getRandom : function(arr) {
+            return arr[~~(Math.random() * arr.length)];
+        },
+        
         popRandom : function(arr) {
             var randomIndex = ~~(Math.random() * arr.length);
                 inst = arr[randomIndex];
@@ -286,6 +337,35 @@ coh.Util = (function(){
             }
             buf[ri] = 1;
             return ri;
+        },
+        
+        /**
+         * return the a string whose first letter is in uppercase.
+         */
+        getFUStr : function(str) {
+            return str[0].toUpperCase() + str.substr(1);
+        },
+                
+        /**
+         * get the function of the target line:
+         * y = kx + c,
+         * let's say the original line constructed by a and b is 
+         * y = -1/k * x + d,
+         * while -1/k = (b.y - a.y) / (b.x - a.x).
+         *@param a {Point} start position.
+         *@param b {Point} ending position.
+         */
+        getBesierMidPos : function(a, b) {
+            var midPos = {x : (b.x + a.x) / 2, y : (b.y + a.y) / 2},
+                //~ k = (a.x - b.x) / (b.y - a.y),
+                //~ c = midPos.y - k * midPos.x,
+                halfDist = Math.sqrt(Math.pow(a.y - b.y, 2) + Math.pow(a.x - b.x, 2)) / 2;
+            
+            // The line found, let's get a rand position from the line.
+            // Don't be too far away from the midPos. 
+            // The max distance should be less than half of the distance between a and b.
+            
+            return target = {x : midPos.x + Math.round(Math.random(halfDist * 2) - halfDist), y : midPos.y};
         },
         
         base64Encode : function(data) {
@@ -339,240 +419,6 @@ coh.Util = (function(){
             return buf;
         }
     };
-})();//~ usage:
-//~ var Fuck = function(){
-
-//~ SlideUtil.run([document.getElementById("Fucker").clientWidth, 10, 0.3, 100, function(target, range, isEnd){
-  //~ document.getElementById("Fucker").style.width = target + "px";
-//~ }]);
-
-//~ }
-var SlideUtil = (function() {
-    
-    var self,
-        arg = arguments;
-    
-    var buf = {
-        interval : false,
-        slides : false,
-        
-        //when self.run() gets a group of new agruments. false after controller.slides.
-        newInstance : false,
-        
-        //assigned with arguments when it's a "newInstance" when validated.
-        oriSlides : false
-    };
-    
-    var LC = {
-        FLOAT_RANGE : 0.00002,
-        PARAM : {
-            START : 0,
-            END : 1,
-            SPEED : 2,
-            INTERVAL : 3,
-            CALLBACK : 4
-        }
-    };
-    
-    var util = {
-        /**
-         *get the greatest common divisor with Euclidean Algorithm
-         */
-        getDivisor : function(a, b) {
-            
-            if (a < b) {
-                var c;
-                c = a;
-                a = b;
-                b = c;
-            }
-            
-            while (b != 0) {
-                c = a % b;
-                a = b;
-                b = c;
-            }
-            
-            return a;
-        }
-    };
-    
-    var controller = {
-        
-        /**
-         *function that judges the legitimacy of a group of param,
-         *also do some basic data transformations.
-         *@return array transformed data if legal, false while data not useable.
-         */
-        judge : function(arg) {
-            
-            var _lc = LC;
-            
-            arg[_lc.PARAM.START] = +arg[_lc.PARAM.START];
-            arg[_lc.PARAM.END] = +arg[_lc.PARAM.END];
-            arg[_lc.PARAM.SPEED] = +arg[_lc.PARAM.SPEED];
-            arg[_lc.PARAM.INTERVAL] = Math.abs(+arg[_lc.PARAM.INTERVAL]);
-            arg[5] && (arg[5] = +arg[5]);
-            
-            //set 17(ms) as the floor range.
-            arg[_lc.PARAM.INTERVAL] = Math.ceil(arg[_lc.PARAM.INTERVAL] / 17) * 17;
-            
-            //any param is not a number
-            if (isNaN(Math.max(arg[_lc.PARAM.START], arg[_lc.PARAM.END], arg[_lc.PARAM.SPEED], arg[_lc.PARAM.INTERVAL]))) return false;
-            
-            //~ //the case that when "start" is bigger than "end" while "speed" is bigger than 0 will be treated as illgal, and vice versa.
-            //~ //at the same time, speed should not be 0.
-            //~ if (arg[_lc.PARAM.SPEED] == 0 || (arg[_lc.PARAM.SPEED] > 0 && arg[_lc.PARAM.START] > arg[_lc.PARAM.END]) || (arg[_lc.PARAM.SPEED] < 0 && arg[_lc.PARAM.START] < arg[_lc.PARAM.END])) return false;
-            
-            //success
-            return arg;
-        },
-        
-        /**
-         *@param arrays
-         *  arguments[0][0] : start value;
-         *  arguments[0][1] : end value;
-         *  arguments[0][2] : speed, for example 0.3 for 30% per interval;
-         *  arguments[0][3] : interval range, 100(ms) is suit for most cases, 10(ms) is the floor range;
-         *  arguments[0][4] : callback function, will be evalued at the end of every interval, reviece param as below:
-         *  [arguments[0][5]] : float range, if it's a float slide, the range that defines end tag:
-         *@paramForCallback target value;
-         *@paramForCallback range value;
-         *@paramForCallback isEnd is this interval the last one;
-         */
-        slide : function() {
-            var endTags = [],
-                timer = 0,
-                _buf = buf,
-                _lc = LC,
-                slides = buf.slides = [];
-            
-            var temp;
-            //format input data.
-            for (var i = 0, len = arguments.length; i < len; ++i) {
-                
-                temp = controller.judge(arguments[i]);
-                
-                //skip if illgal
-                if (!temp) continue;
-                
-                slides.push(temp);
-                timer = timer || temp[_lc.PARAM.INTERVAL];
-                
-                //get the greatest common divisor of all intervals.
-                timer = util.getDivisor(timer, temp[_lc.PARAM.INTERVAL]);
-            }
-            
-            //update buf
-            _buf.newInstance && (_buf.oriSlides = slides);
-            
-            clearInterval(_buf.interval);
-            //let's go!
-            slides.length && (_buf.interval = setInterval(function(){
-                
-                var ranges = [],
-                    end = true,
-                    isInteger = false;
-                for (var i = 0, len = slides.length; i < len; ++i) {
-                    
-                    if (timer % slides[i][_lc.PARAM.INTERVAL] != 0 || endTags[i]) {
-                        end = end && !!endTags[i];
-                        continue;
-                    }
-                    
-                    ranges[i] = slides[i][_lc.PARAM.END] - slides[i][_lc.PARAM.START];
-                    
-                    //end flag judgement
-                    if (ranges[i] == 0 ||  Math.abs(ranges[i]) <= slides[i][5] || Math.abs(ranges[i]) <= LC.FLOAT_RANGE) {
-                        endTags[i] = 1;
-                        end = end && !!endTags[i];
-                    
-                        //the last callback
-                        (slides[i][_lc.PARAM.CALLBACK] instanceof Function) && slides[i][_lc.PARAM.CALLBACK](slides[i][_lc.PARAM.END], ranges[i], !!endTags[i]);
-                    
-                        continue;
-                    } else {
-                        endTags[i] = 0;
-                        end = end && !!endTags[i];
-                    }
-                    
-                    //range = (end - start) * speed;
-                    //start = start + range;
-                    isInteger = slides[i][_lc.PARAM.START] === ~~slides[i][_lc.PARAM.START] && slides[i][_lc.PARAM.END] === ~~slides[i][_lc.PARAM.END];
-                    slides[i][_lc.PARAM.START] = slides[i][_lc.PARAM.START] + ranges[i] * slides[i][_lc.PARAM.SPEED];
-                    isInteger && (slides[i][_lc.PARAM.START] = ranges[i] > 0 ? Math.ceil(slides[i][_lc.PARAM.START]) : Math.floor(slides[i][_lc.PARAM.START]));
-                    
-                    //callback
-                    /**
-                     *@param target value
-                     *@param range value
-                     *@param end tag
-                     */
-                    (slides[i][_lc.PARAM.CALLBACK] instanceof Function) && slides[i][_lc.PARAM.CALLBACK](slides[i][_lc.PARAM.START], ranges[i], !!endTags[i]);
-                }
-                
-                timer += timer;
-                end && clearInterval(_buf.interval);
-            }, timer));
-            
-            _buf.newInstance = false;
-        }
-    };
-    
-    /**
-     * constructor, not needed for derect call.
-     */
-    self = function() {
-        
-        var _buf = buf;
-        _buf.newInstance = 1;
-        _buf.slides = arg;
-    };
-    
-    self.pause = function() {
-        
-        clearInterval(buf.interval);
-    };
-    
-    /**
-     * continue when paused(no arguments needed) or start a new group of intances.
-     *@param see #controller.slide for the detail.
-     */
-    self.run = function() {
-        
-        var _buf = buf;
-        !!arguments.length && (_buf.newInstance = 1);
-        //~ _buf.slides && _buf.slides.length && controller.slide(_buf.slides) || controller.slide.apply({}, arguments);
-        if (arguments && arguments.length) {
-            controller.slide.apply({}, arguments);
-        } else controller.slide(_buf.slides);
-    };
-    
-    self.restore = function() {
-        
-        var _buf = buf,
-            _lc = LC;
-        
-        for (var i in _buf.oriSlides) {
-            _buf.slides[_lc.PARM.END] = _buf.oriSlides[_lc.PARM.START];
-        }
-        controller.slide(_buf.slides);
-    };
-    
-    /**
-     * used to clear current (slided) info, allow the slide rolling again with self.run.
-     */
-    self.clear = function() {
-        
-        var _buf = buf,
-            _lc = LC;
-        
-        for (var i in _buf.oriSlides) {
-            _buf.slides[_lc.PARM.START] = _buf.oriSlides[_lc.PARM.START];
-        }
-    };
-    
-    return self;
 })();/**
  *@implements MapUtil
  */
@@ -1301,7 +1147,7 @@ coh.View = (function() {
                 rate : frame rate, LC.FRAME_RATE for default.
                 cons : sprite constructor. cc.Sprite for default.
                 color : color, 0/1/2,
-                animMode : animation mode constructor, cc.RepeatForever for default.
+                animMode : animation mode constructor, cc.repeatForever for default.
             }
          */
         getSprite : function(unitName, animationName, spriteConfig) {
@@ -1317,13 +1163,13 @@ coh.View = (function() {
             var sc = {
                 rate : spriteConfig.rate || _coh.LocalConfig.FRAME_RATE,
                 cons : spriteConfig.cons || _cc.Sprite,
-                animMode : spriteConfig.animMode || _cc.RepeatForever,
+                animMode : spriteConfig.animMode || _cc.repeatForever,
                 color : spriteConfig.color === undefined ? -1 : spriteConfig.color
             }
             
-            srcName = "img" + (sc.color === _coh.LocalConfig.NO_COLOR ? "" : "_" + (+sc.color));
+            srcName = "img" + (sc.color === _coh.LocalConfig.INVALID ? "" : "_" + (+sc.color));
             
-            action = sc.animMode.create(self.getAnimation(unitName, animationName, srcName, sc.rate));
+            action = sc.animMode(self.getAnimation(unitName, animationName, srcName, sc.rate));
             
             var sprite = new sc.cons(buf.animFrames[unitName][animationName][srcName][0]);
             sprite.runAction(action);
@@ -1331,6 +1177,9 @@ coh.View = (function() {
             return sprite;
         },
         
+        /**
+         * uses coh.res.sprite.<unitName>.<animationName>.<textureIndex>.
+         */
         getAnimation : function(unitName, animationName, textureIndex, rate) {
             
             var _buf = buf,
@@ -1411,12 +1260,35 @@ coh.Actor = cc.Sprite.extend({
             callback && callback();
         });
     }
-});var coh = coh || {};
+});/**
+ *@require {Battle}: Utils for battle scene.
+ */
+var coh = coh || {};
 
 (function() {
-
+}
 /**
  * Super class for all units.
+ * Details for type/status/action/color:
+ * @see config.js, UNIT_TYPES for all types.
+
+    color : color of the unit, defined in faction configurations. 3 colors in current version, it would be generated radomly while creating a unit.
+    type : read only, the basic field of the unit. Type of a unit is defined in unit configurations.
+        whenever a type should be returned, it should only be those ones defined in config.UNIT_TYPES.
+    action : what the unit is doing at the moment. Defaultly set 0 (idle).
+    status : keycode used calculating. 
+        status = (action * typeCount + type) * colorCount + color.
+    for status == 12: 
+        color == 0;
+        type == 4;
+    0 - blank;
+    1 - reserved;
+    2 - reserved;
+    3 - 0/1;
+    4 - 1/1;
+    5 - 2/1;
+    ...
+ *
  */
 var UnitObject = function(unitName) {
     
@@ -1432,11 +1304,15 @@ var UnitObject = function(unitName) {
         name : false,
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
-        color : _coh.LocalConfig.NO_COLOR,
+        color : _coh.LocalConfig.INVALID,
+        // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
         isHero : false,
         
         // other configurations from LC.
-        conf : {}
+        conf : {},
+        
+        // idle for default.
     };
     
     var construct = function(unitName) {
@@ -1473,9 +1349,9 @@ var UnitObject = function(unitName) {
             _buf.conf[i] = _lc[i];
             
             // append getter for all configs.
-            self["get" + i[0].toUpperCase() + i.substr(1)] = (function(i) {
+            self["get" + _coh.Util.getFUStr(i)] = (function(i) {
                 return function() {
-                    return buf.conf[i];
+                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(i), buf.conf[i], self);
                 }
             })(i);
         }
@@ -1503,11 +1379,19 @@ var UnitObject = function(unitName) {
      * could only be actived once the color is set.
      */
     self.getStatus = function() {
-        var _buf = buf;
-        if (_buf.color == coh.LocalConfig.NO_COLOR) {
+        var _buf = buf,
+            _coh = coh;
+        if (_buf.color == _coh.LocalConfig.INVALID) {
             return 0;
         }
-        return coh.Battle.getStatus(self.getType(), _buf.color);
+        
+        return (self.getType() + _buf.action * _coh.LocalConfig.UNIT_TYPES_COUNT) * _coh.LocalConfig.COLOR_COUNT + _buf.color;
+    };
+    self.getAction = function() {
+        return buf.action;
+    };
+    self.setAction = function(actionId) {
+        if (coh.LocalConfig.UNIT_ACTIONS[actionId]) buf.action = actionId;
     };
     
     self.getLevel = function() {
@@ -1525,11 +1409,7 @@ var UnitObject = function(unitName) {
     
     // let's move extra functions out of the class defination, make it possible be expanded.
     self.setAsHero = function() {
-        var _buf = buf;
-        
-        // We won't set it again.
-        if (_buf.isHero) return;
-        _buf.isHero = true;
+        buf.isHero = true;
     };
     
     construct.apply(self, arguments);
@@ -1543,7 +1423,8 @@ var UnitObject = function(unitName) {
 coh.Unit = (function() {
     
     var self,
-        _coh = coh;
+        _coh = coh,
+        LC = _coh.LocalConfig;
 
     var util = {
         /**
@@ -1552,7 +1433,7 @@ coh.Unit = (function() {
          */
         getLeveledOccupation : function(levels) {
             var historyLevel = 0,
-                maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                maxLevel = LC.UNIT.MAX_LEVEL,
                 ocpt = {
                     level : 0
                 },
@@ -1594,7 +1475,7 @@ coh.Unit = (function() {
             inner_buf.type = newType;
         };
         unit.getType = function() {
-            return inner_buf.type;
+            return _coh.utils.FilterUtil.applyFilters("getUnitType", inner_buf.type, unit);
         };
         
         /**
@@ -1628,11 +1509,11 @@ coh.Unit = (function() {
          * getAttack and other functions regenerated here via it's current occupation.
          */
         for (var i in _coh.occupations[_buf.occupation]) {
-            unit["get" + i[0].toUpperCase() + i.substr(1)] = (function(attribute) {
+            unit["get" + _coh.Util.getFUStr(i)] = (function(attribute) {
                 return function() {                    
                     // here we go.
                     var _buf = inner_buf,
-                        maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL,
+                        maxLevel = LC.UNIT.MAX_LEVEL,
                         maxAttr = 0;
                     if (!_buf.levels || !_buf.occupation) return 0;
                     
@@ -1642,7 +1523,7 @@ coh.Unit = (function() {
                     
                     // No ceil. This step would be handled in calculator.
                     //~ return Math.ceil(maxAttr);
-                    return maxAttr;
+                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(attribute), maxAttr, unit);
                 };
             })(i);
         }
@@ -1653,7 +1534,10 @@ coh.Unit = (function() {
     });
     
     return self = {
-        getType : function(unitName) {
+        /**
+         * get type by unit name.
+         */
+        getUnitType : function(unitName) {
             return (coh.units[unitName] && coh.units[unitName].type) || 0;
         },
         
@@ -1669,6 +1553,18 @@ coh.Unit = (function() {
             }
             
             return unit;
+        },
+        
+        getTypeFromStatus : function(status) {
+            return ~~(+status / LC.COLOR_COUNT) % LC.UNIT_TYPES_COUNT;
+        },
+        
+        getActionFromStatus : function(status) {
+            return ~~(~~(+status / LC.COLOR_COUNT) / LC.UNIT_TYPES_COUNT);
+        },
+        
+        getColorFromStatus : function(status) {
+            return +status % LC.COLOR_COUNT;
         }
     }
     
@@ -1714,6 +1610,8 @@ coh.Player = function(unitConfig) {
         
         // attacker for default.
         isAttacker : true,
+        
+        faction : "human",
         
         units : {},
         
@@ -1764,7 +1662,7 @@ coh.Player = function(unitConfig) {
         var _coh = coh,
             _buf = buf,
             _u = _buf.unitsUnplaced,
-            type = _coh.Battle.getTypeFromStatus(status),
+            type = _coh.Unit.getTypeFromStatus(status),
             unit =null, 
             unitName;
         
@@ -1773,7 +1671,7 @@ coh.Player = function(unitConfig) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 unit = _coh.Unit.getInstance(unitName);
                 
-                unit.setColor(_coh.Battle.getColorFromStatus(status));
+                unit.setColor(_coh.Unit.getColorFromStatus(status));
                 unit.setLevel(_buf.savedData.unitLevels[unitName]);
                 
                 // set level history for hero units.
@@ -1851,20 +1749,34 @@ coh.Player = function(unitConfig) {
         buf.isAttacker = false;
     };
     
-    self.getUnitAttack = function(unit) {
+    /**
+     * be sure the given faction is configured in global config.
+     */
+    self.setFaction = function(factionStr) {
+        buf.faction = coh.factions[factionStr] && factionStr || buf.faction;
+    };
+    self.getFaction = function() {
+        return buf.faction;
+    };
+    
+    self.getUnitAttack = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return 0;
         return handlerList.calculator.getAttack(unit);
     };
     
-    self.getUnitHp = function(unit) {
+    self.getUnitHp = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return coh.factions[this.getFaction()].wall.hp;
         return handlerList.calculator.getHp(unit);
     };
     
-    self.getUnitSpeed = function(unit) {
+    self.getUnitSpeed = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return 0;
         return handlerList.calculator.getSpeed(unit);
     };
     
-    self.getDurationForCharge = function(unit) {
-        return handlerList.calculator.getDuration(self.getUnitSpeed(unit));
+    self.getChargingDuration = function(unit, convertType) {
+        if (convertType == coh.LocalConfig.CONVERT_TYPES.WALL) return coh.LocalConfig.INVALID;
+        return handlerList.calculator.getDuration(self.getUnitSpeed(unit), convertType);
     };
     
     self.setCalculator = function(newClt) {
@@ -2023,19 +1935,6 @@ coh.Battle = (function(){
     }
     
     return self = {
-        
-        getTypeFromStatus : function(status) {
-            return ~~(+status / LC.COLOR_COUNT);
-        },
-        
-        getColorFromStatus : function(status) {
-            return +status % LC.COLOR_COUNT;
-        },
-        
-        getStatus : function(type, color) {
-            return (+type) * LC.COLOR_COUNT + (+color);
-        },
-        
         /**
          * @param current
          * @param config {Object}
@@ -2043,19 +1942,7 @@ coh.Battle = (function(){
                 [location type1] : [count of this type1],
                 // ...
             }
-         * null = status == 0;
-         * color = status % _lc.COLOR_COUNT;
-         * type  = (status - colors) / _lc.COLOR_COUNT = ~~(status / _lc.COLOR_COUNT);
-         * for status == 12: 
-            color == 0;
-            type == 4;
-         * 0 - blank;
-         * 1 - reserved;
-         * 2 - reserved;
-         * 3 - 0/1;
-         * 4 - 1/1;
-         * 5 - 2/1;
-         * ...
+         * @see config.js for more details of status & type & color.
          * @return {
                 succeed : [[]], // Two-dimensional array with similay data type given by the current data group.
                 faild : [] // faild list, filled with data type.
@@ -2156,8 +2043,7 @@ coh.Battle = (function(){
             
             var unitType;
             for (var unitName in units) {
-                // no interfaces changed.
-                unitType = _coh.Unit.getType(unitName);
+                unitType = _coh.Unit.getUnitType(unitName);
                 unitConfig[unitType] || (unitConfig[unitType] = 0);
                 unitConfig[unitType] += units[unitName];
             }
@@ -2251,9 +2137,13 @@ coh.UnitBody = function() {
     
     var buf = {
         player : null,
+        battleScene : null,
         // just for a record, no other purposes.
         // indexed by x_y
-        tileRecord : []
+        tileRecord : [],
+        
+        // if a wall or another phananx generated while charging, other animates won't hide the sprite.
+        charging : false
     };
 
     var construct = function(unit) {
@@ -2319,6 +2209,14 @@ coh.UnitBody = function() {
         this.unitSprite.y = 0;
     };
     
+    self.setBattleScene = function(scene) {
+        buf.battleScene = scene;
+    };
+    
+    self.getBattleScene = function() {
+        return buf.battleScene;
+    };
+    
     self.setPlayer = function(player) {
         buf.player = player;
     };
@@ -2332,11 +2230,11 @@ coh.UnitBody = function() {
     };
     
     /**
-     * deep copy.
+     * deep copy required for some cases, do it outside.
      */
     self.getTileRecords = function() {
         if (!buf.tileRecord.length) return null;
-        return buf.tileRecord.concat();
+        return buf.tileRecord;
     };
     
     self.addTileRecord = function(newTile) {
@@ -2365,8 +2263,50 @@ coh.UnitBody = function() {
     /**
      * play convert animations, or change status if necessary.
      */
-    self.convert = function(cType) {
+    self.charge = function() {
+        var srcName = "img_" + (+self.unit.getColor() || 0);
+        self.unitSprite.setVisible(true);
         
+        // XXXXXX TO BE ADDED.
+        self.unitSprite.runAction(cc.repeatForever(coh.View.getAnimation(self.unit.getName(), "charge", srcName)));
+        buf.charging = true;
+    };
+    
+    /**
+     * once the unit is in charge, it will be in charge forever until it's ready to attack.
+     */
+    self.isCharging = function() {
+        return buf.charging;
+    };
+    
+    /**
+     * if a unit can be convert to another one, it must be a type 1 unit.
+     * Once the convert finished, the unit would be removed from the battle scene.
+     */
+    self.convertTo = function(unitTo, callback) {
+        if (!buf.charging) {
+            self.unitSprite.setVisible(false);
+        }
+        var _coh = coh,
+            _buf = buf,
+            convertSprite = cc.Sprite.create(res.imgs.convertor),
+            startPos = _buf.battleScene.getPositionFromTile(_buf.tileRecord[0]),
+            targetPos = _buf.battleScene.getPositionFromTile(_coh.Util.getRandom(unitTo.getTileRecords())),
+            // the control(mid) point can be checked randomly from the square generated by startPos and targetPos.
+            ctrlPos = _coh.Util.getBesierMidPos(startPos, targetPos);
+        
+        self.tileSprite.addChild(convertSprite);
+        convertSprite.runAction(cc.repeatForever(cc.rotateBy(_coh.LocalConfig.EXILE_RATE, 360)));
+        
+        // move the unit tile, picking a random tile from the target unit.
+        self.tileSprite.runAction(cc.sequence(cc.bezierTo(_coh.LocalConfig.EXILE_RATE, [startPos, ctrlPos, targetPos])), cc.callFunc(function(){
+            _coh.Util.isExecutable(callback) && callback(self);
+            
+            if (!buf.charging) {
+                // remove the unit itself from it's battleScene.
+                _buf.battleScene.removeUnit(self);
+            }
+        }));
     };
     
     construct.apply(self, arguments);
@@ -2498,11 +2438,13 @@ coh.MapLayer = cc.Layer.extend({
         return true;
     }
 });/**
+ *@require {Battle}: Utils for battle scene.
  *@require {MapUtil}: if you would like to place units to the battle ground;
  *  inject it from the outer factory.
  *
  *@dispatch filterName: battleSceneEntered
  *@dispatch filterName: unitSpriteCreated
+ * to many of them my friend. Just search for "applyFilters" to find all.
  */
 var coh = coh || {};
 
@@ -2627,7 +2569,7 @@ coh.BattleScene = function() {
          * This function is used to find the directly affected units behind the given unit.
          * @param tileRecords should be parsed incase the given unitWarps isn't holding the tile infomation.
          */
-        getMovingUnits : function(unitBodys, tileRecords) {
+        getMovingUnits : function(unitBodies, tileRecords) {
             
             var _buf = buf,
                 tiles,
@@ -2638,10 +2580,10 @@ coh.BattleScene = function() {
                 tmpUnit,
                 result = [];
             
-            for (i = 0; unitBodys[i]; ++i) {
+            for (i = 0; unitBodies[i]; ++i) {
                 tiles = tileRecords[i],
                 columns = {},
-                isAttacker = unitBodys[i].getPlayer().isAttacker(),
+                isAttacker = unitBodies[i].getPlayer().isAttacker(),
                 startY = 0;
                 
                 for (j in tiles) {
@@ -2657,7 +2599,17 @@ coh.BattleScene = function() {
             return result;
         },
         
-        moveToFrontLine : function(unitBody) {
+        /**
+         * Find the best tile for given unit in the battle field,
+         * When in it's column it's the first blank tile count from the front line.
+         *
+         * @param [isBlankFukc] {Function({UnitBody})} optional. Function used to check if the tile should be treated as a "blank" tile.
+         *  if not specificed, "blank" means no unit is at the found tile.
+         *  return true if it's a "blank" tile for the comparation, that means when the unit is trying to move to the front line, it should pass through the tile checked.
+         *
+         * @return the distance from it's current column to the target tile. Always positive.
+         */
+        getValidDistance : function(unitBody, isBlankFukc) {
             var _ts = handlerList.mapUtil,
                 _buf = buf,
                 tiles = unitBody.getTileRecords(),
@@ -2667,9 +2619,11 @@ coh.BattleScene = function() {
                 deataY = isAttacker ? -1 : 1,
                 endY = yRange[_ts.PUBLIC_ROW_COUNT],
                 columns = {},
-                validTile = _ts.getValidTile(unitBody),
                 y, i, distance = 0, 
-                unitFound;
+                unitFound,
+                checkIsBlank = checkIsBlank || function(unitBody) {
+                    return !unitBody;
+                };
             
             for (i in tiles) {
                 columns[tiles[i].x] = tiles[i].x;
@@ -2684,7 +2638,7 @@ coh.BattleScene = function() {
                 y += deataY;
                 unitFound = false;
                 for (i in columns) {
-                    if (_buf.unitMatrix[columns[i]][y]) {
+                    if (!checkIsBlank(_buf.unitMatrix[columns[i]][y])) {
                         unitFound = true;
                         break;
                     } else {
@@ -2698,12 +2652,46 @@ coh.BattleScene = function() {
                 }
             } while (y != endY);
             
+            // return moved distance.
+            return distance * deataY;
+        },
+        
+        /**
+         * try to reset the positoin of given units, make sure there would be no blank tiles in front of them.
+         *@return distance moved.
+         */
+        moveToFrontLine : function(unitBody) {
+            var _ts = handlerList.mapUtil,
+                validTile = _ts.getValidTile(unitBody),
+                distance = util.getValidDistance(unitBody),
+                isAttacker = unitBody.getPlayer().isAttacker();
+            
             if (distance) {
-                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - distance});
+                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - (isAttacker ? 1 : -1) * distance});
+            }
+        },
+        
+        /**
+         * withdraw a single unit back to rowCount tiles from the front line.
+         * if it's running out of the border, kill the unit.
+         * @return <bool> if the unit is still in the battle ground.
+         */
+        withdraw : function(unitBody, rowCount) {
+            var _ts = handlerList.mapUtil,
+                _buf = buf,
+                isAttacker = unitBody.getPlayer().isAttacker(),
+                yRange = _ts.getYRange(isAttacker),
+                validTile = _ts.getValidTile(unitBody);
+            
+            // out of range, kill the unit.
+            if (isAttacker ? validTile.y - rowCount > yRange[yRange.length - 1] : validTile.y - rowCount < yRange[yRange.length - 1]) {
+                self.removeUnit(unitBody);
+                return false;
             }
             
-            // return moved distance.
-            return distance;
+            self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y + rowCount * (isAttacker ? 1 : -1)});
+            
+            return true;
         },
         
         inPhalanx : function(phalanxHash, cType, unitBody) {
@@ -2720,6 +2708,18 @@ coh.BattleScene = function() {
         },
         
         /**
+         * @return the priority of a unitBody.
+         */
+        getPriority : function(unitBody) {
+            // XXXXXX Here we go!
+            
+            // How should the priority be determined for phalanxes? For archers, they're always supposed to be at the bottom of the battle field, while heros - those who's having a high priority while generating might be archers as well.
+            // What if we set "ranged" as a skill, and use filters for the skill to fix the priority while queueing?
+            // Think it's possible.
+            return 0;
+        },
+        
+        /**
          *@param convert convert object generated from coh.Battle that having data below:
             {
                 column : column number,
@@ -2727,6 +2727,8 @@ coh.BattleScene = function() {
                 converts : [<typeId>],
                 isAttacker : <bool>
             }
+         * For each phalanxes created, status of units within the phalanx should be updated,
+         * while the updates would be applied to battleScene in setUnitToTile.
          */
         getPhalanx : function(convert) {
             var _buf = buf,
@@ -2734,7 +2736,7 @@ coh.BattleScene = function() {
                 // right bottom tile of the convert
                 rbTile = handlerList.mapUtil.getTilePosition(convert.isAttacker, _coh.LocalConfig.UNIT_TYPES.SOLDIER, convert.row, convert.column),
                 convertMatrix,
-                unitBodys,
+                unitBodies,
                 unitBody,
                 halt = false,
                 row, column,
@@ -2747,7 +2749,7 @@ coh.BattleScene = function() {
                 convertMatrix = _coh.LocalConfig.CONVERT_MATRIX[cType];
                 headUnit = null;
                 halt = false;
-                unitBodys = [];
+                unitBodies = [];
                 for (j = 0; row = convertMatrix[j]; ++j) {   
                     for (k = 0; column = row[k]; ++k) {
                         unitBody = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
@@ -2758,7 +2760,7 @@ coh.BattleScene = function() {
                             break;
                         }
                         
-                        unitBodys.push(unitBody);
+                        unitBodies.push(unitBody);
                         phalanxHash[unitBody.unit.getId()] = (phalanxHash[unitBody.unit.getId()] || []).concat(cType);
                     }
                     if (halt) {
@@ -2773,15 +2775,18 @@ coh.BattleScene = function() {
                 
                 // for walls, each unit is a single phalanx.
                 if (cType == _coh.LocalConfig.CONVERT_TYPES.WALL) {
-                    for (j = 0, unitBody; unitBody = unitBodys[j]; ++j) {
+                    for (j = 0, unitBody; unitBody = unitBodies[j]; ++j) {
                         _buf.phalanxList.push(new _coh.Phalanx(cType, [unitBody]));
                     }
                 } else {
-                    _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodys));
+                    _buf.phalanxList.push(new _coh.Phalanx(cType, unitBodies));
                 }
                 
-                // update statusMatrix and unitMatrix for each phalanxes created.
+                // XXXXXX To Be Continued.
                 // phalanxes except for walls won't react to any mouse events.
+                
+                // queue phalanxes first, then
+                // gather all convertedUnitBodies and make a queue for them.
             }
         }
     };
@@ -3093,7 +3098,7 @@ coh.BattleScene = function() {
             _buf.unitDelay = 0;
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                    status && _coh.Battle.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
+                    status && _coh.Unit.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                     _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
                     if (!player.getNumOfUnplacedUnit()) return;
                 }
@@ -3117,10 +3122,11 @@ coh.BattleScene = function() {
                 tileSprite = unitBody.tileSprite,
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Battle.getTypeFromStatus(status), rowNum, colNum);
+                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Unit.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitBody
             unitBody.setPlayer(player);
+            unitBody.setBattleScene(self);
             
             setTimeout(function() {
                 self.battleMap.addChild(tileSprite, tilePosition.y);
@@ -3147,7 +3153,7 @@ coh.BattleScene = function() {
                 unit = unitBody.unit,
                 unitSprite = unitBody.unitSprite,
                 tileSprite = unitBody.tileSprite,
-                srcName ="img_" + (+unit.getColor() || 0),
+                srcName = "img_" + (+unit.getColor() || 0),
                 typeConfig = unitBody.getTypeConfig(),
                 // if there exist tiles in the unitBody and having the same column number (x), move it directly here.
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
@@ -3228,6 +3234,7 @@ coh.BattleScene = function() {
             for (var i in tiles) {
                 self.unbindUnitToTile(unitBody, tiles[i]);
             }
+            unitBody.battleScene = null;
         },
         
         /**
@@ -3295,14 +3302,43 @@ coh.BattleScene = function() {
             
             var _util = util,
                 affectedUnits,
-                movedUnits = [unitBody],
-                tileRecords = [unitBody.getTileRecords()];
+                // get the tileRecords before it's removed.
+                tileRecords = unitBody.getTileRecords().concat();
             
             // XXXXXX Play the removing animate in target tile.
-            
+            coh.FilterUtil.applyFilters("unitRemoved", unitBody);
+
             self.battleMap.removeChild(unitBody.tileSprite, true);
             self.unbindUnit(unitBody);
             unitBody.getPlayer().killUnit(unitBody.unit);
+            
+            // return affected unit for further usage, such as queueUnits.
+            return {
+                unitBody : unitBody,
+                tiles : tileRecords
+            };
+        },
+        
+        /**
+         * Given units would try to array to the front line.
+         * Mind that the units might have been removed already, so tileRecords for that unit is required.
+         *@return all moved units.
+         */
+        queueUnits : function(unitBodies, tileRecords) {
+            
+            var movedUnits = unitBodies,
+                affectedUnits,
+                _util = util,
+                result = [];
+            
+            for (var i = 0, unitBody; unitBody = movedUnits[i]; ++i) {
+                // if it's still in the battle field, charge.
+                if (unitBody.getTileRecords()) {
+                    if (_util.moveToFrontLine(unitBody)) {
+                        result.push(unitBody);
+                    };
+                }
+            }
             
             while (movedUnits.length) {
                 affectedUnits = util.getMovingUnits(movedUnits, tileRecords);
@@ -3310,17 +3346,96 @@ coh.BattleScene = function() {
                 tileRecords = [];
                 for (var i in affectedUnits) {
                     // the unit isn't moved, so it won't have any effect on other units behind it.
-                    tileRecords.push(affectedUnits[i].getTileRecords());
-                    if (util.moveToFrontLine(affectedUnits[i])) {
+                    tileRecords.push(affectedUnits[i].getTileRecords().concat());
+                    if (_util.moveToFrontLine(affectedUnits[i])) {
                         movedUnits.push(affectedUnits[i]);
+                        result.push(affectedUnits[i]);
                     } else {
                         tileRecords.pop();
                     }
                 }
             };
+            
+            return result;
         },
         
-        doConverts : function(unitBodys) {
+        /**
+         * Similar to queueUnits but it affectes all units within a phalanx.
+         * Differently, given phalanxes would never have been removed, so no tileRecords required as a param.
+         */
+        queuePhalanxes : function(phalanxes) {
+            var _util = util,
+                _coh = coh,
+                distance,
+                targetTile,
+                unitBody,
+                priority,
+                // If it's having other units or phalanxes in front of the current one, let's make a comparation.
+                comparedPriority,
+            
+            // find the correct positions for the phalanxes, and then withdraw units if necessary.
+            for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
+                unitBody = phalanx.getLeadUnit;
+                distance = _util.getValidDistance(unitBody, function(comparedUnit) {
+                    // 
+                    return _util.getPriority(comparedUnit) < _util.getPriority(unitBody);
+                });
+                
+                // The front-line rules about melee phalanxes should be handled outside into the filters,
+                // Maybe somewhere else related to a skill set.
+                distance = _coh.utils.FilterUtil.applyFilters("phalanxMovingDistance", distance, phalanx);
+                // if no charge required for current phalanx, do nothing.
+                if (!distance) continue;
+                
+                // if there exist a unit in target place, let's try withdraw for sevral tiles.
+                // specially, if the unit belongs to enimy side, there would be something bad happen to that unlucky guy.
+                // XXXXXX Here we go!
+            }
+        },
+        
+        /**
+         * All units in the selected column will try to withdraw for <rowCount> tiles back.
+         * If the row is having more units than the battle grould allowed, overflowed units would be killed.
+         * Mind units that's having more than 1 tile.
+         * @return all moved units that's still not removed.
+         */
+        withdraw : function(unitBodies, rowCount) {
+            
+            var movedUnits = unitBodies,
+                affectedUnits,
+                _util = util,
+                tileRecords = [],
+                result = [];
+            
+            for (var i = 0, unitBody; unitBody = movedUnits[i]; ++i) {
+                // if it's still in the battle field, charge.
+                if (unitBody.getTileRecords()) {
+                    tileRecords.push(unitBody.getTileRecords().concat());
+                    if (_util.withdraw(unitBody, rowCount)) {
+                        result.push(unitBody);
+                    };
+                }
+            }
+            
+            while (movedUnits.length) {
+                affectedUnits = util.getMovingUnits(movedUnits, tileRecords);
+                movedUnits = [];
+                tileRecords = [];
+                for (var i in affectedUnits) {
+                    tileRecords.push(affectedUnits[i].getTileRecords().concat());
+                    movedUnits.push(affectedUnits[i]);
+                    
+                    // if the unit is removed drew to a withdraw, it won't have an effect on new phalanxes that might generate.
+                    if (_util.withdraw(affectedUnits[i], rowCount)) {
+                        result.push(affectedUnits[i]);
+                    }
+                }
+            };
+            
+            return result;
+        },
+        
+        doConverts : function(unitBodies) {
             
             var _buf = buf,
                 _coh = coh,
@@ -3332,7 +3447,7 @@ coh.BattleScene = function() {
                 converts,
                 allConverts = [];
             
-            for (var i = 0; unitBody = unitBodys[i]; ++i) {
+            for (var i = 0; unitBody = unitBodies[i]; ++i) {
                 // do nothing for types that's not 1.
                 if (unitBody.unit.getType() != 1) continue;
                 
@@ -3604,11 +3719,13 @@ coh.UIController = (function() {
     
     _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitBody, tile, battleScene) {
         
-        var _buf = buf;
+        var _buf = buf,
+            removedUnitBody;
         
         if (_buf.battle.checkedUnit == unitBody) {
             util.clearStatus(battleScene);
-            battleScene.removeUnit(unitBody, tile);
+            removedUnitBody = battleScene.removeUnit(unitBody, tile);
+            battleScene.queueUnits([removedUnitBody.unitBody], [removedUnitBody.tiles]);
         } else {
             util.clearStatus(battleScene);
             battleScene.focusOnUnit(unitBody);
@@ -3651,6 +3768,10 @@ coh.UIController = (function() {
     });
     
     _coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
+    });
+    
+    _coh.utils.FilterUtil.addFilter("convertUnit", function(unitFrom, unitTo, cType) {
+        coh.utils.BaseCvtUtil.getInstance().convert(unitFrom, unitTo, cType);
     });
     
     return self = {

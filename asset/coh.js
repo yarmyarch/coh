@@ -119,7 +119,7 @@ var coh = coh || {};
 
 // ui related configs exist in resource.js,
 // occupation related configs exist in coh.occupations.js.
-coh.units = {
+coh.unitStatic = {
     archer : {
         // used to tag if the unit would be a normal unit that's holding a occupation.
         occupation : "archer",
@@ -140,9 +140,38 @@ coh.units = {
         type : 4,
         priority : 24
     },
+    // general readonly data for heros.
     hero : {
         // types should be set dynamically when generating.
         priority : 32
+    }
+};var coh = coh || {};
+
+/**
+ * Data required saving a unit.
+ * 
+ * The data below will override those configured in coh.unitStatic when there might be any conflicts.
+ * Also, a getter/setter would be generated while creating a unit with these configs.
+ */
+coh.unitData = {
+    unit : {
+        level : 1,
+        number : 1
+    },
+    // general readonly data for heros.
+    hero : {
+        type : 1,
+        // levelhistory.
+        levels : null,
+        // jobname
+        occupation : "",
+        // modifier
+        talent : 1
+    },
+    
+    // specific configs for sevral heros. 
+    leon : {
+        talent : 2
     }
 };var coh = coh || {};
 
@@ -258,16 +287,16 @@ coh.res = {
     };
     
     /**
-     * Full fill the configs of sprite from coh.units.
+     * Full fill the configs of sprite from coh.unitStatic.
      */
     var generateUnits = function(resObj) {
         var _coh = coh,
             colors;
         
         // if a unit is configured in both units and occupations, then it's a normal unit that's having a sprite.
-        for (var i in _coh.units) {
-            if (!_coh.units[i].occupation) continue;
-            colors = _coh.factions[_coh.units[i].faction].colors;
+        for (var i in _coh.unitStatic) {
+            if (!_coh.unitStatic[i].occupation) continue;
+            colors = _coh.factions[_coh.unitStatic[i].faction].colors;
             resObj.sprite[i] = {};
             resObj.sprite[i].idle = {
                 plist : "res/sprite/" + i + "_idle.plist",
@@ -767,7 +796,8 @@ coh.utils = coh.utils || {};
     
     var getInstance = function(maxLevel) {
         
-        if (!maxLevel) maxLevel = coh.LocalConfig.UNIT.MAX_LEVEL;
+        var _coh = coh;
+        if (!maxLevel) maxLevel = _coh.LocalConfig.UNIT.MAX_LEVEL;
         
         // Would the "floor" be a problem as it's float calculating? Think not. Mind it here if it does.
         if (!buf.instances[maxLevel]) {
@@ -778,10 +808,16 @@ coh.utils = coh.utils || {};
                  */
                 getAttack : function(unit) {
                     var attack = unit.getAttack(),
-                        level = unit.getLevel();
+                        level = unit.getLevel(),
+                        rate = Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100;
                     
+                    // rate is always 1 when level equals max level.
+                    // make it modifible from outside for expanditions.
+                    rate = coh.FilterUtil.applyFilters("getAttackModifier", rate, unit);
+                    
+                    // modifiers from types.
                     attack = attack * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].attack || 1);
-                    return Math.floor(Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100 * attack);
+                    return Math.floor(rate * attack);
                 },
                 
                 /**
@@ -790,10 +826,13 @@ coh.utils = coh.utils || {};
                  */
                 getHp : function(unit) {
                     var hp = unit.getHp(),
-                        level = unit.getLevel();
+                        level = unit.getLevel(),
+                        rate = Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100;
+                    
+                    rate = coh.FilterUtil.applyFilters("getHpModifier", rate, unit);
                     
                     hp = hp * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].hp || 1);
-                    return Math.floor(Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100 * hp);
+                    return Math.floor(rate * hp);
                 },
                 
                 /**
@@ -802,10 +841,13 @@ coh.utils = coh.utils || {};
                  */
                 getSpeed : function(unit) {
                     var speed = unit.getSpeed(),
-                        level = unit.getLevel();
+                        level = unit.getLevel()
+                        rate = Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100;
+                    
+                    rate = coh.FilterUtil.applyFilters("getSpeedModifier", rate, unit);
                     
                     speed = speed * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].speed || 1);
-                    return Math.floor(Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100 * speed);
+                    return Math.floor(rate * speed);
                 },
                 
                 /**
@@ -1260,13 +1302,9 @@ coh.Actor = cc.Sprite.extend({
             callback && callback();
         });
     }
-});/**
- *@require {Battle}: Utils for battle scene.
- */
-var coh = coh || {};
+});var coh = coh || {};
 
 (function() {
-}
 /**
  * Super class for all units.
  * Details for type/status/action/color:
@@ -1290,14 +1328,14 @@ var coh = coh || {};
     ...
  *
  */
-var UnitObject = function(unitName) {
+var UnitObject = function(unitName, savedData) {
     
     var self = this,
         _coh = coh,
         // occupation config
         O_LC = _coh.occupations[unitName],
         // unit config
-        U_LC = _coh.units[unitName];
+        U_LC = _coh.unitStatic[unitName];
     
     var buf = {
         id : 0,
@@ -1306,16 +1344,18 @@ var UnitObject = function(unitName) {
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
         // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        // idle for default.
         action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
         isHero : false,
         
         // other configurations from LC.
         conf : {},
         
-        // idle for default.
+        // initilized in constructor.
+        savedData : null
     };
     
-    var construct = function(unitName) {
+    var construct = function(unitName, savedData) {
         
         var _buf = buf,
             _lc = {},
@@ -1333,8 +1373,8 @@ var UnitObject = function(unitName) {
             }
         } else {
             // load common configs for heros first;
-            for (i in _coh.units["hero"]) {
-                _lc[i] = _coh.units["hero"][i];
+            for (i in _coh.unitStatic["hero"]) {
+                _lc[i] = _coh.unitStatic["hero"][i];
             }
             // if a hero is having other configs, let's load it here.
             for (i in U_LC) {
@@ -1345,13 +1385,38 @@ var UnitObject = function(unitName) {
         }
         
         // other initializations required;
+        // static configs, readonly.
+        var index;
         for (i in _lc) {
             _buf.conf[i] = _lc[i];
             
+            index = _coh.Util.getFUStr(i);
             // append getter for all configs.
-            self["get" + _coh.Util.getFUStr(i)] = (function(i) {
+            self["get" + index] = (function(i) {
                 return function() {
-                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(i), buf.conf[i], self);
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, buf.conf[i], self);
+                }
+            })(i);
+        }
+        // dynamic data, read/write.
+        var basicData = self.isHero() ? _coh.unitData.hero || _coh.unitData.unit;
+        // configs for specific heros.
+        for (i in _coh.unitData[unitName]) {
+            basicData[i] = _coh.unitData[unitName][i];
+        }
+        for (i in basicData) {
+            // verifications could be appended outside.
+            _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData[i] || basicData[i], i, self);
+            
+            index = _coh.Util.getFUStr(i);
+            self["get" + index] = (function(i) {
+                return function() {
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, _buf.savedData[i], self);
+                }
+            })(i);
+            self["set" + index] = (function(i) {
+                return function(value) {
+                    _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("setUnit" + index, value, self);
                 }
             })(i);
         }
@@ -1394,13 +1459,8 @@ var UnitObject = function(unitName) {
         if (coh.LocalConfig.UNIT_ACTIONS[actionId]) buf.action = actionId;
     };
     
-    self.getLevel = function() {
-        return buf.level;
-    };
-    
-    self.setLevel = function(newLevel) {
-        var _coh = coh;
-        buf.level = newLevel && Math.min(Math.max(newLevel, _coh.LocalConfig.UNIT.MIN_LEVEL), _coh.LocalConfig.UNIT.MAX_LEVEL) || _coh.LocalConfig.UNIT.MIN_LEVEL;
+    self.getSavedData = function() {
+        return buf.savedData;
     };
     
     self.isHero = function() {
@@ -1425,120 +1485,13 @@ coh.Unit = (function() {
     var self,
         _coh = coh,
         LC = _coh.LocalConfig;
-
-    var util = {
-        /**
-         * @return object with items in each occupations, plus an index "level",
-         * that tells how much levels in total exists in the history.
-         */
-        getLeveledOccupation : function(levels) {
-            var historyLevel = 0,
-                maxLevel = LC.UNIT.MAX_LEVEL,
-                ocpt = {
-                    level : 0
-                },
-                i, attribute;
-            
-            if (!levels) return;
-            
-            for (i in levels) {
-                for (attribute in levels[i]) {
-                    ocpt[attribute] = ocpt[attribute] || 0;
-                    ocpt[attribute] += (levels[i] / maxLevel) * _coh.occupations[i][attribute];
-                }
-                ocpt.level += levels[i];
-            }
-            return ocpt;
-        }
-    };
-    
-    // react filters here.
-    
-    /**
-     * extea actions appended for hero units.
-     */
-    _coh.utils.FilterUtil.addFilter("heroGenerated", function(unit) {
-        
-        // New buffer for the unit object.
-        var inner_buf = {
-            type : 0,
-            occupation : null,
-            levels : null,
-            historyOcpt : null
-        };
-        
-        /**
-         * types chould be changed for heros.
-         * the attribute "type" would be from inner_buf, that's over covering the on (if exist) from common configs.
-         */
-        unit.setType = function(newType) {
-            inner_buf.type = newType;
-        };
-        unit.getType = function() {
-            return _coh.utils.FilterUtil.applyFilters("getUnitType", inner_buf.type, unit);
-        };
-        
-        /**
-         * Set level history for the unit, the level history won't include it's current occupation.
-         * Attack/Hp/Speeds would be generated from the level history.
-         * The object may look like this:
-            {
-                <occupation name> : <level>,
-                // ... other occupations here.
-            }
-         */
-        unit.setLevels = function(levels) {
-            inner_buf.levels = levels;
-            // it should be regenerated once the history level changed.
-            inner_buf.historyOcpt = null;
-        };
-        unit.getLevels = function(levels) {
-            return inner_buf.levels;
-        };
-        
-        unit.setOccupation = function(ocptName) {
-            inner_buf.occupation = _coh.occupations[ocptName];
-        };
-        unit.getOccupation = function(ocptName) {
-            return inner_buf.occupation;
-        };
-        
-        /**
-         * There must be a more simple solution for heros.
-         * Bingo! I found it!
-         * getAttack and other functions regenerated here via it's current occupation.
-         */
-        for (var i in _coh.occupations[_buf.occupation]) {
-            unit["get" + _coh.Util.getFUStr(i)] = (function(attribute) {
-                return function() {                    
-                    // here we go.
-                    var _buf = inner_buf,
-                        maxLevel = LC.UNIT.MAX_LEVEL,
-                        maxAttr = 0;
-                    if (!_buf.levels || !_buf.occupation) return 0;
-                    
-                    _buf.historyOcpt = _buf.historyOcpt || util.getLeveledOccupation(_buf.levels);
-                    
-                    maxAttr = _buf.historyOcpt[attribute] + (1 - _buf.historyOcpt.level / maxLevel) * _coh.occupations[_buf.occupation][attribute];
-                    
-                    // No ceil. This step would be handled in calculator.
-                    //~ return Math.ceil(maxAttr);
-                    return _coh.utils.FilterUtil.applyFilters("unitAttribute" + _coh.Util.getFUStr(attribute), maxAttr, unit);
-                };
-            })(i);
-        }
-        
-        // Use the newly affected unit instead of the original one.
-        // Actually it's not necessary returning this, as in js it's pointers parsed... Never mind, who nows.
-        return unit;
-    });
     
     return self = {
         /**
          * get type by unit name.
          */
         getUnitType : function(unitName) {
-            return (coh.units[unitName] && coh.units[unitName].type) || 0;
+            return (coh.unitStatic[unitName] && coh.unitStatic[unitName].type) || 0;
         },
         
         /**
@@ -1621,9 +1574,14 @@ coh.Player = function(unitConfig) {
         unitsUnplaced : {},
         
         savedData : {
-            unitLevels : {},
-            heros : {
-                
+            
+            // saved data required from data configuration in coh.unitData.js.
+            units : {
+                /*
+                <unitName> : {
+                    <data_id> : <data_value>
+                }
+                */
             }
         }
     };
@@ -1643,7 +1601,7 @@ coh.Player = function(unitConfig) {
         _buf.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
         
         for (var unitName in unitConfig) {
-            unit = _coh.units[unitName];
+            unit = _coh.unitStatic[unitName];
             if (!unit) continue;
             
             _u[unit.priority] = _u[unit.priority] || {};
@@ -1669,19 +1627,11 @@ coh.Player = function(unitConfig) {
         for (var i in _u) {
             if (_u[i][type]) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
-                unit = _coh.Unit.getInstance(unitName);
+                // for normal units, level & numbers are injected already;
+                // for heros, data such as type/level history/occupation are generated, from savd data.
+                unit = _coh.Unit.getInstance(unitName, buf.savedData.units[unitName]);
                 
                 unit.setColor(_coh.Unit.getColorFromStatus(status));
-                unit.setLevel(_buf.savedData.unitLevels[unitName]);
-                
-                // set level history for hero units.
-                if (_buf.savedData.heros[unitName]) {
-                    var heroData = _buf.savedData.heros[unitName];
-                    
-                    unit.setType(heroData.type);
-                    unit.setLevels(heroData.levels);
-                    unit.setOccupation(heroData.ocpt);
-                }
                 
                 break;
             }
