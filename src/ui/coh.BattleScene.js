@@ -270,14 +270,16 @@ coh.BattleScene = function() {
         
         /**
          * @return the priority of a unitBody.
+         * It's a value that contains the current mode/action of the affected unit.
          */
         getPriority : function(unitBody) {
             // set "ranged" as a skill, and use filters for the skill to fix the priority while queueing.
-            var priority = unitBody.unit.getPriority();
+            var priority = unitBody.unit.getPriority(),
+                _lc = coh.LocalConfig;
             
-            if (unitBody.unit.getAction())
+            priority = (unitBody.unit.getMode() + _lc.PRIORITIES.PHALANX) * _lc.PRIORITY_CHUNK + priority;
             
-            return ;
+            return coh.FilterUtil.applyFilters("getUnitPriorityInScene", priority, unitBody.unit);
         },
         
         /**

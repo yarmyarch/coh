@@ -29,3 +29,14 @@ coh.unitStatic = {
         priority : 32
     }
 };
+
+// append configs that's need be calculated.
+(function() {
+// set PRIORITY_CHUNK for global config.
+var maxPriority = 0;
+for (var i in coh.unitStatic) {
+    maxPriority = Math.max(maxPriority, +coh.unitStatic[i].priority);
+}
+coh.LocalConfig.PRIORITY_CHUNK = maxPriority;
+
+})();

@@ -13,6 +13,7 @@ coh.LocalConfig = {
     },
     UNIT_TYPES: {
         // blank, unused datagroup data or other unexpected units shares this type.
+        // walls : type equals to static, and it charging.
         STATIC : 0,
         SOLDIER : 1,
         ELITE : 2,
@@ -23,10 +24,11 @@ coh.LocalConfig = {
     UNIT_TYPES_COUNT : 0,
     // for units whose type code is within <x> * UNIT_TYPES_COUNT ~ <x + 1> * UNIT_TYPES_COUNT, having the action below which value is <x>.
     // Ex. charging elite unit is having the type of 1 * UNIT_TYPES_COUNT + 2.
-    UNIT_ACTIONS : {
+    UNIT_MODES : {
         // default action is idle.
         IDLE : 0,
-        CHARGE : 1
+        CHARGE : 1,
+        WALL : 2
     },
     CONVERT_TYPES : {
         SOLDIER : 1,
@@ -103,11 +105,13 @@ coh.LocalConfig = {
         MIN_LEVEL : 1
     },
     
-    PRIORITIES {
-        // 0 - 100 : normal priority for units;
-        // 100 - 999 : reserved priorities for other possible skills, for example "ranged";
-        PHALANX : 1000,
-        WALL : 1100
+    // calculated from unit configs.
+    PRIORITY_CHUNK : 0,
+    PRIORITIES : {
+        // 0 ~ 1 chunk : normal priority for units;
+        // 1 ~ 9 chunk - 1 : reserved priorities for other possible skills, for example "ranged";
+        // priority = (10 + unit_mode) * priority_chunk + unit_priority
+        PHALANX : 10,
     }
 };
 

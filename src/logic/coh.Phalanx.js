@@ -49,10 +49,14 @@ coh.Phalanx = function(type, units) {
             
             // for a unit, it's the convert type isn't a wall and it's a type 1 unit, it should be converted into the lead unit.
             // converted units should have been removed from the battle scene.
-            if (unitBody.unit.getType != _coh.UNIT_TYPES.SOLDIER && type != _coh.CONVERT_TYPES.WALL)
+            if (unitBody.unit.getType() != _coh.UNIT_TYPES.SOLDIER)
                 // if the unit was not converted - meanning removed, let's say it's actived.
                 _buf.unitBodies.push(unitBody);
-                unitBody.unit.setAction(_coh.ACTIONS.CHARGE);
+                if (type == _coh.CONVERT_TYPES.WALL) {
+                    unitBody.unit.setMode(_coh.UNIT_MODES.WALL);
+                } else {
+                    unitBody.unit.setMode(_coh.UNIT_MODES.CHARGE);
+                }
             } else {
                 _buf.r_unitBodies.push(unitBody);
             }

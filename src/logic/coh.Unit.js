@@ -39,9 +39,9 @@ var UnitObject = function(unitName, savedData) {
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
-        // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        // check coh.LocalConfig.UNIT_MODES for full action list.
         // idle for default.
-        action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
+        action : _coh.LocalConfig.UNIT_MODES.IDLE
         isHero : false,
         
         // other configurations from LC.
@@ -146,13 +146,13 @@ var UnitObject = function(unitName, savedData) {
             return 0;
         }
         
-        return (self.getType() + _buf.action * _coh.LocalConfig.UNIT_TYPES_COUNT) * _coh.LocalConfig.COLOR_COUNT + _buf.color;
+        return (self.getType() + _buf.mode * _coh.LocalConfig.UNIT_TYPES_COUNT) * _coh.LocalConfig.COLOR_COUNT + _buf.color;
     };
-    self.getAction = function() {
-        return buf.action;
+    self.getMode = function() {
+        return buf.mode;
     };
-    self.setAction = function(actionId) {
-        if (coh.LocalConfig.UNIT_ACTIONS[actionId]) buf.action = actionId;
+    self.setMode = function(actionId) {
+        if (coh.LocalConfig.UNIT_MODES[actionId]) buf.mode = modeId;
     };
     
     self.getSavedData = function() {
@@ -171,6 +171,7 @@ var UnitObject = function(unitName, savedData) {
     self.clone = function() {
         var clone = coh.Unit.getInstance(self.getName(), self.getSavedData());
         clone.setColor(self.getColor());
+        clone.setMode(self.getMode());
         
         return clone;
     };
