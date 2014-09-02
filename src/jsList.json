@@ -6,9 +6,12 @@
         "src/army/coh.unitData.js",
         "src/army/coh.occupations.js",
         "src/army/coh.factions.js",
-        "src/resource.js",
-        "src/util/coh.Util.js",
         
+        "src/skill/coh.factions.js",
+        
+        "src/resource.js",
+        
+        "src/util/coh.Util.js",
         "src/util/coh.utils.MapUtil_16X16.js",
         "src/util/coh.utils.BaseTileTransformer.js",
         "src/util/coh.utils.FilterUtil.js",
