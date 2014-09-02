@@ -168,6 +168,13 @@ var UnitObject = function(unitName, savedData) {
         buf.isHero = true;
     };
     
+    self.clone = function() {
+        var clone = coh.Unit.getInstance(self.getName(), self.getSavedData());
+        clone.setColor(self.getColor());
+        
+        return clone;
+    };
+    
     construct.apply(self, arguments);
     
     return self;

@@ -317,7 +317,8 @@ coh.BattleScene = function() {
                         
                         // if the unit is in another phalanx, create a copy of it for the new one.
                         if (util.inPhalanx(phalanxHash, cType, unitBody)) {
-                            unitBody = unitBody.copy();
+                            // cloned units won't be counted into the backup of the player.
+                            unitBody = unitBody.clone();
                         }
                         
                         unitBodies.push(unitBody);

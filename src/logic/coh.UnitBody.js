@@ -186,18 +186,18 @@ coh.UnitBody = function() {
     /**
      * make a copy of itself, including any info related to the scene.
      */
-    self.copy = function() {
-        var copy = new coh.UnitBody(self.unit);
-        copy.setBattleScene(self.getBattleScene());
-        copy.setPlayer(self.getPlayer());
+    self.clone = function() {
+        var clone = new coh.UnitBody(self.unit.clone());
+        clone.setBattleScene(self.getBattleScene());
+        clone.setPlayer(self.getPlayer());
         
         var tiles = self.getTileRecords();
         
         for (var i in tiles) {            
-            copy.addTileRecord(tiles[i]);
+            clone.addTileRecord(tiles[i]);
         }
         
-        return copy;
+        return clone;
     }
     
     construct.apply(self, arguments);
