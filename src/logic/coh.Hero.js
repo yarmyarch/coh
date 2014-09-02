@@ -34,21 +34,23 @@ coh.Hero = (function() {
                 ocpt.level += levels[i];
             }
             return ocpt;
+        },
+        
+        getTalent : function(levelRate, unit) {
+            // The growth could be in the saved data of a player, or in the unit settings.
+            var level = unit.getLevel(),
+                modifier = unit.getTalent();
+            
+            return Math.pow(levelRate, 1/modifier);
         }
     };
     
     // react filters here.
     
     // Render growth of the hero. Data from calculators, such as coh.utils.BaseCalculator
-    _coh.utils.FilterUtil.addFilter("getAttackModifier", function(levelRate, unit) {
-        // The growth could be in the saved data of a player, or in the unit settings.
-        // Now let's try to find the player that's having the hero, in order to get required info, modifier.
-        // eg. getModifier.
-        var level = unit.getLevel(),
-            modifier = unit.getTalent();
-        
-        return Math.pow(levelRate, 1/modifier);
-    });
+    _coh.utils.FilterUtil.addFilter("getAttackModifier", util.getTalent);
+    _coh.utils.FilterUtil.addFilter("getHpModifier", util.getTalent);
+    _coh.utils.FilterUtil.addFilter("getSpeedModifier", util.getTalent);
     
     /**
      * extea actions appended for hero units.
