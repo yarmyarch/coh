@@ -223,7 +223,7 @@ coh.BattleScene = function() {
          */
         moveToFrontLine : function(unitBody) {
             var _ts = handlerList.mapUtil,
-                validTile = _ts.getValidTile(unitBody),
+                validTile = self.getValidTile(unitBody),
                 distance = util.getValidDistance(unitBody),
                 isAttacker = unitBody.getPlayer().isAttacker();
             
@@ -242,7 +242,7 @@ coh.BattleScene = function() {
                 _buf = buf,
                 isAttacker = unitBody.getPlayer().isAttacker(),
                 yRange = _ts.getYRange(isAttacker),
-                validTile = _ts.getValidTile(unitBody);
+                validTile = self.getValidTile(unitBody);
             
             // out of range, kill the unit.
             if (isAttacker ? validTile.y - rowCount > yRange[yRange.length - 1] : validTile.y - rowCount < yRange[yRange.length - 1]) {
@@ -272,12 +272,12 @@ coh.BattleScene = function() {
          * @return the priority of a unitBody.
          */
         getPriority : function(unitBody) {
-            // XXXXXX Here we go!
+            // set "ranged" as a skill, and use filters for the skill to fix the priority while queueing.
+            var priority = unitBody.unit.getPriority();
             
-            // How should the priority be determined for phalanxes? For archers, they're always supposed to be at the bottom of the battle field, while heros - those who's having a high priority while generating might be archers as well.
-            // What if we set "ranged" as a skill, and use filters for the skill to fix the priority while queueing?
-            // Think it's possible.
-            return 0;
+            if (unitBody.unit.getAction())
+            
+            return ;
         },
         
         /**
@@ -315,21 +315,14 @@ coh.BattleScene = function() {
                     for (k = 0; column = row[k]; ++k) {
                         unitBody = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
                         
-                        // if the unit is in another phalanx that's having the same type with the existing one(except for walls), fail for the convert.
-                        if (cType != _coh.LocalConfig.CONVERT_TYPES.WALL && util.inPhalanx(phalanxHash, cType, unitBody)) {
-                            halt = true;
-                            break;
+                        // if the unit is in another phalanx, create a copy of it for the new one.
+                        if (util.inPhalanx(phalanxHash, cType, unitBody)) {
+                            unitBody = unitBody.copy();
                         }
                         
                         unitBodies.push(unitBody);
                         phalanxHash[unitBody.unit.getId()] = (phalanxHash[unitBody.unit.getId()] || []).concat(cType);
                     }
-                    if (halt) {
-                        break;
-                    }
-                }
-                if (halt) {
-                    continue;
                 }
                 
                 // create the phalanx object.
@@ -718,7 +711,7 @@ coh.BattleScene = function() {
                 typeConfig = unitBody.getTypeConfig(),
                 // if there exist tiles in the unitBody and having the same column number (x), move it directly here.
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
-                originalY = handlerList.mapUtil.getValidTile(unitBody);
+                originalY = self.getValidTile(unitBody);
             
             // prevent focus, no other mouse/touch actions during the moving;
             _buf.focusTagLocked = true;
@@ -938,7 +931,6 @@ coh.BattleScene = function() {
             for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
                 unitBody = phalanx.getLeadUnit;
                 distance = _util.getValidDistance(unitBody, function(comparedUnit) {
-                    // 
                     return _util.getPriority(comparedUnit) < _util.getPriority(unitBody);
                 });
                 
@@ -1044,6 +1036,10 @@ coh.BattleScene = function() {
         // XXXXXX for debug usage currently.
         getStatusMatrix : function() {
             return buf.statusMatrix;
+        },
+        
+        getValidTile : function(unitBody) {
+            return handlerList.mapUtil.getValidTile(unitBody);
         }
     });
     

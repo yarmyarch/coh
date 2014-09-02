@@ -103,7 +103,12 @@ coh.LocalConfig = {
         MIN_LEVEL : 1
     },
     
-    PRIORITY_WALL : 100
+    PRIORITIES {
+        // 0 - 100 : normal priority for units;
+        // 100 - 999 : reserved priorities for other possible skills, for example "ranged";
+        PHALANX : 1000,
+        WALL : 1100
+    }
 };
 
 // append configs that's need be calculated.

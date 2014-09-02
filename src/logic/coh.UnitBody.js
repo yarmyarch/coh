@@ -145,7 +145,6 @@ coh.UnitBody = function() {
      */
     self.charge = function() {
         var srcName = "img_" + (+self.unit.getColor() || 0);
-        self.unitSprite.setVisible(true);
         
         // XXXXXX TO BE ADDED.
         self.unitSprite.runAction(cc.repeatForever(coh.View.getAnimation(self.unit.getName(), "charge", srcName)));
@@ -164,9 +163,6 @@ coh.UnitBody = function() {
      * Once the convert finished, the unit would be removed from the battle scene.
      */
     self.convertTo = function(unitTo, callback) {
-        if (!buf.charging) {
-            self.unitSprite.setVisible(false);
-        }
         var _coh = coh,
             _buf = buf,
             convertSprite = cc.Sprite.create(res.imgs.convertor),
@@ -182,12 +178,27 @@ coh.UnitBody = function() {
         self.tileSprite.runAction(cc.sequence(cc.bezierTo(_coh.LocalConfig.EXILE_RATE, [startPos, ctrlPos, targetPos])), cc.callFunc(function(){
             _coh.Util.isExecutable(callback) && callback(self);
             
-            if (!buf.charging) {
-                // remove the unit itself from it's battleScene.
-                _buf.battleScene.removeUnit(self);
-            }
+            // remove the unit itself from it's battleScene.
+            _buf.battleScene.removeUnit(self);
         }));
     };
+    
+    /**
+     * make a copy of itself, including any info related to the scene.
+     */
+    self.copy = function() {
+        var copy = new coh.UnitBody(self.unit);
+        copy.setBattleScene(self.getBattleScene());
+        copy.setPlayer(self.getPlayer());
+        
+        var tiles = self.getTileRecords();
+        
+        for (var i in tiles) {            
+            copy.addTileRecord(tiles[i]);
+        }
+        
+        return copy;
+    }
     
     construct.apply(self, arguments);
     
