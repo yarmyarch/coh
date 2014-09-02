@@ -277,6 +277,7 @@ coh.BattleScene = function() {
             var priority = unitBody.unit.getPriority(),
                 _lc = coh.LocalConfig;
             
+            // XXXXXX TODO: ranged ones.
             priority = (unitBody.unit.getMode() + _lc.PRIORITIES.PHALANX) * _lc.PRIORITY_CHUNK + priority;
             
             return coh.FilterUtil.applyFilters("getUnitPriorityInScene", priority, unitBody.unit);
