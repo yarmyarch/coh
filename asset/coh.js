@@ -14,6 +14,7 @@ coh.LocalConfig = {
     },
     UNIT_TYPES: {
         // blank, unused datagroup data or other unexpected units shares this type.
+        // walls : type equals to static, and it charging.
         STATIC : 0,
         SOLDIER : 1,
         ELITE : 2,
@@ -24,10 +25,11 @@ coh.LocalConfig = {
     UNIT_TYPES_COUNT : 0,
     // for units whose type code is within <x> * UNIT_TYPES_COUNT ~ <x + 1> * UNIT_TYPES_COUNT, having the action below which value is <x>.
     // Ex. charging elite unit is having the type of 1 * UNIT_TYPES_COUNT + 2.
-    UNIT_ACTIONS : {
+    UNIT_MODES : {
         // default action is idle.
         IDLE : 0,
-        CHARGE : 1
+        CHARGE : 1,
+        WALL : 2
     },
     CONVERT_TYPES : {
         SOLDIER : 1,
@@ -104,7 +106,14 @@ coh.LocalConfig = {
         MIN_LEVEL : 1
     },
     
-    PRIORITY_WALL : 100
+    // calculated from unit configs.
+    PRIORITY_CHUNK : 0,
+    PRIORITIES : {
+        // 0 ~ 1 chunk : normal priority for units;
+        // 1 ~ 9 chunk - 1 : reserved priorities for other possible skills, for example "ranged";
+        // priority = (10 + unit_mode) * priority_chunk + unit_priority
+        PHALANX : 10,
+    }
 };
 
 // append configs that's need be calculated.
@@ -145,7 +154,19 @@ coh.unitStatic = {
         // types should be set dynamically when generating.
         priority : 32
     }
-};var coh = coh || {};
+};
+
+// append configs that's need be calculated.
+(function() {
+// set PRIORITY_CHUNK for global config.
+var maxPriority = 0;
+for (var i in coh.unitStatic) {
+    maxPriority = Math.max(maxPriority, +coh.unitStatic[i].priority);
+}
+coh.LocalConfig.PRIORITY_CHUNK = maxPriority;
+
+})();
+var coh = coh || {};
 
 /**
  * Data required saving a unit.
@@ -211,6 +232,76 @@ coh.factions = {
         colors : ["blue", "white", "gold"]
     }
 };var coh = coh || {};
+
+coh.skills = {
+    /**
+     * <skill name> : [<affix_affixLevel>]
+     * none for default level 1.
+     * eg: 
+        ranged : ["ranged_1"] 
+     * equals to
+        ranged : ["ranged"]
+     * that's having the affix "ranged" at the level of 1.
+     */
+    ranged : ["ranged"],
+    melee : ["melee"]
+};var coh = coh || {};
+
+(function() {
+var levelCalculators = {
+    // defaultly used calculator when no one defined in effect
+    
+    /**
+     * @param level level of a unit.
+     * Most effects would be more effective when the level of the unit gains.
+     */
+    levels : function() {
+        return 1;
+    }
+}, _lc = levelCalculators;
+
+coh.effects = {
+    // ranged effect will be actived when calculating priorities of a unit when generating a phalanx.
+    ranged : {
+        // interested filters
+        filters : {
+            getUnitPriorityInScene : function() {
+                
+            }
+        },
+        // the effect won't gains with the level
+        levels : false
+    }
+};
+
+})();var coh = coh || {};
+
+(function() {
+var levelCalculators = {
+    // defaultly used calculator when no one defined in affix
+    levels : function(level) {
+        return 1;
+    }
+}, _lc = levelCalculators;
+
+coh.affixes = {
+    ranged : {
+        effects : [
+            {
+                /**
+                 * <effect_name> : [<effect param>]
+                 * the value would be parsed as params of the effect levels calculator. So it's soppused to be an array.
+                 */ 
+                ranged : 1
+            }
+        ],
+        // defines how the effect should gains with the level.
+        // default config: _lc.levels
+        levels : false
+    }
+};
+
+})();var coh = coh || {};
 coh.res = {
     //image
     //plist
@@ -880,12 +971,12 @@ coh.utils = coh.utils || {};
         return buf.instances[maxLevel];
     };
     
-    coh.utils.BaseCalculator = function(maxLevel) {
+    coh.utils.BaseAttrCalculator = function(maxLevel) {
         //getTilePosition
         return getInstance(maxLevel);
     }
 
-    coh.utils.BaseCalculator.getInstance = getInstance;
+    coh.utils.BaseAttrCalculator.getInstance = getInstance;
 })();
 /**
  * UI Components class, the highlight cursor when focusing on an unit.
@@ -1343,9 +1434,9 @@ var UnitObject = function(unitName, savedData) {
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
-        // check coh.LocalConfig.UNIT_ACTIONS for full action list.
+        // check coh.LocalConfig.UNIT_MODES for full action list.
         // idle for default.
-        action : _coh.LocalConfig.UNIT_ACTIONS.IDLE
+        action : _coh.LocalConfig.UNIT_MODES.IDLE
         isHero : false,
         
         // other configurations from LC.
@@ -1450,13 +1541,13 @@ var UnitObject = function(unitName, savedData) {
             return 0;
         }
         
-        return (self.getType() + _buf.action * _coh.LocalConfig.UNIT_TYPES_COUNT) * _coh.LocalConfig.COLOR_COUNT + _buf.color;
+        return (self.getType() + _buf.mode * _coh.LocalConfig.UNIT_TYPES_COUNT) * _coh.LocalConfig.COLOR_COUNT + _buf.color;
     };
-    self.getAction = function() {
-        return buf.action;
+    self.getMode = function() {
+        return buf.mode;
     };
-    self.setAction = function(actionId) {
-        if (coh.LocalConfig.UNIT_ACTIONS[actionId]) buf.action = actionId;
+    self.setMode = function(actionId) {
+        if (coh.LocalConfig.UNIT_MODES[actionId]) buf.mode = modeId;
     };
     
     self.getSavedData = function() {
@@ -1470,6 +1561,14 @@ var UnitObject = function(unitName, savedData) {
     // let's move extra functions out of the class defination, make it possible be expanded.
     self.setAsHero = function() {
         buf.isHero = true;
+    };
+    
+    self.clone = function() {
+        var clone = coh.Unit.getInstance(self.getName(), self.getSavedData());
+        clone.setColor(self.getColor());
+        clone.setMode(self.getMode());
+        
+        return clone;
     };
     
     construct.apply(self, arguments);
@@ -2215,7 +2314,6 @@ coh.UnitBody = function() {
      */
     self.charge = function() {
         var srcName = "img_" + (+self.unit.getColor() || 0);
-        self.unitSprite.setVisible(true);
         
         // XXXXXX TO BE ADDED.
         self.unitSprite.runAction(cc.repeatForever(coh.View.getAnimation(self.unit.getName(), "charge", srcName)));
@@ -2234,9 +2332,6 @@ coh.UnitBody = function() {
      * Once the convert finished, the unit would be removed from the battle scene.
      */
     self.convertTo = function(unitTo, callback) {
-        if (!buf.charging) {
-            self.unitSprite.setVisible(false);
-        }
         var _coh = coh,
             _buf = buf,
             convertSprite = cc.Sprite.create(res.imgs.convertor),
@@ -2252,12 +2347,27 @@ coh.UnitBody = function() {
         self.tileSprite.runAction(cc.sequence(cc.bezierTo(_coh.LocalConfig.EXILE_RATE, [startPos, ctrlPos, targetPos])), cc.callFunc(function(){
             _coh.Util.isExecutable(callback) && callback(self);
             
-            if (!buf.charging) {
-                // remove the unit itself from it's battleScene.
-                _buf.battleScene.removeUnit(self);
-            }
+            // remove the unit itself from it's battleScene.
+            _buf.battleScene.removeUnit(self);
         }));
     };
+    
+    /**
+     * make a copy of itself, including any info related to the scene.
+     */
+    self.clone = function() {
+        var clone = new coh.UnitBody(self.unit.clone());
+        clone.setBattleScene(self.getBattleScene());
+        clone.setPlayer(self.getPlayer());
+        
+        var tiles = self.getTileRecords();
+        
+        for (var i in tiles) {            
+            clone.addTileRecord(tiles[i]);
+        }
+        
+        return clone;
+    }
     
     construct.apply(self, arguments);
     
@@ -2329,12 +2439,12 @@ coh.MapLayer = cc.Layer.extend({
                     // attacker
                     attacker = new _coh.Player({ archer : 16, knight: 1, paladin: 1});
                     attacker.setAsDefender();
-                    attacker.setCalculator(_coh.utils.BaseCalculator.getInstance());
+                    attacker.setCalculator(_coh.utils.BaseAttrCalculator.getInstance());
                     aMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), attacker);
                     // defender
                     defender = new _coh.Player({ archer : 24, knight: 4, paladin: 3});
                     defender.setAsAttacker();
-                    defender.setCalculator(_coh.utils.BaseCalculator.getInstance());
+                    defender.setCalculator(_coh.utils.BaseAttrCalculator.getInstance());
                     dMatrix = _coh.Battle.generatePlayerMatrix(battleScene.getDefaultDataGroup(), defender);
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneEntered", generatePlayer, 12);
@@ -2612,7 +2722,7 @@ coh.BattleScene = function() {
          */
         moveToFrontLine : function(unitBody) {
             var _ts = handlerList.mapUtil,
-                validTile = _ts.getValidTile(unitBody),
+                validTile = self.getValidTile(unitBody),
                 distance = util.getValidDistance(unitBody),
                 isAttacker = unitBody.getPlayer().isAttacker();
             
@@ -2631,7 +2741,7 @@ coh.BattleScene = function() {
                 _buf = buf,
                 isAttacker = unitBody.getPlayer().isAttacker(),
                 yRange = _ts.getYRange(isAttacker),
-                validTile = _ts.getValidTile(unitBody);
+                validTile = self.getValidTile(unitBody);
             
             // out of range, kill the unit.
             if (isAttacker ? validTile.y - rowCount > yRange[yRange.length - 1] : validTile.y - rowCount < yRange[yRange.length - 1]) {
@@ -2659,14 +2769,17 @@ coh.BattleScene = function() {
         
         /**
          * @return the priority of a unitBody.
+         * It's a value that contains the current mode/action of the affected unit.
          */
         getPriority : function(unitBody) {
-            // XXXXXX Here we go!
+            // set "ranged" as a skill, and use filters for the skill to fix the priority while queueing.
+            var priority = unitBody.unit.getPriority(),
+                _lc = coh.LocalConfig;
             
-            // How should the priority be determined for phalanxes? For archers, they're always supposed to be at the bottom of the battle field, while heros - those who's having a high priority while generating might be archers as well.
-            // What if we set "ranged" as a skill, and use filters for the skill to fix the priority while queueing?
-            // Think it's possible.
-            return 0;
+            // XXXXXX TODO: ranged ones.
+            priority = (unitBody.unit.getMode() + _lc.PRIORITIES.PHALANX) * _lc.PRIORITY_CHUNK + priority;
+            
+            return coh.FilterUtil.applyFilters("getUnitPriorityInScene", priority, unitBody.unit);
         },
         
         /**
@@ -2704,21 +2817,15 @@ coh.BattleScene = function() {
                     for (k = 0; column = row[k]; ++k) {
                         unitBody = _buf.unitMatrix[rbTile.x - column.length + j + 1][rbTile.y - row.length + k + 1];
                         
-                        // if the unit is in another phalanx that's having the same type with the existing one(except for walls), fail for the convert.
-                        if (cType != _coh.LocalConfig.CONVERT_TYPES.WALL && util.inPhalanx(phalanxHash, cType, unitBody)) {
-                            halt = true;
-                            break;
+                        // if the unit is in another phalanx, create a copy of it for the new one.
+                        if (util.inPhalanx(phalanxHash, cType, unitBody)) {
+                            // cloned units won't be counted into the backup of the player.
+                            unitBody = unitBody.clone();
                         }
                         
                         unitBodies.push(unitBody);
                         phalanxHash[unitBody.unit.getId()] = (phalanxHash[unitBody.unit.getId()] || []).concat(cType);
                     }
-                    if (halt) {
-                        break;
-                    }
-                }
-                if (halt) {
-                    continue;
                 }
                 
                 // create the phalanx object.
@@ -3107,7 +3214,7 @@ coh.BattleScene = function() {
                 typeConfig = unitBody.getTypeConfig(),
                 // if there exist tiles in the unitBody and having the same column number (x), move it directly here.
                 // Mind type 4, whose x was modified while handling exiledTileFrom.
-                originalY = handlerList.mapUtil.getValidTile(unitBody);
+                originalY = self.getValidTile(unitBody);
             
             // prevent focus, no other mouse/touch actions during the moving;
             _buf.focusTagLocked = true;
@@ -3327,7 +3434,6 @@ coh.BattleScene = function() {
             for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
                 unitBody = phalanx.getLeadUnit;
                 distance = _util.getValidDistance(unitBody, function(comparedUnit) {
-                    // 
                     return _util.getPriority(comparedUnit) < _util.getPriority(unitBody);
                 });
                 
@@ -3433,6 +3539,10 @@ coh.BattleScene = function() {
         // XXXXXX for debug usage currently.
         getStatusMatrix : function() {
             return buf.statusMatrix;
+        },
+        
+        getValidTile : function(unitBody) {
+            return handlerList.mapUtil.getValidTile(unitBody);
         }
     });
     
@@ -3446,7 +3556,253 @@ coh.BattleScene = function() {
     
     return self = eval("new BSClass(" + argList + ")");
 };/**
- * Do events and filters binding.
+ * Do events and filters bindings related to skills.
+ */
+
+coh.SkillController = (function() {
+    
+    var self,
+        _coh = coh;
+    
+    var buf = {
+        battle : {            
+            // mark the last handled unitBody and tile, for click and slide events.
+            lastUnitBody : null, 
+            lastTile : null,
+            
+            // if a unit is checked twice, it would be removed from the scene.
+            checkedUnit : null,
+            exiledUnit : null,
+            
+            exiledTileFrom : null,
+            exiledTileTo : null
+        },
+        
+        // exile/locate/default or other possible kinds of mouse actions in battleScene.
+        // locate for the default.
+        mouseAction : "locate"
+    };
+    
+    var handlerList = {
+        doFocus : function(event, battleScene) {
+            
+            var location = event.getLocationInView(),
+                unitGlobal = battleScene.getUnitInGlobal(location.x, location.y),
+                tile = battleScene.getTileInTurn(
+                    unitGlobal ? unitGlobal.getPlayer().isAttacker() : battleScene.isAttackerTurn(), 
+                    location.x, 
+                    location.y
+                ),
+                unitBody = battleScene.getUnit(tile);
+            
+            if (unitBody) {
+                battleScene.locateToUnit(unitBody);
+                _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitBody, tile, battleScene);
+            }
+        },
+        
+        doCheckOrExile : function(event, battleScene) {
+            var location = event.getLocationInView(),
+                tile = battleScene.getTileInGlobal(location.x, location.y),
+                // only units in its side could be clicked or exiled.
+                unitBody = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y),
+                clickedUnit = battleScene.getUnitInGlobal(location.x, location.y),
+                lastUnitBody = buf.battle.lastUnitBody,
+                lastTile = buf.battle.lastTile;
+            
+            // the same unit clicked: clickedUnit should be the same as the lastUnitBody.
+            if (lastUnitBody && unitBody == lastUnitBody && clickedUnit == unitBody) {
+                _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitBody, tile, battleScene);
+                return;
+            }
+            
+            // slide from top to bottom of the battle field, or the last unit in the group clicked.
+            if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
+                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit && tile || lastTile, battleScene);
+                return;
+            }
+            
+            _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitBody, tile, battleScene);
+        },
+        
+        doExileMove : function(event, battleScene) {
+            var location = event.getLocationInView(),
+                globalTile = battleScene.getTileInGlobal(location.x, location.y),
+                columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
+                _buf = buf,
+                lastTile = _buf.battle.exiledTileTo || _buf.battle.lastTile,
+                targetTile;
+            
+            if (!columnTile || !_buf.battle.exiledUnit || lastTile.x == columnTile.x) {
+                return;
+            }
+            
+            targetTile = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom);
+            targetTile && (_buf.battle.exiledTileTo = targetTile);
+        },
+        
+        doUnExile : function(event, battleScene) {
+            
+            var _buf = buf,
+                location = event.getLocationInView(),
+                globalTile = battleScene.getTileInGlobal(location.x, location.y),
+                exiledUnit = _buf.battle.exiledUnit;
+            
+            exiledUnit && exiledUnit.unExile(); 
+            
+            // There should be a target tile found, 
+            // further more, the target tile should be within the battle field,
+            // to make sure the user could cancel the exile with a slide out of the ground.
+            
+            // Check the range of 
+            if (
+                _buf.battle.exiledTileTo 
+                && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x 
+                && battleScene.isTileInGround(battleScene.isAttackerTurn(), globalTile)) {
+                
+                battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileTo, function() {
+                    // If type 1 - normal solders, then there might be converts generated.
+                    // Let's find and make it directly.
+                    if (exiledUnit.unit.getType() == 1)
+                    battleScene.doConverts([exiledUnit]);
+                });
+            } else {
+                battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileFrom);
+            }
+            
+            _buf.battle.exiledUnit = null;
+            _buf.mouseAction = "locate";
+        },
+        
+        recordTile : function(event, battleScene) {            
+            var location = event.getLocationInView(),
+                tile = battleScene.getTileInGlobal(location.x, location.y),
+                unitBody = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y);
+
+            buf.battle.lastUnitBody = unitBody;
+            buf.battle.lastTile = tile;
+        }
+    };
+    
+    // Magic.
+    var actionsConfig = {
+        battle : {
+            exile : {
+                onMouseMove : handlerList.doExileMove,
+                onMouseUp : handlerList.doUnExile,
+                onMouseDown : function(event, battleScene) {
+                    handlerList.recordTile(event, battleScene);
+                    handlerList.doExileMove(event, battleScene);
+                }
+            },
+            locate : {
+                onMouseMove : handlerList.doFocus,
+                onMouseUp : handlerList.doCheckOrExile
+            },
+            onDefault : {
+                onMouseDown : handlerList.recordTile
+            }
+        }
+    };
+    
+    var util = {
+        clearStatus : function(battleScene) {
+            
+            var _buf = buf;
+            
+            // cancel focus in other cases.
+            battleScene.cancelFocus();
+            
+            // cancel checked units incase of checked.
+            _buf.battle.checkedUnit && _buf.battle.checkedUnit.unCheck();
+            _buf.battle.checkedUnit  = null;
+            
+            _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
+            _buf.battle.exiledUnit = null;
+        }
+    };
+    
+    _coh.utils.FilterUtil.addFilter("battleUnitsReady", function(battleScene) {
+        if ('mouse' in cc.sys.capabilities)
+        cc.eventManager.addListener({
+            event: cc.EventListener.MOUSE,
+            onMouseMove : function(event){
+                (actionsConfig.battle[buf.mouseAction].onMouseMove || actionsConfig.battle.onDefault.onMouseMove)(event, battleScene);
+            },
+            
+            onMouseDown : function(event) {
+                (actionsConfig.battle[buf.mouseAction].onMouseDown || actionsConfig.battle.onDefault.onMouseDown)(event, battleScene);
+            },
+            
+            onMouseUp : function(event) {
+                (actionsConfig.battle[buf.mouseAction].onMouseUp || actionsConfig.battle.onDefault.onMouseUp)(event, battleScene);
+            }
+            
+        }, battleScene);
+    });
+    
+    _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitBody, tile, battleScene) {
+        
+        var _buf = buf,
+            removedUnitBody;
+        
+        if (_buf.battle.checkedUnit == unitBody) {
+            util.clearStatus(battleScene);
+            removedUnitBody = battleScene.removeUnit(unitBody, tile);
+            battleScene.queueUnits([removedUnitBody.unitBody], [removedUnitBody.tiles]);
+        } else {
+            util.clearStatus(battleScene);
+            battleScene.focusOnUnit(unitBody);
+            
+            _buf.battle.checkedUnit = unitBody;
+        }
+    });
+    
+    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(tile, battleScene) {
+        var isAttacker = battleScene.isAttackerTurn(),
+            exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
+            exiledUnit = battleScene.getUnit(exiledTileFrom),
+            _buf = buf,
+            unitTiles = exiledUnit && exiledUnit.getTileRecords();
+        
+        util.clearStatus(battleScene);
+        
+        // the original tile should be modified for type that's not 1, to prevent the wrong position restored while canceling.
+        // when set to map, the target tile should be the left bottom tile of the unit.
+        for (var i in unitTiles) {
+            if (exiledTileFrom.x >= unitTiles[i].x) exiledTileFrom.x = unitTiles[i].x;
+            if (exiledTileFrom.y <= unitTiles[i].y) exiledTileFrom.y = unitTiles[i].y;
+        }
+        
+        // unExile would be executed in the doUnExile process.
+        if (battleScene.exileUnit(exiledUnit)) {            
+            _buf.battle.exiledUnit = exiledUnit;
+            _buf.battle.exiledTileFrom = exiledTileFrom;
+            _buf.battle.exiledTileTo = null;
+            
+            _buf.mouseAction = "exile";
+        }
+    });
+    
+    _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitBody, tile, battleScene) {
+        util.clearStatus(battleScene);
+    });
+    
+    _coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {
+    });
+    
+    _coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
+    });
+    
+    _coh.utils.FilterUtil.addFilter("convertUnit", function(unitFrom, unitTo, cType) {
+        coh.utils.BaseCvtUtil.getInstance().convert(unitFrom, unitTo, cType);
+    });
+    
+    return self = {
+        
+    };
+})();/**
+ * Do events and filters bindings related to battle scene.
  */
 
 /*
@@ -3485,7 +3841,7 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
 }
 */
 
-coh.UIController = (function() {
+coh.BattleSceneController = (function() {
     
     var self,
         _coh = coh;

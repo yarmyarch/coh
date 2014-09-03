@@ -1,5 +1,5 @@
 /**
- * Do events and filters binding.
+ * Do events and filters bindings related to battle scene.
  */
 
 /*
@@ -38,7 +38,7 @@ if (cc.sys.capabilities.hasOwnProperty('touches')){
 }
 */
 
-coh.UIController = (function() {
+coh.BattleSceneController = (function() {
     
     var self,
         _coh = coh;
