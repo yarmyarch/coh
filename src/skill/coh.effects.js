@@ -18,8 +18,8 @@ coh.effects = {
     ranged : {
         // interested filters
         filters : {
-            getUnitPriorityInScene : function() {
-                
+            getUnitPriority : function(priority, unit) {
+                return priority - coh.LocalConfig.PRIORITY_CHUNK;
             }
         },
         // the effect won't gains with the level
