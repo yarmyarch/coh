@@ -47,7 +47,7 @@ coh.Hero = (function() {
     
     // react filters here.
     
-    // Render growth of the hero. Data from calculators, such as coh.utils.BaseCalculator
+    // Render growth of the hero. Data from calculators, such as coh.utils.BaseAttrCalculator
     _coh.utils.FilterUtil.addFilter("getAttackModifier", util.getTalent);
     _coh.utils.FilterUtil.addFilter("getHpModifier", util.getTalent);
     _coh.utils.FilterUtil.addFilter("getSpeedModifier", util.getTalent);

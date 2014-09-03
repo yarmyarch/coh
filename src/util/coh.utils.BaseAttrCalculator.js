@@ -120,10 +120,10 @@ coh.utils = coh.utils || {};
         return buf.instances[maxLevel];
     };
     
-    coh.utils.BaseCalculator = function(maxLevel) {
+    coh.utils.BaseAttrCalculator = function(maxLevel) {
         //getTilePosition
         return getInstance(maxLevel);
     }
 
-    coh.utils.BaseCalculator.getInstance = getInstance;
+    coh.utils.BaseAttrCalculator.getInstance = getInstance;
 })();
