@@ -1,7 +1,9 @@
 var coh = coh || {};
 
 coh.affixes = {
-    ranged : function() {
-        // XXXXXX here we go!
+    ranged : {
+        levels : function(level) {
+            // XXXXXX here we go!
+        }
     }
 };
