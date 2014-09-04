@@ -3,6 +3,7 @@ var coh = coh || {};
 (function() {
 /**
  * Super class for all units.
+ * @impliments FilterUtil, can add and apply filters.
  * Details for type/status/action/color:
  * @see config.js, UNIT_TYPES for all types.
 
@@ -57,6 +58,9 @@ var UnitObject = function(unitName, savedData) {
             _lc = {},
             i;
         
+        // register itself as a filter adapter.
+        _coh.utils.FilterUtil.activate(self);
+        
         _buf.name = unitName;
         
         // if a unit isn't having the name configed in occupations, let's treat it as a hero unit.
@@ -90,7 +94,7 @@ var UnitObject = function(unitName, savedData) {
             // append getter for all configs.
             self["get" + index] = (function(i) {
                 return function() {
-                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, buf.conf[i], self);
+                    return self.applyFilters("getUnit" + index, buf.conf[i]);
                 }
             })(i);
         }
@@ -102,17 +106,19 @@ var UnitObject = function(unitName, savedData) {
         }
         for (i in basicData) {
             // verifications could be appended outside.
+            
+            // it should be a global filter as at this time, the unit isn't returned yet. 
             _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData[i] || basicData[i], i, self);
             
             index = _coh.Util.getFUStr(i);
             self["get" + index] = (function(i) {
                 return function() {
-                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, _buf.savedData[i], self);
+                    return self.applyFilters("getUnit" + index, _buf.savedData[i]);
                 }
             })(i);
             self["set" + index] = (function(i) {
                 return function(value) {
-                    _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("setUnit" + index, value, self);
+                    _buf.savedData[i] = self.applyFilters("setUnit" + index, value);
                 }
             })(i);
         }

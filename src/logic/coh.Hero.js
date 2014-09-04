@@ -36,21 +36,16 @@ coh.Hero = (function() {
             return ocpt;
         },
         
-        getTalent : function(levelRate, unit) {
+        getTalent : function(levelRate) {
             // The growth could be in the saved data of a player, or in the unit settings.
-            var level = unit.getLevel(),
-                modifier = unit.getTalent();
+            var level = this.getLevel(),
+                modifier = this.getTalent();
             
             return Math.pow(levelRate, 1/modifier);
         }
     };
     
     // react filters here.
-    
-    // Render growth of the hero. Data from calculators, such as coh.utils.BaseAttrCalculator
-    _coh.utils.FilterUtil.addFilter("getAttackModifier", util.getTalent);
-    _coh.utils.FilterUtil.addFilter("getHpModifier", util.getTalent);
-    _coh.utils.FilterUtil.addFilter("getSpeedModifier", util.getTalent);
     
     /**
      * extea actions appended for hero units.
@@ -64,6 +59,11 @@ coh.Hero = (function() {
             levels : null,
             historyOcpt : null
         };
+        
+        // Render growth of the hero. Data from calculators, such as coh.utils.BaseAttrCalculator
+        unit.addFilter("getAttackModifier", util.getTalent);
+        unit.addFilter("getHpModifier", util.getTalent);
+        unit.addFilter("getSpeedModifier", util.getTalent);
         
         /**
          * rewrite attribute "levels" generated from savedData.

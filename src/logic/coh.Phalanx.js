@@ -63,9 +63,9 @@ coh.Phalanx = function(type, units) {
         }
         
         // walls have different value as normal soldiers.
-        _buf.attack = _coh.utils.FilterUtil.applyFilters("unitActivedAttack", leadUnit.getPlayer().getUnitAttack(leadUnit, convertType), leadUnit.unit);
-        _buf.hp = _coh.utils.FilterUtil.applyFilters("unitActivedHp", leadUnit.getPlayer().getUnitHp(leadUnit, convertType), leadUnit.unit);
-        _buf.duration = _coh.utils.FilterUtil.applyFilters("unitActivedDuration", leadUnit.getPlayer().getChargingDuration(leadUnit, convertType), leadUnit.unit);
+        _buf.attack = leadUnit.unit.applyFilters("unitActivedAttack", leadUnit.getPlayer().getUnitAttack(leadUnit, convertType));
+        _buf.hp = leadUnit.unit.applyFilters("unitActivedHp", leadUnit.getPlayer().getUnitHp(leadUnit, convertType));
+        _buf.duration = leadUnit.unit.applyFilters("unitActivedDuration", leadUnit.getPlayer().getChargingDuration(leadUnit, convertType));
     };
     
     self.getType = function() {

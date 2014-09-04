@@ -3,8 +3,7 @@
  *@require {MapUtil}: if you would like to place units to the battle ground;
  *  inject it from the outer factory.
  *
- *@dispatch filterName: battleSceneEntered
- *@dispatch filterName: unitSpriteCreated
+ * @impliments FilterUtil, can add and apply filters.
  * to many of them my friend. Just search for "applyFilters" to find all.
  */
 var coh = coh || {};
@@ -363,6 +362,9 @@ coh.BattleScene = function() {
             this.setBattleMap(mapSrc);
             
             this.addChild(this.battleLayer);
+            
+            // XXXXXX not it used here at the moment. Maybe filters related to the battle scene should be optimized in future.
+            coh.utils.FilterUtil.activate(this);
         },
         
         onEnter : function() {

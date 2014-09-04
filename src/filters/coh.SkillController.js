@@ -11,6 +11,8 @@ coh.SkillController = (function() {
     var _coh = coh,
         _fu = _coh.utils.FilterUtil;
     
+    /**
+     * no it's not a good idea.
     var utils = {
         // do the global -> unit translation
         filterTranslation : function() {
@@ -24,7 +26,7 @@ coh.SkillController = (function() {
                 return phalanx.getLeadingUnit().applyFilters("phalanxMovingDistance", distance);
             });
         }
-    }
+    }*/
     
     // bind skill reactions to each unit created.
     _fu.addFilter("unitGenerated", function(unit) {
@@ -34,7 +36,6 @@ coh.SkillController = (function() {
     return self = {
         // allow an unit be able to react to skills.
         setupUnitSkills : function(unit) {
-            _fu.activate(unit);
             // do unit.addFilters;
         }
     };
