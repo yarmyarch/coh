@@ -119,7 +119,7 @@ coh.utils.FilterUtil = (function() {
                             // rebuild arguments for next filter. 
                             // first param is currend calculated value, additional arguments can be parsed via the input.
                             arg = value == undefined ? (arg.length && arg || [].slice.call(arguments, 1)) : [value].concat([].slice.call(arguments, 2));
-                            (filterList[j] instanceof Function) && (value = filterList[j].apply({}, arg));
+                            (filterList[j] instanceof Function) && (value = filterList[j].apply(obj, arg));
                         }
                     }
                     
