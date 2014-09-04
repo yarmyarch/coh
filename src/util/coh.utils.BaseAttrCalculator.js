@@ -49,7 +49,7 @@ coh.utils = coh.utils || {};
                 getAttack : function(unit) {
                     var attack = unit.getAttack(),
                         level = unit.getLevel(),
-                        rate = Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100;
+                        rate = 0.5 * Math.pow(4 / maxLevel * level, 0.5);
                     
                     // rate is always 1 when level equals max level.
                     // make it modifible from outside for expanditions.
@@ -67,7 +67,7 @@ coh.utils = coh.utils || {};
                 getHp : function(unit) {
                     var hp = unit.getHp(),
                         level = unit.getLevel(),
-                        rate = Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100;
+                        rate = 0.5 * Math.pow(4 / maxLevel * level, 0.5);
                     
                     rate = coh.FilterUtil.applyFilters("getHpModifier", rate, unit);
                     
@@ -82,7 +82,7 @@ coh.utils = coh.utils || {};
                 getSpeed : function(unit) {
                     var speed = unit.getSpeed(),
                         level = unit.getLevel()
-                        rate = Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100;
+                        rate = Math.pow(1 / maxLevel * level, 0.2);
                     
                     rate = coh.FilterUtil.applyFilters("getSpeedModifier", rate, unit);
                     
