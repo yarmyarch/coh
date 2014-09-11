@@ -53,7 +53,7 @@ coh.utils = coh.utils || {};
                     
                     // rate is always 1 when level equals max level.
                     // make it modifible from outside for expanditions.
-                    rate = unit.applyFilters("getAttackModifier", rate);
+                    rate = _coh.utils.FilterUtil.applyFilters("getAttackModifier", rate, unit);
                     
                     // modifiers from types.
                     attack = attack * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].attack || 1);
@@ -69,7 +69,7 @@ coh.utils = coh.utils || {};
                         level = unit.getLevel(),
                         rate = 0.5 * Math.pow(4 / maxLevel * level, 0.5);
                     
-                    rate = unit.applyFilters("getHpModifier", rate);
+                    rate = _coh.utils.FilterUtil.applyFilters("getHpModifier", rate, unit);
                     
                     hp = hp * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].hp || 1);
                     return Math.floor(rate * hp);
@@ -84,7 +84,7 @@ coh.utils = coh.utils || {};
                         level = unit.getLevel()
                         rate = Math.pow(1 / maxLevel * level, 0.2);
                     
-                    rate = unit.applyFilters("getSpeedModifier", rate);
+                    rate = _coh.utils.FilterUtil.applyFilters("getSpeedModifier", unit);
                     
                     speed = speed * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].speed || 1);
                     return Math.floor(rate * speed);

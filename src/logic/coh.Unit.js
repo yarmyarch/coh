@@ -56,6 +56,7 @@ var UnitObject = function(unitName, savedData) {
         
         var _buf = buf,
             _lc = {},
+            _coh = _coh,
             i;
         
         // register itself as a filter adapter.
@@ -94,7 +95,7 @@ var UnitObject = function(unitName, savedData) {
             // append getter for all configs.
             self["get" + index] = (function(i) {
                 return function() {
-                    return self.applyFilters("getUnit" + index, buf.conf[i]);
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, buf.conf[i], self);
                 }
             })(i);
         }
@@ -113,12 +114,12 @@ var UnitObject = function(unitName, savedData) {
             index = _coh.Util.getFUStr(i);
             self["get" + index] = (function(i) {
                 return function() {
-                    return self.applyFilters("getUnit" + index, _buf.savedData[i]);
+                    return _coh.utils.FilterUtil.applyFilters("getUnit" + index, _buf.savedData[i], self);
                 }
             })(i);
             self["set" + index] = (function(i) {
                 return function(value) {
-                    _buf.savedData[i] = self.applyFilters("setUnit" + index, value);
+                    _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("setUnit" + index, value, self);
                 }
             })(i);
         }

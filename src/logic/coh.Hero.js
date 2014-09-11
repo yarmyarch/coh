@@ -46,6 +46,10 @@ coh.Hero = (function() {
     };
     
     // react filters here.
+    // Render growth of the hero. Data from calculators, such as coh.utils.BaseAttrCalculator
+    _coh.utils.FilterUtil.addFilter("getAttackModifier", util.getTalent);
+    _coh.utils.FilterUtil.addFilter("getHpModifier", util.getTalent);
+    _coh.utils.FilterUtil.addFilter("getSpeedModifier", util.getTalent);
     
     /**
      * extea actions appended for hero units.
@@ -59,11 +63,6 @@ coh.Hero = (function() {
             levels : null,
             historyOcpt : null
         };
-        
-        // Render growth of the hero. Data from calculators, such as coh.utils.BaseAttrCalculator
-        unit.addFilter("getAttackModifier", util.getTalent);
-        unit.addFilter("getHpModifier", util.getTalent);
-        unit.addFilter("getSpeedModifier", util.getTalent);
         
         /**
          * rewrite attribute "levels" generated from savedData.
