@@ -38,25 +38,25 @@ coh.SkillController = (function() {
             for (i in filterList) {
                 // remove unit locaters.
                 // XXXXXX it might be a problem in future here.
-                /*
-                
-                an effect may define a filter like this:
-                    getAttrAttack$1 : function(){};
-                while that means in the globally triggered filter named "getAttrAttack", 
-                there might be more than 1 params in the argument list (except for the first value in the arglist) that is an instance of a Unit, 
-                just like this:
-                    
-                    coh.util.FilterUtil.applyFilter("getAttrAttack", value, unit1, unit2);
-                
-                while it may be translated into:
-                    unit1.applyFilter("getAttrAttack", value, unit2);
-                    unit2.applyFilter("getAttrAttack$2", value, unit1);
-                when $1 is ignored as the default one.
-                
-                $1 here means this effect should react the filter triggered by unit1 only.
-                if there is only 1 unit in the filter, $1 can be optional.
-                
-                Note that only when /$\d+/ is written at the end of the filtername would be recognized.
+/*
+
+an effect may define a filter like this:
+    getAttrAttack$1 : function(){};
+while that means in the globally triggered filter named "getAttrAttack", 
+there might be more than 1 params in the argument list (except for the first value in the arglist) that is an instance of a Unit, 
+just like this:
+    
+    coh.util.FilterUtil.applyFilter("getAttrAttack", value, unit1, unit2);
+
+while it may be translated into:
+    unit1.applyFilter("getAttrAttack", value, unit2);
+    unit2.applyFilter("getAttrAttack$2", value, unit1);
+when $1 is ignored as the default one.
+
+$1 here means this effect should react the filter triggered by unit1 only.
+if there is only 1 unit in the filter, $1 can be optional.
+
+Note that only when /$\d+/ is written at the end of the filtername would be recognized.
                  */
                 unitIndex = (unitIndex = i.match(/\$(\d+)$/)) && +unitIndex[1] || 1;
                 filterName = i.replace(/\$id+$/, "");
@@ -69,7 +69,7 @@ coh.SkillController = (function() {
                                 i, len, unitCounter = 0,
                                 filterNameInUnit = filterName;
                             
-                            for (i = 0, len = args.length; i < len; ++i) {
+                            for (i = 1, len = args.length; i < len; ++i) {
                                 if (args[i] instanceof coh.Unit) {
                                     ++unitCounter;
                                 }
