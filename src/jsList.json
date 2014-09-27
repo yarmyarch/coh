@@ -24,6 +24,7 @@
         "src/logic/coh.View.js",
         "src/logic/coh.Actor.js",
         "src/logic/coh.Unit.js",
+        "src/logic/coh.UnitFactory.js",
         "src/logic/coh.Player.js",
         "src/logic/coh.Battle.js",
         "src/logic/coh.UnitBody.js",

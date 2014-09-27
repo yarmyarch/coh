@@ -95,7 +95,7 @@ coh.Player = function(unitConfig) {
         var _coh = coh,
             _buf = buf,
             _u = _buf.unitsUnplaced,
-            type = _coh.Unit.getTypeFromStatus(status),
+            type = _coh.UnitFactory.getTypeFromStatus(status),
             unit =null, 
             unitName;
         
@@ -104,9 +104,9 @@ coh.Player = function(unitConfig) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 // for normal units, level & numbers are injected already;
                 // for heros, data such as type/level history/occupation are generated, from savd data.
-                unit = _coh.Unit.getInstance(unitName, buf.savedData.units[unitName]);
+                unit = _coh.UnitFactory.getInstance(unitName, buf.savedData.units[unitName]);
                 
-                unit.setColor(_coh.Unit.getColorFromStatus(status));
+                unit.setColor(_coh.UnitFactory.getColorFromStatus(status));
                 
                 break;
             }

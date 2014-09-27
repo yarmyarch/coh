@@ -1,6 +1,4 @@
 var coh = coh || {};
-
-(function() {
 /**
  * Super class for all units.
  * @impliments FilterUtil, can add and apply filters.
@@ -25,7 +23,7 @@ var coh = coh || {};
     ...
  *
  */
-var UnitObject = function(unitName, savedData) {
+coh.Unit = function(unitName, savedData) {
     
     var self = this,
         _coh = coh,
@@ -176,7 +174,7 @@ var UnitObject = function(unitName, savedData) {
     };
     
     self.clone = function() {
-        var clone = coh.Unit.getInstance(self.getName(), self.getSavedData());
+        var clone = _coh.UnitFactory.getInstance(self.getName(), self.getSavedData());
         clone.setColor(self.getColor());
         clone.setMode(self.getMode());
         
@@ -187,51 +185,3 @@ var UnitObject = function(unitName, savedData) {
     
     return self;
 };
-
-/**
- * Unit factary and all public functions related to units.
- */
-coh.Unit = (function() {
-    
-    var self,
-        _coh = coh,
-        LC = _coh.LocalConfig;
-    
-    return self = {
-        /**
-         * get type by unit name.
-         */
-        getUnitType : function(unitName) {
-            return (coh.unitStatic[unitName] && coh.unitStatic[unitName].type) || 0;
-        },
-        
-        /**
-         * factory function that returns the unit object via the given key.
-         */
-        getInstance : function(unitName) {
-            var unit = new UnitObject(unitName);
-            
-            unit = coh.utils.FilterUtil.applyFilters("unitGenerated", unit);
-            if (unit.isHero()) {
-                unit = coh.utils.FilterUtil.applyFilters("heroGenerated", unit);
-            }
-            
-            return unit;
-        },
-        
-        getTypeFromStatus : function(status) {
-            return ~~(+status / LC.COLOR_COUNT) % LC.UNIT_TYPES_COUNT;
-        },
-        
-        getActionFromStatus : function(status) {
-            return ~~(~~(+status / LC.COLOR_COUNT) / LC.UNIT_TYPES_COUNT);
-        },
-        
-        getColorFromStatus : function(status) {
-            return +status % LC.COLOR_COUNT;
-        }
-    }
-    
-})();
-
-})();
