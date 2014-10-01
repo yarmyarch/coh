@@ -18,7 +18,9 @@ coh.effects = {
     ranged : {
         // interested filters
         filters : {
-            getUnitPriority : function(priority, unit) {
+            // "this" in the handler would be the unit that's having the skill,
+            // so it's ignored in the artguments list.
+            getUnitPriority : function(priority) {
                 return priority - coh.LocalConfig.PRIORITY_CHUNK;
             }
         },
