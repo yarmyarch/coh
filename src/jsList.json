@@ -7,10 +7,6 @@
         "src/army/coh.occupations.js",
         "src/army/coh.factions.js",
         
-        "src/skill/coh.skills.js",
-        "src/skill/coh.effects.js",
-        "src/skill/coh.affixes.js",
-        
         "src/resource.js",
         
         "src/util/coh.Util.js",
@@ -32,6 +28,10 @@
         "src/ui/coh.MapScene.js",
         "src/ui/coh.MapLayer.js",
         "src/ui/coh.BattleScene.js",
+        
+        "src/skill/coh.skills.js",
+        "src/skill/coh.effects.js",
+        "src/skill/coh.affixes.js",
         
         "src/filters/coh.SkillController.js",
         "src/filters/coh.BattleSceneController.js"

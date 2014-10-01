@@ -276,7 +276,7 @@ coh.BattleScene = function() {
             var priority = unitBody.unit.getPriority(),
                 _lc = coh.LocalConfig;
             
-            // XXXXXX TODO: ranged ones.
+            // ranged ones would be handled when getPriority, within the filter getUnitPriority.
             priority = (unitBody.unit.getMode() + _lc.PRIORITIES.PHALANX) * _lc.PRIORITY_CHUNK + priority;
             
             return priority;
@@ -948,7 +948,10 @@ coh.BattleScene = function() {
                 
                 // if there exist a unit in target place, let's try withdraw for sevral tiles.
                 // specially, if the unit belongs to enimy side, there would be something bad happen to that unlucky guy.
-                // XXXXXX Here we go!
+                // XXXXXX It's about the skill "melee", let's leave it later after a normal phalanx.
+                
+                
+                // XXXXXX Here we go, the distance found. What then?
             }
         },
         
