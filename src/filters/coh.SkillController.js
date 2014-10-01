@@ -37,7 +37,7 @@ coh.SkillController = (function() {
             // do the translation from global to unit for recorded filters.
             for (i in filterList) {
                 // remove unit locaters.
-                // XXXXXX it might be a problem in future here.
+                // XXXXXX will it be a problem in future here?
                 /*
 
                 an effect may define a filter like this:
@@ -111,9 +111,13 @@ coh.SkillController = (function() {
             
             for (skillName in skills) {
                 affixses = _coh.skills[i];
+                // incase it's not found in config.
+                if (!affixses) continue;
                 skillLevel = skills[i];
                 for (i = 0, effectName; effectName = affixses[i]; ++i) {
                     effect = _coh.effects[effectName];
+                    // incase it's not found in config.
+                    if (!effect) continue;
                     filters = effect.filters;
                     levelFunc = effect.levels;
                     for (filterName in filters) {
