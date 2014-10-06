@@ -935,7 +935,7 @@ coh.BattleScene = function() {
             
             // find the correct positions for the phalanxes, and then withdraw units if necessary.
             for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
-                unitBody = phalanx.getLeadUnit;
+                unitBody = phalanx.getLeadUnit();
                 distance = _util.getValidDistance(unitBody, function(comparedUnit) {
                     return _util.getPriority(comparedUnit) < _util.getPriority(unitBody);
                 });
@@ -951,6 +951,10 @@ coh.BattleScene = function() {
                 // XXXXXX It's about the skill "melee", let's leave it later after a normal phalanx.
                 
                 
+                // Function withdraw should receives another 1 params:
+                //  shouldKill: if the unit run out of the border;
+                // and return false if a withdraw fails when should not kill and a border must be reached.
+                // In that case, the phalanx will have to choose it's action when trying to charge to the front line.
                 // XXXXXX Here we go, the distance found. What then?
             }
         },

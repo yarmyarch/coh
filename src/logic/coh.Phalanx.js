@@ -72,6 +72,19 @@ coh.Phalanx = function(type, units) {
         return buf.type;
     };
     
+    self.getRowCount = function() {
+        var type = self.getType();
+        if (type == _coh.UNIT_TYPES.SOLDIER) {
+            return buf.unitBodies.length;
+        } else {
+            return self.getLeadingUnit().getTypeConfig()[0];
+        }
+    };
+    
+    self.getColumnCount = function() {
+        return self.getLeadingUnit().getTypeConfig()[1];
+    };
+    
     self.getAttack = function() {
         return buf.attack;
     };
