@@ -200,27 +200,45 @@ coh.occupations = {
     archer : {
         attack : 12,
         hp : 4,
-        speed : 75
+        speed : 75,        
+        /**
+         * <skill name> : {<affixName> : <affixLevel>}
+         */
+        skills : {
+            ranged : 1
+        }
     },
     knight : {
         attack : 15,
         hp : 6,
-        speed : 60
+        speed : 60,
+        skills : {
+            melee : 1
+        }
     },
     paladin : {
         attack : 14,
         hp : 5,
-        speed : 66
+        speed : 66,
+        skills : {
+            melee : 1
+        }
     },
     worrior : {
         attack : 16,
         hp : 5,
-        speed : 48
+        speed : 48,
+        skills : {
+            melee : 1
+        }
     },
     elf_archer : {
         attack : 9,
         hp : 2,
-        speed : 105
+        speed : 105,
+        skills : {
+            ranged : 1
+        }
     }
 };var coh = coh || {};
 
@@ -232,76 +250,6 @@ coh.factions = {
         colors : ["blue", "white", "gold"]
     }
 };var coh = coh || {};
-
-coh.skills = {
-    /**
-     * <skill name> : [<affix_affixLevel>]
-     * none for default level 1.
-     * eg: 
-        ranged : ["ranged_1"] 
-     * equals to
-        ranged : ["ranged"]
-     * that's having the affix "ranged" at the level of 1.
-     */
-    ranged : ["ranged"],
-    melee : ["melee"]
-};var coh = coh || {};
-
-(function() {
-var levelCalculators = {
-    // defaultly used calculator when no one defined in effect
-    
-    /**
-     * @param level level of a unit.
-     * Most effects would be more effective when the level of the unit gains.
-     */
-    levels : function() {
-        return 1;
-    }
-}, _lc = levelCalculators;
-
-coh.effects = {
-    // ranged effect will be actived when calculating priorities of a unit when generating a phalanx.
-    ranged : {
-        // interested filters
-        filters : {
-            getUnitPriorityInScene : function() {
-                
-            }
-        },
-        // the effect won't gains with the level
-        levels : false
-    }
-};
-
-})();var coh = coh || {};
-
-(function() {
-var levelCalculators = {
-    // defaultly used calculator when no one defined in affix
-    levels : function(level) {
-        return 1;
-    }
-}, _lc = levelCalculators;
-
-coh.affixes = {
-    ranged : {
-        effects : [
-            {
-                /**
-                 * <effect_name> : [<effect param>]
-                 * the value would be parsed as params of the effect levels calculator. So it's soppused to be an array.
-                 */ 
-                ranged : 1
-            }
-        ],
-        // defines how the effect should gains with the level.
-        // default config: _lc.levels
-        levels : false
-    }
-};
-
-})();var coh = coh || {};
 coh.res = {
     //image
     //plist
@@ -779,75 +727,129 @@ coh.utils.FilterUtil = (function() {
     
     var self;
     
-    var buf = {
-        filters : {}
+    var g_utils = {
+        sort : function(a, b) {
+            return a - b;
+        }
     };
     
-    return self = {
+    self = {
         
         /**
-         * @param handler {Function} function(lastReturnedValue, [argument1, [argument2, [...]]])
-         * @param priority {int} defaultly set 10. The smaller, the higher priority.
+         * Activate an object as an adapter that can add and apply filters.
+         * Filters added to the given object would be reacted by itself only.
+         * @return {bool} false if there exist some a function having the same name with those to be added.
          */
-        addFilter : function(filterName, handler, priority) {
-            var _buf = buf,
-                priority = (undefined === priority) && 10 || priority;
+        activate : function(obj) {
             
-            !_buf.filters[filterName] && (_buf.filters[filterName] = {});
+            // the buffer used by this object only.
+            var buf = {
+                filters : {},
+                priorities : {}
+            };
             
-            if (!_buf.filters[filterName][priority]) {
-                _buf.filters[filterName][priority] = [];
-            }
-            
-            (handler instanceof Function) && _buf.filters[filterName][priority].push(handler);
-        },
-        
-        removeFilter : function(filterName, handler, priority) {
-            var _buf = buf,
-                filters, result = [],
-                priority = (undefined === priority) && 10 || priority;
-            
-            if (!_buf.filters[filterName]) return false;
-            
-            filters = _buf.filters[filterName][priority];
-            for (var i in filters) {
-                if (filters[i] != handler) result.push(filters[i]);
-            }
-            
-            _buf.filters[filterName][priority] = result;
-            return true;
-        },
-        
-        applyFilters : function(filterName, originalValue) {
-            var _buf = buf,
-                priorities = _buf.filters[filterName],
-                filterList,
-                filter,
-                value = originalValue,
-                arg = [],
-                i, j, leni, lenj;
-            
-            if (!priorities) return value;
-            
-            for (i in priorities) {
-                filterList = priorities[i];
-                for (j = 0, lenj = filterList.length; j < lenj; ++j) {
-                    // rebuild arguments for next filter. 
-                    // first param is currend calculated value, additional arguments can be parsed via the input.
-                    arg = value == undefined ? (arg.length && arg || [].slice.call(arguments, 1)) : [value].concat([].slice.call(arguments, 2));
-                    (filterList[j] instanceof Function) && (value = filterList[j].apply({}, arg));
+            var expandations = {
+                
+                /**
+                 * @param handler {Function} function(lastReturnedValue, [argument1, [argument2, [...]]])
+                 * @param priority {int} defaultly set 10. The smaller, the higher priority. Should be bigger than 0.
+                 */
+                addFilter : function(filterName, handler, priority) {
+                    var _buf = buf,
+                        priority = (undefined === priority) && 10 || priority;
+                    
+                    if (!(handler instanceof Function)) {
+                        return false;
+                    }
+                    
+                    !_buf.filters[filterName] && (_buf.filters[filterName] = {}, _buf.priorities[filterName] = []);
+                    
+                    if (!_buf.filters[filterName][priority]) {
+                        _buf.priorities[filterName].push(priority);
+                        _buf.priorities[filterName].sort(g_utils.sort);
+                        _buf.filters[filterName][priority] = [];
+                    }
+                    
+                    _buf.filters[filterName][priority].push(handler);
+                    
+                    return true;
+                },
+                
+                removeFilter : function(filterName, handler, priority) {
+                    var _buf = buf,
+                        filters, result = [],
+                        priority = (undefined === priority) && 10 || priority;
+                    
+                    if (!_buf.filters[filterName]) return false;
+                    
+                    filters = _buf.filters[filterName][priority];
+                    for (var i = 0, filter; filter = filters[i]; ++i) {
+                        if (filter != handler) result.push(filter);
+                    }
+                    // all filters removed, remove the priority from buffer.
+                    if (!_buf.filters[filterName][priority].length) {
+                        delete _buf.filters[filterName][priority];
+                        for (i = 0, len = _buf.priorities[filterName].length; i < len; ++i) {
+                            if (_buf.priorities[filterName][i] == priority) {
+                                _buf.priorities[filterName][i] = Number.POSITIVE_INFINITY;
+                                _buf.priorities[filterName].sort(g_utils.sort);
+                            }
+                        }
+                    }
+                    
+                    _buf.filters[filterName][priority] = result;
+                    return true;
+                },
+                
+                applyFilters : function(filterName, originalValue) {
+                    var _buf = buf,
+                        priorities = _buf.priorities[filterName],
+                        filterList,
+                        filter,
+                        value = originalValue,
+                        arg = [],
+                        i, j, leni, lenj;
+                    
+                    if (!priorities || !priorities.length) return value;
+                    
+                    for (i = 0, len = priorities.length; i < len; ++i) {
+                        filterList = _buf.filters[filterName][priorities[i]];
+                        for (j = 0, lenj = filterList.length; j < lenj; ++j) {
+                            // rebuild arguments for next filter. 
+                            // first param is currend calculated value, additional arguments can be parsed via the input.
+                            arg = value == undefined ? (arg.length && arg || [].slice.call(arguments, 1)) : [value].concat([].slice.call(arguments, 2));
+                            (filterList[j] instanceof Function) && (value = filterList[j].apply(obj, arg));
+                        }
+                    }
+                    
+                    return value;
+                },
+                
+                clearFilters : function(filterName) {
+                    var _buf = buf;
+                    
+                    _buf.filters[filterName] = {};
+                    
+                    return true;
                 }
+            };
+            
+            var i;
+            // in case of occupations.
+            for (i in expandations) {
+                if (obj[i]) return false;
             }
-            
-            return value;
-        },
-        
-        clearFilters : function(filterName) {
-            var _buf = buf;
-            
-            _buf.filters[filterName] = {};
+            for (i in expandations) {
+                obj[i] = expandations[i];
+            }
+            return true;
         }
     }
+    
+    // register the object itself as an adapter.
+    self.activate(self);
+    
+    return self;
     
 })();/**
  * Calculator used to get basic attributes of a unit.
@@ -900,11 +902,11 @@ coh.utils = coh.utils || {};
                 getAttack : function(unit) {
                     var attack = unit.getAttack(),
                         level = unit.getLevel(),
-                        rate = Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100;
+                        rate = 0.5 * Math.pow(4 / maxLevel * level, 0.5);
                     
                     // rate is always 1 when level equals max level.
                     // make it modifible from outside for expanditions.
-                    rate = coh.FilterUtil.applyFilters("getAttackModifier", rate, unit);
+                    rate = _coh.utils.FilterUtil.applyFilters("getAttackModifier", rate, unit);
                     
                     // modifiers from types.
                     attack = attack * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].attack || 1);
@@ -918,9 +920,9 @@ coh.utils = coh.utils || {};
                 getHp : function(unit) {
                     var hp = unit.getHp(),
                         level = unit.getLevel(),
-                        rate = Math.floor(0.5 * Math.pow(4 / maxLevel * level, 0.5) * 100) / 100;
+                        rate = 0.5 * Math.pow(4 / maxLevel * level, 0.5);
                     
-                    rate = coh.FilterUtil.applyFilters("getHpModifier", rate, unit);
+                    rate = _coh.utils.FilterUtil.applyFilters("getHpModifier", rate, unit);
                     
                     hp = hp * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].hp || 1);
                     return Math.floor(rate * hp);
@@ -933,9 +935,9 @@ coh.utils = coh.utils || {};
                 getSpeed : function(unit) {
                     var speed = unit.getSpeed(),
                         level = unit.getLevel()
-                        rate = Math.floor(Math.pow(1 / maxLevel * level, 0.2) * 100) / 100;
+                        rate = Math.pow(1 / maxLevel * level, 0.2);
                     
-                    rate = coh.FilterUtil.applyFilters("getSpeedModifier", rate, unit);
+                    rate = _coh.utils.FilterUtil.applyFilters("getSpeedModifier", unit);
                     
                     speed = speed * (LC.ADDITIONS[unit.getType()] && LC.ADDITIONS[unit.getType()].speed || 1);
                     return Math.floor(rate * speed);
@@ -1394,10 +1396,9 @@ coh.Actor = cc.Sprite.extend({
         });
     }
 });var coh = coh || {};
-
-(function() {
 /**
  * Super class for all units.
+ * @impliments FilterUtil, can add and apply filters.
  * Details for type/status/action/color:
  * @see config.js, UNIT_TYPES for all types.
 
@@ -1419,7 +1420,7 @@ coh.Actor = cc.Sprite.extend({
     ...
  *
  */
-var UnitObject = function(unitName, savedData) {
+coh.Unit = function(unitName, savedData) {
     
     var self = this,
         _coh = coh,
@@ -1436,21 +1437,25 @@ var UnitObject = function(unitName, savedData) {
         color : _coh.LocalConfig.INVALID,
         // check coh.LocalConfig.UNIT_MODES for full action list.
         // idle for default.
-        action : _coh.LocalConfig.UNIT_MODES.IDLE
+        action : _coh.LocalConfig.UNIT_MODES.IDLE,
         isHero : false,
         
         // other configurations from LC.
         conf : {},
         
         // initilized in constructor.
-        savedData : null
+        savedData : {}
     };
     
     var construct = function(unitName, savedData) {
         
         var _buf = buf,
             _lc = {},
+            _coh = coh,
             i;
+        
+        // register itself as a filter adapter.
+        _coh.utils.FilterUtil.activate(self);
         
         _buf.name = unitName;
         
@@ -1490,14 +1495,16 @@ var UnitObject = function(unitName, savedData) {
             })(i);
         }
         // dynamic data, read/write.
-        var basicData = self.isHero() ? _coh.unitData.hero || _coh.unitData.unit;
+        var basicData = self.isHero() && _coh.unitData.hero || _coh.unitData.unit;
         // configs for specific heros.
         for (i in _coh.unitData[unitName]) {
             basicData[i] = _coh.unitData[unitName][i];
         }
         for (i in basicData) {
             // verifications could be appended outside.
-            _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData[i] || basicData[i], i, self);
+            
+            // it should be a global filter as at this time, the unit isn't returned yet. 
+            _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData && savedData[i] || basicData[i], i, self);
             
             index = _coh.Util.getFUStr(i);
             self["get" + index] = (function(i) {
@@ -1564,7 +1571,7 @@ var UnitObject = function(unitName, savedData) {
     };
     
     self.clone = function() {
-        var clone = coh.Unit.getInstance(self.getName(), self.getSavedData());
+        var clone = _coh.UnitFactory.getInstance(self.getName(), self.getSavedData());
         clone.setColor(self.getColor());
         clone.setMode(self.getMode());
         
@@ -1574,12 +1581,13 @@ var UnitObject = function(unitName, savedData) {
     construct.apply(self, arguments);
     
     return self;
-};
+};var coh = coh || {};
 
+(function() {
 /**
  * Unit factary and all public functions related to units.
  */
-coh.Unit = (function() {
+coh.UnitFactory = (function() {
     
     var self,
         _coh = coh,
@@ -1597,7 +1605,7 @@ coh.Unit = (function() {
          * factory function that returns the unit object via the given key.
          */
         getInstance : function(unitName) {
-            var unit = new UnitObject(unitName);
+            var unit = new _coh.Unit(unitName);
             
             unit = coh.utils.FilterUtil.applyFilters("unitGenerated", unit);
             if (unit.isHero()) {
@@ -1719,7 +1727,7 @@ coh.Player = function(unitConfig) {
         var _coh = coh,
             _buf = buf,
             _u = _buf.unitsUnplaced,
-            type = _coh.Unit.getTypeFromStatus(status),
+            type = _coh.UnitFactory.getTypeFromStatus(status),
             unit =null, 
             unitName;
         
@@ -1728,9 +1736,9 @@ coh.Player = function(unitConfig) {
                 unitName = _coh.Util.popRandom(_u[i][type]);
                 // for normal units, level & numbers are injected already;
                 // for heros, data such as type/level history/occupation are generated, from savd data.
-                unit = _coh.Unit.getInstance(unitName, buf.savedData.units[unitName]);
+                unit = _coh.UnitFactory.getInstance(unitName, buf.savedData.units[unitName]);
                 
-                unit.setColor(_coh.Unit.getColorFromStatus(status));
+                unit.setColor(_coh.UnitFactory.getColorFromStatus(status));
                 
                 break;
             }
@@ -2092,7 +2100,7 @@ coh.Battle = (function(){
             
             var unitType;
             for (var unitName in units) {
-                unitType = _coh.Unit.getUnitType(unitName);
+                unitType = _coh.UnitFactory.getUnitType(unitName);
                 unitConfig[unitType] || (unitConfig[unitType] = 0);
                 unitConfig[unitType] += units[unitName];
             }
@@ -2502,8 +2510,7 @@ coh.MapLayer = cc.Layer.extend({
  *@require {MapUtil}: if you would like to place units to the battle ground;
  *  inject it from the outer factory.
  *
- *@dispatch filterName: battleSceneEntered
- *@dispatch filterName: unitSpriteCreated
+ * @impliments FilterUtil, can add and apply filters.
  * to many of them my friend. Just search for "applyFilters" to find all.
  */
 var coh = coh || {};
@@ -2776,10 +2783,10 @@ coh.BattleScene = function() {
             var priority = unitBody.unit.getPriority(),
                 _lc = coh.LocalConfig;
             
-            // XXXXXX TODO: ranged ones.
+            // ranged ones would be handled when getPriority, within the filter getUnitPriority.
             priority = (unitBody.unit.getMode() + _lc.PRIORITIES.PHALANX) * _lc.PRIORITY_CHUNK + priority;
             
-            return coh.FilterUtil.applyFilters("getUnitPriorityInScene", priority, unitBody.unit);
+            return priority;
         },
         
         /**
@@ -2862,6 +2869,9 @@ coh.BattleScene = function() {
             this.setBattleMap(mapSrc);
             
             this.addChild(this.battleLayer);
+            
+            // XXXXXX not it used here at the moment. Maybe filters related to the battle scene should be optimized in future.
+            coh.utils.FilterUtil.activate(this);
         },
         
         onEnter : function() {
@@ -3155,7 +3165,7 @@ coh.BattleScene = function() {
             _buf.unitDelay = 0;
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                    status && _coh.Unit.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
+                    status && _coh.UnitFactory.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                     _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
                     if (!player.getNumOfUnplacedUnit()) return;
                 }
@@ -3179,7 +3189,7 @@ coh.BattleScene = function() {
                 tileSprite = unitBody.tileSprite,
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Unit.getTypeFromStatus(status), rowNum, colNum);
+                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.UnitFactory.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitBody
             unitBody.setPlayer(player);
@@ -3428,11 +3438,11 @@ coh.BattleScene = function() {
                 unitBody,
                 priority,
                 // If it's having other units or phalanxes in front of the current one, let's make a comparation.
-                comparedPriority,
+                comparedPriority;
             
             // find the correct positions for the phalanxes, and then withdraw units if necessary.
             for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {
-                unitBody = phalanx.getLeadUnit;
+                unitBody = phalanx.getLeadUnit();
                 distance = _util.getValidDistance(unitBody, function(comparedUnit) {
                     return _util.getPriority(comparedUnit) < _util.getPriority(unitBody);
                 });
@@ -3445,7 +3455,14 @@ coh.BattleScene = function() {
                 
                 // if there exist a unit in target place, let's try withdraw for sevral tiles.
                 // specially, if the unit belongs to enimy side, there would be something bad happen to that unlucky guy.
-                // XXXXXX Here we go!
+                // XXXXXX It's about the skill "melee", let's leave it later after a normal phalanx.
+                
+                
+                // Function withdraw should receives another 1 params:
+                //  shouldKill: if the unit run out of the border;
+                // and return false if a withdraw fails when should not kill and a border must be reached.
+                // In that case, the phalanx will have to choose it's action when trying to charge to the front line.
+                // XXXXXX Here we go, the distance found. What then?
             }
         },
         
@@ -3555,251 +3572,203 @@ coh.BattleScene = function() {
     argList = argList.join(",");
     
     return self = eval("new BSClass(" + argList + ")");
-};/**
+};var coh = coh || {};
+
+coh.skills = {
+    /**
+     * <skill name> : [<affixName>]
+     */
+    ranged : ["ranged"],
+    melee : ["melee"]
+};var coh = coh || {};
+
+(function() {
+var levelCalculators = {
+    // defaultly used calculator when no one defined in effect
+    
+    /**
+     * @param level level of a unit.
+     * Most effects would be more effective when the level of the unit gains.
+     */
+    levels : function() {
+        return 1;
+    }
+}, _lc = levelCalculators;
+
+coh.effects = {
+    // ranged effect will be actived when calculating priorities of a unit when generating a phalanx.
+    ranged : {
+        // interested filters
+        filters : {
+            // "this" in the handler would be the unit that's having the skill,
+            // so it's ignored in the artguments list.
+            getUnitPriority : function(priority) {
+                return priority - coh.LocalConfig.PRIORITY_CHUNK;
+            }
+        },
+        // the effect won't gains with the level
+        levels : false
+    }
+};
+
+})();var coh = coh || {};
+
+(function() {
+var levelCalculators = {
+    // defaultly used calculator when no one defined in affix
+    levels : function(level) {
+        return 1;
+    }
+}, _lc = levelCalculators;
+
+coh.affixes = {
+    ranged : {
+        effects : [
+            {
+                /**
+                 * <effect_name> : [<effect param>]
+                 * the value would be parsed as params of the effect levels calculator. So it's soppused to be an array.
+                 */ 
+                ranged : 1
+            }
+        ],
+        // defines how the effect should gains with the level.
+        // default config: _lc.levels
+        levels : false
+    }
+};
+
+})();/**
  * Do events and filters bindings related to skills.
+ * This class is designed to add the skill sets to units without injecting to the original code,
+ *  and translate global filters into units'.
  */
-
 coh.SkillController = (function() {
-    
-    var self,
-        _coh = coh;
-    
-    var buf = {
-        battle : {            
-            // mark the last handled unitBody and tile, for click and slide events.
-            lastUnitBody : null, 
-            lastTile : null,
-            
-            // if a unit is checked twice, it would be removed from the scene.
-            checkedUnit : null,
-            exiledUnit : null,
-            
-            exiledTileFrom : null,
-            exiledTileTo : null
-        },
-        
-        // exile/locate/default or other possible kinds of mouse actions in battleScene.
-        // locate for the default.
-        mouseAction : "locate"
-    };
-    
-    var handlerList = {
-        doFocus : function(event, battleScene) {
-            
-            var location = event.getLocationInView(),
-                unitGlobal = battleScene.getUnitInGlobal(location.x, location.y),
-                tile = battleScene.getTileInTurn(
-                    unitGlobal ? unitGlobal.getPlayer().isAttacker() : battleScene.isAttackerTurn(), 
-                    location.x, 
-                    location.y
-                ),
-                unitBody = battleScene.getUnit(tile);
-            
-            if (unitBody) {
-                battleScene.locateToUnit(unitBody);
-                _coh.utils.FilterUtil.applyFilters("battleUnitsLocated", unitBody, tile, battleScene);
-            }
-        },
-        
-        doCheckOrExile : function(event, battleScene) {
-            var location = event.getLocationInView(),
-                tile = battleScene.getTileInGlobal(location.x, location.y),
-                // only units in its side could be clicked or exiled.
-                unitBody = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y),
-                clickedUnit = battleScene.getUnitInGlobal(location.x, location.y),
-                lastUnitBody = buf.battle.lastUnitBody,
-                lastTile = buf.battle.lastTile;
-            
-            // the same unit clicked: clickedUnit should be the same as the lastUnitBody.
-            if (lastUnitBody && unitBody == lastUnitBody && clickedUnit == unitBody) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitClicked", unitBody, tile, battleScene);
-                return;
-            }
-            
-            // slide from top to bottom of the battle field, or the last unit in the group clicked.
-            if (lastTile && tile.x == lastTile.x && (battleScene.isAttackerTurn() ? tile.y > lastTile.y : tile.y < lastTile.y)) {
-                _coh.utils.FilterUtil.applyFilters("battleUnitExiled", clickedUnit && tile || lastTile, battleScene);
-                return;
-            }
-            
-            _coh.utils.FilterUtil.applyFilters("battleActionsCanceled", unitBody, tile, battleScene);
-        },
-        
-        doExileMove : function(event, battleScene) {
-            var location = event.getLocationInView(),
-                globalTile = battleScene.getTileInGlobal(location.x, location.y),
-                columnTile = battleScene.getLastTileInColumn(battleScene.isAttackerTurn(), globalTile),
-                _buf = buf,
-                lastTile = _buf.battle.exiledTileTo || _buf.battle.lastTile,
-                targetTile;
-            
-            if (!columnTile || !_buf.battle.exiledUnit || lastTile.x == columnTile.x) {
-                return;
-            }
-            
-            targetTile = battleScene.prepareMoving(_buf.battle.exiledUnit, columnTile, _buf.battle.exiledTileTo || _buf.battle.exiledTileFrom);
-            targetTile && (_buf.battle.exiledTileTo = targetTile);
-        },
-        
-        doUnExile : function(event, battleScene) {
-            
-            var _buf = buf,
-                location = event.getLocationInView(),
-                globalTile = battleScene.getTileInGlobal(location.x, location.y),
-                exiledUnit = _buf.battle.exiledUnit;
-            
-            exiledUnit && exiledUnit.unExile(); 
-            
-            // There should be a target tile found, 
-            // further more, the target tile should be within the battle field,
-            // to make sure the user could cancel the exile with a slide out of the ground.
-            
-            // Check the range of 
-            if (
-                _buf.battle.exiledTileTo 
-                && _buf.battle.exiledTileTo.x != _buf.battle.exiledTileFrom.x 
-                && battleScene.isTileInGround(battleScene.isAttackerTurn(), globalTile)) {
-                
-                battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileTo, function() {
-                    // If type 1 - normal solders, then there might be converts generated.
-                    // Let's find and make it directly.
-                    if (exiledUnit.unit.getType() == 1)
-                    battleScene.doConverts([exiledUnit]);
-                });
-            } else {
-                battleScene.setUnitToTile(exiledUnit, _buf.battle.exiledTileFrom);
-            }
-            
-            _buf.battle.exiledUnit = null;
-            _buf.mouseAction = "locate";
-        },
-        
-        recordTile : function(event, battleScene) {            
-            var location = event.getLocationInView(),
-                tile = battleScene.getTileInGlobal(location.x, location.y),
-                unitBody = battleScene.getUnitInTurn(battleScene.isAttackerTurn(), location.x, location.y);
 
-            buf.battle.lastUnitBody = unitBody;
-            buf.battle.lastTile = tile;
-        }
-    };
+    var self;
     
-    // Magic.
-    var actionsConfig = {
-        battle : {
-            exile : {
-                onMouseMove : handlerList.doExileMove,
-                onMouseUp : handlerList.doUnExile,
-                onMouseDown : function(event, battleScene) {
-                    handlerList.recordTile(event, battleScene);
-                    handlerList.doExileMove(event, battleScene);
+    var _coh = coh,
+        _fu = _coh.utils.FilterUtil;
+    
+    /**
+     * no it's not a good idea...
+     *  whatelse can I do?
+     */
+    var utils = {
+        // do the global -> unit translation for applying filters.
+        filterTranslation : function() {
+            var filterList = [],
+                i, j, filters, 
+                _coh = coh,
+                _fu = _fu;
+            
+            // XXXXXX is there any lazy-loadiing way making it instead of a full scan to the attributes?
+            for (i in _coh.effects) {
+                filters = _coh.effects.filters;
+                for (j in filters) {
+                    // $1 can be optional.
+                    j = j.replace(/\$1$/, "");
+                    // record filter names only, and no dulplicates.
+                    filterList[j] = j;
                 }
-            },
-            locate : {
-                onMouseMove : handlerList.doFocus,
-                onMouseUp : handlerList.doCheckOrExile
-            },
-            onDefault : {
-                onMouseDown : handlerList.recordTile
-            }
-        }
-    };
-    
-    var util = {
-        clearStatus : function(battleScene) {
-            
-            var _buf = buf;
-            
-            // cancel focus in other cases.
-            battleScene.cancelFocus();
-            
-            // cancel checked units incase of checked.
-            _buf.battle.checkedUnit && _buf.battle.checkedUnit.unCheck();
-            _buf.battle.checkedUnit  = null;
-            
-            _buf.battle.exiledUnit && _buf.battle.exiledUnit.unExile(); 
-            _buf.battle.exiledUnit = null;
-        }
-    };
-    
-    _coh.utils.FilterUtil.addFilter("battleUnitsReady", function(battleScene) {
-        if ('mouse' in cc.sys.capabilities)
-        cc.eventManager.addListener({
-            event: cc.EventListener.MOUSE,
-            onMouseMove : function(event){
-                (actionsConfig.battle[buf.mouseAction].onMouseMove || actionsConfig.battle.onDefault.onMouseMove)(event, battleScene);
-            },
-            
-            onMouseDown : function(event) {
-                (actionsConfig.battle[buf.mouseAction].onMouseDown || actionsConfig.battle.onDefault.onMouseDown)(event, battleScene);
-            },
-            
-            onMouseUp : function(event) {
-                (actionsConfig.battle[buf.mouseAction].onMouseUp || actionsConfig.battle.onDefault.onMouseUp)(event, battleScene);
             }
             
-        }, battleScene);
-    });
-    
-    _coh.utils.FilterUtil.addFilter("battleUnitClicked", function(unitBody, tile, battleScene) {
-        
-        var _buf = buf,
-            removedUnitBody;
-        
-        if (_buf.battle.checkedUnit == unitBody) {
-            util.clearStatus(battleScene);
-            removedUnitBody = battleScene.removeUnit(unitBody, tile);
-            battleScene.queueUnits([removedUnitBody.unitBody], [removedUnitBody.tiles]);
-        } else {
-            util.clearStatus(battleScene);
-            battleScene.focusOnUnit(unitBody);
-            
-            _buf.battle.checkedUnit = unitBody;
+            var filterName, unitIndex;
+            // do the translation from global to unit for recorded filters.
+            for (i in filterList) {
+                // remove unit locaters.
+                // XXXXXX will it be a problem in future here?
+                /*
+
+                an effect may define a filter like this:
+                    getAttrAttack$1 : function(){};
+                while that means in the globally triggered filter named "getAttrAttack", 
+                there might be more than 1 params in the argument list (except for the first value in the arglist) that is an instance of a Unit, 
+                just like this:
+                    
+                    coh.util.FilterUtil.applyFilter("getAttrAttack", value, unit1, unit2);
+
+                while it may be translated into:
+                    unit1.applyFilter("getAttrAttack", value, unit2);
+                    unit2.applyFilter("getAttrAttack$2", value, unit1);
+                when $1 is ignored as the default one.
+
+                $1 here means this effect should react the filter triggered by unit1 only.
+                if there is only 1 unit in the filter, $1 can be optional.
+
+                Note that only when /$\d+/ is written at the end of the filtername would be recognized.
+                 */
+                unitIndex = (unitIndex = i.match(/\$(\d+)$/)) && +unitIndex[1] || 1;
+                filterName = i.replace(/\$id+$/, "");
+                _fu.addFilter(
+                    filterName, 
+                    (function(unitIndex, filterName) {
+                        return function() {
+                            // call faster than apply, in non-strict mode.
+                            var args = [].slice.call(arguments),
+                                i, len, unitCounter = 0,
+                                filterNameInUnit = filterName;
+                            
+                            for (i = 1, len = args.length; i < len; ++i) {
+                                if (args[i] instanceof coh.Unit) {
+                                    ++unitCounter;
+                                }
+                                if (unitCounter == unitIndex) {
+                                    unitIndex != 1 && (filterNameInUnit += "$" + unitIndex);
+                                    args.splice(i, 1);
+                                    return args[i].applyFilter.apply(args[i], [filterNameInUnit].concat(args));
+                                }
+                            }
+                        }
+                    })(unitIndex, filterName)
+                );
+            }
         }
-    });
+    }
     
-    _coh.utils.FilterUtil.addFilter("battleUnitExiled", function(tile, battleScene) {
-        var isAttacker = battleScene.isAttackerTurn(),
-            exiledTileFrom = battleScene.getLastTileInColumn(isAttacker, tile),
-            exiledUnit = battleScene.getUnit(exiledTileFrom),
-            _buf = buf,
-            unitTiles = exiledUnit && exiledUnit.getTileRecords();
-        
-        util.clearStatus(battleScene);
-        
-        // the original tile should be modified for type that's not 1, to prevent the wrong position restored while canceling.
-        // when set to map, the target tile should be the left bottom tile of the unit.
-        for (var i in unitTiles) {
-            if (exiledTileFrom.x >= unitTiles[i].x) exiledTileFrom.x = unitTiles[i].x;
-            if (exiledTileFrom.y <= unitTiles[i].y) exiledTileFrom.y = unitTiles[i].y;
-        }
-        
-        // unExile would be executed in the doUnExile process.
-        if (battleScene.exileUnit(exiledUnit)) {            
-            _buf.battle.exiledUnit = exiledUnit;
-            _buf.battle.exiledTileFrom = exiledTileFrom;
-            _buf.battle.exiledTileTo = null;
-            
-            _buf.mouseAction = "exile";
-        }
-    });
-    
-    _coh.utils.FilterUtil.addFilter("battleActionsCanceled", function(unitBody, tile, battleScene) {
-        util.clearStatus(battleScene);
-    });
-    
-    _coh.utils.FilterUtil.addFilter("defenderTurnStarted", function(battleScene) {
-    });
-    
-    _coh.utils.FilterUtil.addFilter("attackerTurnStarted", function(battleScene) {
-    });
-    
-    _coh.utils.FilterUtil.addFilter("convertUnit", function(unitFrom, unitTo, cType) {
-        coh.utils.BaseCvtUtil.getInstance().convert(unitFrom, unitTo, cType);
+    // bind skill reactions to each unit created.
+    _fu.addFilter("unitGenerated", function(unit) {
+        self.setupUnitSkills(unit);
     });
     
     return self = {
-        
+        // allow an unit be able to react to skills,
+        // adding filters to the unit for applying in future(parsed from global filters).
+        setupUnitSkills : function(unit) {
+            // do unit.addFilters with all configured skills to the unit.
+            var skills = unit.getSkills(),
+                skillLevel,
+                skillName, 
+                affixes,
+                effect,
+                effectName,
+                i,
+                filters,
+                filterName,
+                filterAction,
+                levelFunc,
+                _coh = coh;
+            
+            for (skillName in skills) {
+                affixses = _coh.skills[i];
+                // incase it's not found in config.
+                if (!affixses) continue;
+                skillLevel = skills[i];
+                for (i = 0, effectName; effectName = affixses[i]; ++i) {
+                    effect = _coh.effects[effectName];
+                    // incase it's not found in config.
+                    if (!effect) continue;
+                    filters = effect.filters;
+                    levelFunc = effect.levels;
+                    for (filterName in filters) {
+                        filterAction = filters[filterName];
+                        // ignore $1.
+                        filterName = filterName.replace(/\$1$/, "");
+                        unit.addFilter(filterName, filterAction);
+                    }
+                }
+            }
+        }
     };
 })();/**
  * Do events and filters bindings related to battle scene.

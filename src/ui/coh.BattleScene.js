@@ -658,7 +658,7 @@ coh.BattleScene = function() {
             _buf.unitDelay = 0;
             for (var i = 0, row; row = matrix.succeed[i]; ++i) {
                 for (var j = 0, status; (status = row[j]) != undefined; ++j) {
-                    status && _coh.Unit.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
+                    status && _coh.UnitFactory.getTypeFromStatus(status) && this.placeUnit(player, status, i, j);
                     _buf.unitDelay += _coh.LocalConfig.ASSAULT_DEATA;
                     if (!player.getNumOfUnplacedUnit()) return;
                 }
@@ -682,7 +682,7 @@ coh.BattleScene = function() {
                 tileSprite = unitBody.tileSprite,
                 
                 // get tile and do the possible translation, for example for a type 2 defender unit.
-                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.Unit.getTypeFromStatus(status), rowNum, colNum);
+                tilePosition = handlerList.mapUtil.getTilePosition(player.isAttacker(), _coh.UnitFactory.getTypeFromStatus(status), rowNum, colNum);
             
             // init unitBody
             unitBody.setPlayer(player);
@@ -931,7 +931,7 @@ coh.BattleScene = function() {
                 unitBody,
                 priority,
                 // If it's having other units or phalanxes in front of the current one, let's make a comparation.
-                comparedPriority,
+                comparedPriority;
             
             // find the correct positions for the phalanxes, and then withdraw units if necessary.
             for (var i = 0, phalanx; phalanx = phalanxes[i]; ++i) {

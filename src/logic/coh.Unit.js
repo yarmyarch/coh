@@ -40,21 +40,21 @@ coh.Unit = function(unitName, savedData) {
         color : _coh.LocalConfig.INVALID,
         // check coh.LocalConfig.UNIT_MODES for full action list.
         // idle for default.
-        action : _coh.LocalConfig.UNIT_MODES.IDLE
+        action : _coh.LocalConfig.UNIT_MODES.IDLE,
         isHero : false,
         
         // other configurations from LC.
         conf : {},
         
         // initilized in constructor.
-        savedData : null
+        savedData : {}
     };
     
     var construct = function(unitName, savedData) {
         
         var _buf = buf,
             _lc = {},
-            _coh = _coh,
+            _coh = coh,
             i;
         
         // register itself as a filter adapter.
@@ -98,7 +98,7 @@ coh.Unit = function(unitName, savedData) {
             })(i);
         }
         // dynamic data, read/write.
-        var basicData = self.isHero() ? _coh.unitData.hero || _coh.unitData.unit;
+        var basicData = self.isHero() && _coh.unitData.hero || _coh.unitData.unit;
         // configs for specific heros.
         for (i in _coh.unitData[unitName]) {
             basicData[i] = _coh.unitData[unitName][i];
@@ -107,7 +107,7 @@ coh.Unit = function(unitName, savedData) {
             // verifications could be appended outside.
             
             // it should be a global filter as at this time, the unit isn't returned yet. 
-            _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData[i] || basicData[i], i, self);
+            _buf.savedData[i] = _coh.utils.FilterUtil.applyFilters("loadSavedData" +  i, savedData && savedData[i] || basicData[i], i, self);
             
             index = _coh.Util.getFUStr(i);
             self["get" + index] = (function(i) {

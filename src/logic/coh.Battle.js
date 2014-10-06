@@ -236,7 +236,7 @@ coh.Battle = (function(){
             
             var unitType;
             for (var unitName in units) {
-                unitType = _coh.Unit.getUnitType(unitName);
+                unitType = _coh.UnitFactory.getUnitType(unitName);
                 unitConfig[unitType] || (unitConfig[unitType] = 0);
                 unitConfig[unitType] += units[unitName];
             }

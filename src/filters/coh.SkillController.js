@@ -19,7 +19,7 @@ coh.SkillController = (function() {
         filterTranslation : function() {
             var filterList = [],
                 i, j, filters, 
-                _coh = _coh,
+                _coh = coh,
                 _fu = _fu;
             
             // XXXXXX is there any lazy-loadiing way making it instead of a full scan to the attributes?
@@ -107,7 +107,7 @@ coh.SkillController = (function() {
                 filterName,
                 filterAction,
                 levelFunc,
-                _coh = _coh;
+                _coh = coh;
             
             for (skillName in skills) {
                 affixses = _coh.skills[i];
