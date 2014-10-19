@@ -1027,8 +1027,8 @@ coh.BattleScene = function() {
                     tile.y
                 );
                 converts = _coh.Battle.findAllPossibleConverts(_buf.statusMatrix[player.getId()], 
-                    index.x, 
-                    index.y, 
+                    index.column, 
+                    index.row, 
                     unitBody.unit.getColor()
                 );
                 

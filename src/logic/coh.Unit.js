@@ -2,15 +2,15 @@ var coh = coh || {};
 /**
  * Super class for all units.
  * @impliments FilterUtil, can add and apply filters.
- * Details for type/status/action/color:
+ * Details for type/status/mode/color:
  * @see config.js, UNIT_TYPES for all types.
 
     color : color of the unit, defined in faction configurations. 3 colors in current version, it would be generated radomly while creating a unit.
     type : read only, the basic field of the unit. Type of a unit is defined in unit configurations.
         whenever a type should be returned, it should only be those ones defined in config.UNIT_TYPES.
-    action : what the unit is doing at the moment. Defaultly set 0 (idle).
+    mode : what the unit is doing at the moment. Defaultly set 0 (idle).
     status : keycode used calculating. 
-        status = (action * typeCount + type) * colorCount + color.
+        status = (mode * typeCount + type) * colorCount + color.
     for status == 12: 
         color == 0;
         type == 4;
@@ -38,9 +38,9 @@ coh.Unit = function(unitName, savedData) {
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
-        // check coh.LocalConfig.UNIT_MODES for full action list.
+        // check coh.LocalConfig.UNIT_MODES for full mode list.
         // idle for default.
-        action : _coh.LocalConfig.UNIT_MODES.IDLE,
+        mode : _coh.LocalConfig.UNIT_MODES.IDLE,
         isHero : false,
         
         // other configurations from LC.
@@ -122,7 +122,7 @@ coh.Unit = function(unitName, savedData) {
             })(i);
         }
         
-        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
+        buf.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
     }
     
     self.getName = function() {
@@ -156,8 +156,8 @@ coh.Unit = function(unitName, savedData) {
     self.getMode = function() {
         return buf.mode;
     };
-    self.setMode = function(actionId) {
-        if (coh.LocalConfig.UNIT_MODES[actionId]) buf.mode = modeId;
+    self.setMode = function(modeId) {
+        if (coh.LocalConfig.UNIT_MODES[modeId]) buf.mode = modeId;
     };
     
     self.getSavedData = function() {
