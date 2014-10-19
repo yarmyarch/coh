@@ -817,7 +817,6 @@ coh.utils.FilterUtil = (function() {
                         for (j = 0, lenj = filterList.length; j < lenj; ++j) {
                             // rebuild arguments for next filter. 
                             // first param is currend calculated value, additional arguments can be parsed via the input.
-                            //~ arg = value == undefined ? (arg.length && arg || [].slice.call(arguments, 1)) : [value].concat([].slice.call(arguments, 2));
                             arg = [value].concat([].slice.call(arguments, 2));
                             (filterList[j] instanceof Function) && (value = filterList[j].apply(obj, arg));
                             // use the last returned value as the new param.
@@ -1402,15 +1401,15 @@ coh.Actor = cc.Sprite.extend({
 /**
  * Super class for all units.
  * @impliments FilterUtil, can add and apply filters.
- * Details for type/status/action/color:
+ * Details for type/status/mode/color:
  * @see config.js, UNIT_TYPES for all types.
 
     color : color of the unit, defined in faction configurations. 3 colors in current version, it would be generated radomly while creating a unit.
     type : read only, the basic field of the unit. Type of a unit is defined in unit configurations.
         whenever a type should be returned, it should only be those ones defined in config.UNIT_TYPES.
-    action : what the unit is doing at the moment. Defaultly set 0 (idle).
+    mode : what the unit is doing at the moment. Defaultly set 0 (idle).
     status : keycode used calculating. 
-        status = (action * typeCount + type) * colorCount + color.
+        status = (mode * typeCount + type) * colorCount + color.
     for status == 12: 
         color == 0;
         type == 4;
@@ -1438,9 +1437,9 @@ coh.Unit = function(unitName, savedData) {
         // level 1 for default.
         level : _coh.LocalConfig.UNIT.MIN_LEVEL,
         color : _coh.LocalConfig.INVALID,
-        // check coh.LocalConfig.UNIT_MODES for full action list.
+        // check coh.LocalConfig.UNIT_MODES for full mode list.
         // idle for default.
-        action : _coh.LocalConfig.UNIT_MODES.IDLE,
+        mode : _coh.LocalConfig.UNIT_MODES.IDLE,
         isHero : false,
         
         // other configurations from LC.
@@ -1522,7 +1521,7 @@ coh.Unit = function(unitName, savedData) {
             })(i);
         }
         
-        this.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
+        buf.id = _coh.LocalConfig.PRE_RAND_ID + _coh.Util.getRandId();
     }
     
     self.getName = function() {
@@ -1556,8 +1555,8 @@ coh.Unit = function(unitName, savedData) {
     self.getMode = function() {
         return buf.mode;
     };
-    self.setMode = function(actionId) {
-        if (coh.LocalConfig.UNIT_MODES[actionId]) buf.mode = modeId;
+    self.setMode = function(modeId) {
+        if (coh.LocalConfig.UNIT_MODES[modeId]) buf.mode = modeId;
     };
     
     self.getSavedData = function() {
@@ -2816,7 +2815,8 @@ coh.BattleScene = function() {
                 // used to check dulplicated phalanxes for a single unit.
                 // indexed by unitid.
                 phalanxHash = {},
-                i,j,k;
+                i,j,k,
+                cType;
             
             for (i = 0, cType; cType = convert.converts[i]; ++i) {
                 convertMatrix = _coh.LocalConfig.CONVERT_MATRIX[cType];
@@ -3376,7 +3376,7 @@ coh.BattleScene = function() {
                 tileRecords = unitBody.getTileRecords().concat();
             
             // XXXXXX Play the removing animate in target tile.
-            coh.FilterUtil.applyFilters("unitRemoved", unitBody);
+            coh.utils.FilterUtil.applyFilters("unitRemoved", unitBody);
 
             self.battleMap.removeChild(unitBody.tileSprite, true);
             self.unbindUnit(unitBody);
@@ -3537,8 +3537,8 @@ coh.BattleScene = function() {
                     tile.y
                 );
                 converts = _coh.Battle.findAllPossibleConverts(_buf.statusMatrix[player.getId()], 
-                    index.x, 
-                    index.y, 
+                    index.column, 
+                    index.row, 
                     unitBody.unit.getColor()
                 );
                 

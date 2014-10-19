@@ -306,7 +306,8 @@ coh.BattleScene = function() {
                 // used to check dulplicated phalanxes for a single unit.
                 // indexed by unitid.
                 phalanxHash = {},
-                i,j,k;
+                i,j,k,
+                cType;
             
             for (i = 0, cType; cType = convert.converts[i]; ++i) {
                 convertMatrix = _coh.LocalConfig.CONVERT_MATRIX[cType];
@@ -866,7 +867,7 @@ coh.BattleScene = function() {
                 tileRecords = unitBody.getTileRecords().concat();
             
             // XXXXXX Play the removing animate in target tile.
-            coh.FilterUtil.applyFilters("unitRemoved", unitBody);
+            coh.utils.FilterUtil.applyFilters("unitRemoved", unitBody);
 
             self.battleMap.removeChild(unitBody.tileSprite, true);
             self.unbindUnit(unitBody);
