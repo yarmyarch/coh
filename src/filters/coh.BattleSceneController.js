@@ -254,7 +254,7 @@ coh.BattleSceneController = (function() {
         }
         
         // unExile would be executed in the doUnExile process.
-        if (battleScene.exileUnit(exiledUnit)) {            
+        if (battleScene.exileUnit(exiledUnit)) {
             _buf.battle.exiledUnit = exiledUnit;
             _buf.battle.exiledTileFrom = exiledTileFrom;
             _buf.battle.exiledTileTo = null;

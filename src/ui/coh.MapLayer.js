@@ -70,7 +70,7 @@ coh.MapLayer = cc.Layer.extend({
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
                     
-                    coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
+                    _coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
                 };
                 
                 _coh.utils.FilterUtil.addFilter("battleSceneEntered", generatePlayer, 12);

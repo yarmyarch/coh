@@ -2468,7 +2468,7 @@ coh.MapLayer = cc.Layer.extend({
                     
                     _coh.utils.FilterUtil.removeFilter("battleSceneReady", render, 12);
                     
-                    coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
+                    _coh.utils.FilterUtil.applyFilters("battleUnitsReady", battleScene);
                 };
                 
                 _coh.utils.FilterUtil.addFilter("battleSceneEntered", generatePlayer, 12);
@@ -2508,8 +2508,8 @@ coh.MapLayer = cc.Layer.extend({
         return true;
     }
 });/**
- *@require {Battle}: Utils for battle scene.
- *@require {MapUtil}: if you would like to place units to the battle ground;
+ * @require {Battle}: Utils for battle scene.
+ * @require {MapUtil}: if you would like to place units to the battle ground;
  *  inject it from the outer factory.
  *
  * @impliments FilterUtil, can add and apply filters.
@@ -2727,7 +2727,7 @@ coh.BattleScene = function() {
         
         /**
          * try to reset the positoin of given units, make sure there would be no blank tiles in front of them.
-         *@return distance moved.
+         * @return distance moved.
          */
         moveToFrontLine : function(unitBody) {
             var _ts = handlerList.mapUtil,
@@ -2736,8 +2736,10 @@ coh.BattleScene = function() {
                 isAttacker = unitBody.getPlayer().isAttacker();
             
             if (distance) {
-                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - (isAttacker ? -1 : 1) * distance});
+                self.setUnitToTile(unitBody, {x : validTile.x, y : validTile.y - (isAttacker ? 1 : -1) * distance});
+                return true;
             }
+            return false;
         },
         
         /**
@@ -2792,7 +2794,7 @@ coh.BattleScene = function() {
         },
         
         /**
-         *@param convert convert object generated from coh.Battle that having data below:
+         * @param convert convert object generated from coh.Battle that having data below:
             {
                 column : column number,
                 row : row number,
@@ -3091,7 +3093,7 @@ coh.BattleScene = function() {
         },
         
         /**
-         *@return if the unit could be exiled for a relocation.
+         * @return if the unit could be exiled for a relocation.
          *  mainly for types that's occupying 2 columns.
          */
         exileUnit : function(unitBody) {
@@ -3392,7 +3394,7 @@ coh.BattleScene = function() {
         /**
          * Given units would try to array to the front line.
          * Mind that the units might have been removed already, so tileRecords for that unit is required.
-         *@return all moved units.
+         * @return all moved units.
          */
         queueUnits : function(unitBodies, tileRecords) {
             
@@ -4029,7 +4031,7 @@ coh.BattleSceneController = (function() {
         }
         
         // unExile would be executed in the doUnExile process.
-        if (battleScene.exileUnit(exiledUnit)) {            
+        if (battleScene.exileUnit(exiledUnit)) {
             _buf.battle.exiledUnit = exiledUnit;
             _buf.battle.exiledTileFrom = exiledTileFrom;
             _buf.battle.exiledTileTo = null;

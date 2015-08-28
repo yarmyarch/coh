@@ -110,7 +110,7 @@ coh.Hero = (function() {
         }
         
         // Use the newly affected unit instead of the original one.
-        // Actually it's not necessary returning this, as in js it's pointers parsed... Never mind, who nows.
+        // Actually it's not necessary returning this, as in js it's pointers parsed... Never mind, who knows.
         return unit;
     });
     
